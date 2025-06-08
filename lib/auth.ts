@@ -49,6 +49,13 @@ export const auth = betterAuth({
     "http://localhost:3000",
     process.env.BETTER_AUTH_URL || "http://localhost:3000"
   ],
+  logger: {
+    level: process.env.NODE_ENV === "development" ? "debug" : "error",
+    disabled: false,
+  },
+  advanced: {
+    generateId: () => crypto.randomUUID(),
+  },
 });
 
 export type Session = typeof auth.$Infer.Session;
