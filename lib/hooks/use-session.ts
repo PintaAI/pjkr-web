@@ -3,6 +3,21 @@
 import { useSession as useBetterAuthSession } from "../auth-client";
 import { useMemo } from "react";
 
+type UserRole = "MURID" | "GURU" | "ADMIN";
+type UserPlan = "FREE" | "PREMIUM" | "CUSTOM";
+
+interface ExtendedUser {
+  role: UserRole;
+  plan: UserPlan;
+  currentStreak: number;
+  maxStreak: number;
+  xp: number;
+  level: number;
+  email: string;
+  name?: string;
+  [key: string]: unknown;
+}
+
 /**
  * Enhanced client-side session hook with additional utilities
  */
@@ -12,15 +27,16 @@ export function useSession() {
   const user = useMemo(() => {
     if (!session?.user) return null;
     
+    const rawUser = session.user as Record<string, unknown>;
     return {
       ...session.user,
-      role: (session.user as any).role || "MURID",
-      plan: (session.user as any).plan || "FREE",
-      currentStreak: (session.user as any).currentStreak || 0,
-      maxStreak: (session.user as any).maxStreak || 0,
-      xp: (session.user as any).xp || 0,
-      level: (session.user as any).level || 1,
-    };
+      role: (rawUser.role as UserRole) || "MURID",
+      plan: (rawUser.plan as UserPlan) || "FREE",
+      currentStreak: (rawUser.currentStreak as number) || 0,
+      maxStreak: (rawUser.maxStreak as number) || 0,
+      xp: (rawUser.xp as number) || 0,
+      level: (rawUser.level as number) || 1,
+    } as ExtendedUser;
   }, [session]);
 
   const isAuthenticated = !!session;

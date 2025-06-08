@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { auth } from "./auth";
 import type { Session } from "./auth";
 
+
 /**
  * Get session on the server-side
  * Use this in Server Components, API routes, and Server Actions
@@ -46,7 +47,7 @@ export async function hasRole(requiredRole: string) {
   const session = await getServerSession();
   if (!session) return false;
   
-  const userRole = (session.user as any).role;
+  const userRole = (session.user as Record<string, unknown>).role as string;
   return userRole === requiredRole;
 }
 
@@ -57,6 +58,6 @@ export async function hasPlan(requiredPlan: string) {
   const session = await getServerSession();
   if (!session) return false;
   
-  const userPlan = (session.user as any).plan;
+  const userPlan = (session.user as Record<string, unknown>).plan as string;
   return userPlan === requiredPlan;
 }

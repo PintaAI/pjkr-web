@@ -1,12 +1,27 @@
 "use server";
 
-import { getServerSession, requireAuth, hasRole, hasPlan } from "./session";
+import { getServerSession, requireAuth } from "./session";
 import { redirect } from "next/navigation";
+
+type UserRole = "USER" | "GURU" | "ADMIN";
+type UserPlan = "FREE" | "PREMIUM" | "CUSTOM";
+
+interface AuthUser {
+  role: UserRole;
+  plan: UserPlan;
+  email: string;
+  [key: string]: unknown;
+}
+
+interface AuthSession {
+  user: AuthUser;
+  [key: string]: unknown;
+}
 
 /**
  * Wrapper for server actions that require authentication
  */
-export async function withAuth<T extends any[], R>(
+export async function withAuth<T extends unknown[], R>(
   action: (...args: T) => Promise<R>
 ) {
   return async (...args: T): Promise<R> => {
@@ -21,13 +36,13 @@ export async function withAuth<T extends any[], R>(
 /**
  * Wrapper for server actions that require specific role
  */
-export async function withRole<T extends any[], R>(
+export async function withRole<T extends unknown[], R>(
   requiredRole: string,
   action: (...args: T) => Promise<R>
 ) {
   return async (...args: T): Promise<R> => {
-    const session = await requireAuth();
-    const userRole = (session.user as any).role;
+    const session = await requireAuth() as AuthSession;
+    const userRole = session.user.role;
     
     if (userRole !== requiredRole) {
       throw new Error(`Access denied. Required role: ${requiredRole}`);
@@ -40,13 +55,13 @@ export async function withRole<T extends any[], R>(
 /**
  * Wrapper for server actions that require specific plan
  */
-export async function withPlan<T extends any[], R>(
+export async function withPlan<T extends unknown[], R>(
   requiredPlan: string,
   action: (...args: T) => Promise<R>
 ) {
   return async (...args: T): Promise<R> => {
-    const session = await requireAuth();
-    const userPlan = (session.user as any).plan;
+    const session = await requireAuth() as AuthSession;
+    const userPlan = session.user.plan;
     
     if (userPlan !== requiredPlan && userPlan !== "CUSTOM") {
       throw new Error(`Access denied. Required plan: ${requiredPlan}`);
@@ -76,7 +91,7 @@ export const createCourse = withRole("GURU", async (title: string, description: 
   // Your course creation logic here
   return {
     success: true,
-    message: `Course "${title}" created by ${session!.user.email}`,
+    message: `Course "${title}" with description "${description}" created by ${session!.user.email}`,
   };
 });
 
@@ -120,8 +135,8 @@ export async function assertAuthenticated() {
 }
 
 export async function assertRole(requiredRole: string) {
-  const session = await assertAuthenticated();
-  const userRole = (session.user as any).role;
+  const session = await assertAuthenticated() as AuthSession;
+  const userRole = session.user.role;
   
   if (userRole !== requiredRole) {
     throw new Error(`Access denied. Required role: ${requiredRole}`);
@@ -131,8 +146,8 @@ export async function assertRole(requiredRole: string) {
 }
 
 export async function assertPlan(requiredPlan: string) {
-  const session = await assertAuthenticated();
-  const userPlan = (session.user as any).plan;
+  const session = await assertAuthenticated() as AuthSession;
+  const userPlan = session.user.plan;
   
   if (userPlan !== requiredPlan && userPlan !== "CUSTOM") {
     throw new Error(`Access denied. Required plan: ${requiredPlan}`);

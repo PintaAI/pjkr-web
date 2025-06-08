@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "./avatar"
+import { Avatar, AvatarFallback } from "./avatar"
 import { 
   Breadcrumb, 
   BreadcrumbItem, 
@@ -50,11 +50,7 @@ import {
   Search, 
   Filter, 
   Calendar as CalendarIcon, 
-  Clock, 
-  MapPin, 
   Globe,
-  ChevronRight,
-  ChevronDown,
   Plus,
   Minus,
   X,

@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
 export function AuthCard() {
-  const { session, user, isAuthenticated, isLoading: sessionLoading } = useSession();
+  const { user, isAuthenticated, isLoading: sessionLoading } = useSession();
   const { canCreateCourse, canManageUsers, canAccessPremium, isGuru, isAdmin } = usePermissions();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
