@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { nextCookies } from "better-auth/next-js";
 import { prisma } from "./db";
 
 export const auth = betterAuth({
@@ -54,8 +55,13 @@ export const auth = betterAuth({
     disabled: false,
   },
   advanced: {
-    generateId: () => crypto.randomUUID(),
+    database: {
+      generateId: () => crypto.randomUUID(),
+    },
   },
+  plugins: [
+    nextCookies() // This should be the last plugin in the array
+  ],
 });
 
 export type Session = typeof auth.$Infer.Session;

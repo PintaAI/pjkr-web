@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { signInWithGoogle, signOut, signInWithEmailPassword, signUpWithEmailPassword } from "../lib/auth-client";
 import { useSession, usePermissions } from "../lib/hooks/use-session";
+import { DEFAULT_LOGIN_REDIRECT } from "../lib/routes";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -14,6 +16,7 @@ export function AuthCard() {
   const { canCreateCourse, canManageUsers, canAccessPremium, isGuru, isAdmin } = usePermissions();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
@@ -35,6 +38,10 @@ export function AuthCard() {
       const result = await signInWithEmailPassword(loginEmail, loginPassword);
       if (result.error) {
         setError(result.error.message || "Login failed");
+      } else {
+        // Redirect on successful login
+        router.push(DEFAULT_LOGIN_REDIRECT);
+        router.refresh();
       }
     } catch (error) {
       setError("Login failed. Please check your credentials.");
@@ -64,6 +71,10 @@ export function AuthCard() {
       const result = await signUpWithEmailPassword(registerEmail, registerPassword, registerName);
       if (result.error) {
         setError(result.error.message || "Registration failed");
+      } else {
+        // Redirect on successful registration
+        router.push(DEFAULT_LOGIN_REDIRECT);
+        router.refresh();
       }
     } catch (error) {
       setError("Registration failed. Please try again.");
@@ -80,6 +91,10 @@ export function AuthCard() {
       const result = await signInWithGoogle();
       if (result.error) {
         setError(result.error.message || "Google sign in failed");
+      } else {
+        // Redirect on successful Google sign in
+        router.push(DEFAULT_LOGIN_REDIRECT);
+        router.refresh();
       }
     } catch (error) {
       setError("Google sign in failed. Please try again.");

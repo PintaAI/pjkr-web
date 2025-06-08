@@ -1,6 +1,7 @@
 "use server";
 
-import { getServerSession, requireAuth } from "./session";
+import { auth } from "./auth";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 type UserRole = "USER" | "GURU" | "ADMIN";
@@ -25,7 +26,9 @@ export async function withAuth<T extends unknown[], R>(
   action: (...args: T) => Promise<R>
 ) {
   return async (...args: T): Promise<R> => {
-    const session = await getServerSession();
+    const session = await auth.api.getSession({
+      headers: await headers()
+    });
     if (!session) {
       redirect("/auth");
     }
@@ -41,9 +44,14 @@ export async function withRole<T extends unknown[], R>(
   action: (...args: T) => Promise<R>
 ) {
   return async (...args: T): Promise<R> => {
-    const session = await requireAuth() as AuthSession;
-    const userRole = session.user.role;
+    const session = await auth.api.getSession({
+      headers: await headers()
+    });
+    if (!session) {
+      redirect("/auth");
+    }
     
+    const userRole = (session.user as any).role;
     if (userRole !== requiredRole) {
       throw new Error(`Access denied. Required role: ${requiredRole}`);
     }
@@ -60,9 +68,14 @@ export async function withPlan<T extends unknown[], R>(
   action: (...args: T) => Promise<R>
 ) {
   return async (...args: T): Promise<R> => {
-    const session = await requireAuth() as AuthSession;
-    const userPlan = session.user.plan;
+    const session = await auth.api.getSession({
+      headers: await headers()
+    });
+    if (!session) {
+      redirect("/auth");
+    }
     
+    const userPlan = (session.user as any).plan;
     if (userPlan !== requiredPlan && userPlan !== "CUSTOM") {
       throw new Error(`Access denied. Required plan: ${requiredPlan}`);
     }
@@ -77,7 +90,9 @@ export async function withPlan<T extends unknown[], R>(
 
 // Protected action that requires authentication
 export const getUserProfile = withAuth(async () => {
-  const session = await getServerSession();
+  const session = await auth.api.getSession({
+    headers: await headers()
+  });
   return {
     user: session!.user,
     message: "This is a protected action",
@@ -86,7 +101,9 @@ export const getUserProfile = withAuth(async () => {
 
 // Action that requires GURU role
 export const createCourse = withRole("GURU", async (title: string, description: string) => {
-  const session = await getServerSession();
+  const session = await auth.api.getSession({
+    headers: await headers()
+  });
   
   // Your course creation logic here
   return {
@@ -97,7 +114,9 @@ export const createCourse = withRole("GURU", async (title: string, description: 
 
 // Action that requires PREMIUM plan
 export const accessPremiumFeature = withPlan("PREMIUM", async () => {
-  const session = await getServerSession();
+  const session = await auth.api.getSession({
+    headers: await headers()
+  });
   
   // Your premium feature logic here
   return {
@@ -108,7 +127,9 @@ export const accessPremiumFeature = withPlan("PREMIUM", async () => {
 
 // Admin-only action
 export const manageUsers = withRole("ADMIN", async () => {
-  const session = await getServerSession();
+  const session = await auth.api.getSession({
+    headers: await headers()
+  });
   
   // Your user management logic here
   return {
@@ -122,12 +143,16 @@ export const manageUsers = withRole("ADMIN", async () => {
  */
 
 export async function getCurrentUser() {
-  const session = await getServerSession();
+  const session = await auth.api.getSession({
+    headers: await headers()
+  });
   return session?.user || null;
 }
 
 export async function assertAuthenticated() {
-  const session = await getServerSession();
+  const session = await auth.api.getSession({
+    headers: await headers()
+  });
   if (!session) {
     throw new Error("Authentication required");
   }
@@ -136,7 +161,7 @@ export async function assertAuthenticated() {
 
 export async function assertRole(requiredRole: string) {
   const session = await assertAuthenticated() as AuthSession;
-  const userRole = session.user.role;
+  const userRole = (session.user as any).role;
   
   if (userRole !== requiredRole) {
     throw new Error(`Access denied. Required role: ${requiredRole}`);
@@ -147,7 +172,7 @@ export async function assertRole(requiredRole: string) {
 
 export async function assertPlan(requiredPlan: string) {
   const session = await assertAuthenticated() as AuthSession;
-  const userPlan = session.user.plan;
+  const userPlan = (session.user as any).plan;
   
   if (userPlan !== requiredPlan && userPlan !== "CUSTOM") {
     throw new Error(`Access denied. Required plan: ${requiredPlan}`);
