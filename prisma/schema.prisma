@@ -1,0 +1,424 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ================================
+// ENUMS
+// ================================
+
+enum UserRoles {
+  GURU
+  MURID
+  ADMIN
+}
+
+enum UserPlan {
+  FREE
+  PREMIUM
+  CUSTOM // Added Custom plan
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum LiveSessionStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+}
+
+enum VocabularyType {
+  WORD
+  SENTENCE
+}
+
+// Activity types for logging
+
+enum ActivityType {
+  LOGIN
+  COMPLETE_MODULE
+  COMPLETE_COURSE
+  COMPLETE_QUIZ
+  VOCABULARY_PRACTICE
+  DAILY_CHALLENGE
+  SUBMIT_ASSIGNMENT
+  PARTICIPATE_LIVE_SESSION
+  PLAY_GAME
+  OTHER
+}
+
+// ================================
+// CORE USER & AUTH MODELS
+// ================================
+
+model User {
+  id                    String                 @id @default(cuid())
+  email                 String                 @unique
+  name                  String?
+  role                  UserRoles              @default(MURID)
+  plan                  UserPlan               @default(FREE)
+  emailVerified         Boolean                @default(false) // Boolean for Better Auth compatibility
+  image                 String?
+  password              String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  // Streak related fields
+  currentStreak         Int                    @default(0)
+  maxStreak             Int                    @default(0)
+  lastActivityDate      DateTime?
+  // XP and Level fields
+  xp                    Int                    @default(0)
+  level                 Int                    @default(1)
+  accounts              Account[]
+  sessions              Session[]
+  authoredArticles      Article[]              @relation("ArticleAuthor")
+  authoredCourses       Course[]               @relation("CourseAuthor")
+  createdLiveSessions   LiveSession[]          @relation("LiveSessionCreator")
+  moduleCompletions     UserModuleCompletion[]
+  vocabularyCollections VocabularyCollection[]
+  pushNotifications     PushNotification[]
+  joinedCourses         Course[]               @relation("CourseMembers")
+  joinedLiveSessions    LiveSession[]          @relation("LiveSessionParticipants")
+  soals                 Soal[]                 @relation("SoalAuthor")
+  drawings              ExcalidrawDrawing[]
+  tryoutParticipations  TryoutParticipant[]
+  subscriptions         Subscription[] // Added relation to Subscription
+  activityLogs          ActivityLog[] // Added relation to ActivityLog
+  isCertificateEligible Boolean                @default(false) // Added for certificate eligibility
+
+  @@map("user")
+}
+
+model Account {
+  id                   String    @id @default(cuid())
+  userId               String
+  providerId           String
+  accountId            String
+  refreshToken         String?   @db.Text
+  accessToken          String?   @db.Text
+  accessTokenExpiresAt DateTime?
+  scope                String?
+  idToken              String?   @db.Text
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  refreshTokenExpiresAt DateTime?
+  password              String?
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("account")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  ipAddress String?
+  userAgent String?
+
+  @@index([userId])
+  @@map("session")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ================================
+// COURSE & EDUCATION MODELS
+// ================================
+
+model Course {
+  id              Int           @id @default(autoincrement())
+  title           String
+  description     String?
+  jsonDescription String?
+  htmlDescription String?
+  level           CourseLevel
+  thumbnail       String?
+  icon            String?
+  isCompleted     Boolean       @default(false)
+  isLocked        Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  authorId        String
+  author          User          @relation("CourseAuthor", fields: [authorId], references: [id])
+  modules         Module[]      @relation("CourseModules")
+  liveSessions    LiveSession[] @relation("CourseLiveSessions")
+  members         User[]        @relation("CourseMembers")
+}
+
+model Module {
+  id              Int                    @id @default(autoincrement())
+  title           String
+  description     String
+  jsonDescription String
+  htmlDescription String
+  order           Int
+  isCompleted     Boolean                @default(false)
+  isLocked        Boolean                @default(false)
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  courseId        Int
+  course          Course                 @relation("CourseModules", fields: [courseId], references: [id])
+  completions     UserModuleCompletion[]
+}
+
+model UserModuleCompletion {
+  id          Int      @id @default(autoincrement())
+  userId      String
+  moduleId    Int
+  isCompleted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  module      Module   @relation(fields: [moduleId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, moduleId])
+}
+
+model LiveSession {
+  id             String            @id @default(cuid())
+  name           String
+  description    String?
+  streamCallId   String? // Stream Video Call ID
+  status         LiveSessionStatus @default(SCHEDULED)
+  scheduledStart DateTime
+  scheduledEnd   DateTime?
+  actualStart    DateTime?
+  actualEnd      DateTime?
+  recordingUrl   String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  creatorId      String
+  courseId       Int
+  course         Course            @relation("CourseLiveSessions", fields: [courseId], references: [id])
+  creator        User              @relation("LiveSessionCreator", fields: [creatorId], references: [id])
+  participants   User[]            @relation("LiveSessionParticipants")
+
+  @@index([streamCallId])
+}
+
+model Article {
+  id              Int      @id @default(autoincrement())
+  title           String
+  description     String?
+  jsonDescription String
+  htmlDescription String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  authorId        String
+  author          User     @relation("ArticleAuthor", fields: [authorId], references: [id])
+}
+
+// ================================
+// ASSESSMENT & QUIZ MODELS
+// ================================
+
+model KoleksiSoal {
+  id        Int      @id @default(autoincrement())
+  nama      String
+  deskripsi String?
+  isPrivate Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  soals     Soal[]
+  tryouts   Tryout[]
+}
+
+model Soal {
+  id             Int         @id @default(autoincrement())
+  koleksiId      Int
+  authorId       String // Changed to String to match existing User id type
+  pertanyaan     String
+  attachmentUrl  String?
+  attachmentType String?
+  difficulty     Difficulty?
+  explanation    String?
+  isActive       Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  koleksiSoal    KoleksiSoal @relation(fields: [koleksiId], references: [id])
+  author         User        @relation("SoalAuthor", fields: [authorId], references: [id])
+  opsis          Opsi[]
+}
+
+model Opsi {
+  id             Int      @id @default(autoincrement())
+  soalId         Int
+  opsiText       String
+  attachmentUrl  String?
+  attachmentType String?
+  isCorrect      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  soal           Soal     @relation(fields: [soalId], references: [id])
+}
+
+model Tryout {
+  id            Int                 @id @default(autoincrement())
+  nama          String
+  startTime     DateTime
+  endTime       DateTime
+  duration      Int                 @default(30) // Duration in minutes
+  koleksiSoalId Int
+  isActive      Boolean             @default(false)
+  guruId        String
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  koleksiSoal   KoleksiSoal         @relation(fields: [koleksiSoalId], references: [id])
+  participants  TryoutParticipant[]
+}
+
+model TryoutParticipant {
+  id               Int       @id @default(autoincrement())
+  tryoutId         Int
+  userId           String
+  score            Int       @default(0)
+  submittedAt      DateTime?
+  timeTakenSeconds Int? // Nullable for backward compatibility with existing records
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  tryout           Tryout    @relation(fields: [tryoutId], references: [id])
+  user             User      @relation(fields: [userId], references: [id])
+
+  @@unique([tryoutId, userId])
+}
+
+// ================================
+// VOCABULARY & LEARNING TOOLS
+// ================================
+
+model VocabularyCollection {
+  id          Int              @id @default(autoincrement())
+  title       String
+  description String?
+  icon        String?          @default("FaBook")
+  isPublic    Boolean          @default(false)
+  userId      String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  user        User?            @relation(fields: [userId], references: [id])
+  items       VocabularyItem[]
+}
+
+model VocabularyItem {
+  id           Int                  @id @default(autoincrement())
+  korean       String
+  indonesian   String
+  isChecked    Boolean              @default(false)
+  type         VocabularyType       @default(WORD)
+  collectionId Int
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  collection   VocabularyCollection @relation(fields: [collectionId], references: [id])
+}
+
+model ExcalidrawDrawing {
+  id        String   @id @default(cuid())
+  name      String
+  elements  String   @db.Text // Serialized Excalidraw elements
+  appState  String?  @db.Text // Serialized Excalidraw app state
+  files     String?  @db.Text // Serialized files data
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+// ================================
+// UTILITY & FEATURE MODELS
+// ================================
+
+model PushNotification {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Added Subscription model for Midtrans tracking
+
+model Subscription {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  midtransOrderId String    @unique // Store the Midtrans order_id from createTransaction API
+  status          String // e.g., PENDING, SUCCESS, FAILED, CHALLENGE (maps to Midtrans status)
+  plan            UserPlan // The plan subscribed to (e.g., PREMIUM)
+  startDate       DateTime? // Set when payment is confirmed (settlement/capture+accept)
+  endDate         DateTime? // Optional: For recurring/timed subscriptions
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Index for faster lookup via webhook
+  @@index([userId])
+  @@index([midtransOrderId])
+}
+
+// Activity log for tracking user activities, streaks, and XP changes
+
+model ActivityLog {
+  id             String       @id @default(cuid())
+  userId         String
+  type           ActivityType
+  description    String?
+  xpEarned       Int? // XP earned from this activity
+  streakUpdated  Boolean      @default(false)
+  previousStreak Int?
+  newStreak      Int?
+  previousLevel  Int?
+  newLevel       Int?
+  metadata       String?      @db.Text // JSON string for additional metadata
+  createdAt      DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}
