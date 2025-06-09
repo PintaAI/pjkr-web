@@ -3,6 +3,22 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { SignOutButton } from "../../components/signout-button";
 
+type UserRoles = "GURU" | "MURID" | "ADMIN";
+type UserTier = "FREE" | "PREMIUM" | "CUSTOM";
+
+interface DashboardUser {
+  id: string;
+  email: string;
+  name?: string;
+  role: UserRoles;
+  accessTier: UserTier;
+  currentStreak: number;
+  maxStreak: number;
+  xp: number;
+  level: number;
+  isCertificateEligible: boolean;
+}
+
 export default async function DashboardPage() {
   const session = await auth.api.getSession({
     headers: await headers()
@@ -12,7 +28,7 @@ export default async function DashboardPage() {
     redirect("/auth");
   }
 
-  const user = session.user as any;
+  const user = session.user as DashboardUser;
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -33,7 +49,7 @@ export default async function DashboardPage() {
               <p><strong>Email:</strong> {user.email}</p>
               <p><strong>Name:</strong> {user.name || "Not provided"}</p>
               <p><strong>Role:</strong> {user.role}</p>
-              <p><strong>Plan:</strong> {user.plan}</p>
+              <p><strong>Plan:</strong> {user.accessTier}</p>
             </div>
           </div>
 

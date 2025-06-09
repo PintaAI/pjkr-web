@@ -58,6 +58,6 @@ export async function hasPlan(requiredPlan: string) {
   const session = await getServerSession();
   if (!session) return false;
   
-  const userPlan = (session.user as Record<string, unknown>).plan as string;
+  const userPlan = (session.user as Record<string, unknown>).accessTier as string;
   return userPlan === requiredPlan;
 }

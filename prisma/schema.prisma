@@ -1,13 +1,13 @@
 
 generator client {
   provider = "prisma-client-js"
-  previewFeatures = ["relationJoins"]
-  engineType = "library"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ================================
@@ -20,7 +20,7 @@ enum UserRoles {
   ADMIN
 }
 
-enum UserPlan {
+enum UserTier {
   FREE
   PREMIUM
   CUSTOM // Added Custom plan
@@ -49,8 +49,6 @@ enum VocabularyType {
   SENTENCE
 }
 
-// Activity types for logging
-
 enum ActivityType {
   LOGIN
   COMPLETE_MODULE
@@ -58,10 +56,20 @@ enum ActivityType {
   COMPLETE_QUIZ
   VOCABULARY_PRACTICE
   DAILY_CHALLENGE
-  SUBMIT_ASSIGNMENT
   PARTICIPATE_LIVE_SESSION
   PLAY_GAME
   OTHER
+}
+
+enum MidtransStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CHALLENGE
+  SETTLEMENT
+  CAPTURE
+  EXPIRE
+  CANCEL
 }
 
 // ================================
@@ -73,10 +81,9 @@ model User {
   email                 String                 @unique
   name                  String?
   role                  UserRoles              @default(MURID)
-  plan                  UserPlan               @default(FREE)
+  accessTier            UserTier               @default(FREE)
   emailVerified         Boolean                @default(false) // Boolean for Better Auth compatibility
   image                 String?
-  password              String?
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
   // Streak related fields
@@ -99,12 +106,31 @@ model User {
   soals                 Soal[]                 @relation("SoalAuthor")
   drawings              ExcalidrawDrawing[]
   tryoutParticipations  TryoutParticipant[]
-  subscriptions         Subscription[] // Added relation to Subscription
-  activityLogs          ActivityLog[] // Added relation to ActivityLog
+  koleksiSoals          KoleksiSoal[]          @relation("KoleksiSoalAuthor")
+  createdTryouts        Tryout[]               @relation("TryoutGuru")
+  subscriptions         Subscription[]         // Added relation to Subscription
+  activityLogs          ActivityLog[]          // Added relation to ActivityLog
   isCertificateEligible Boolean                @default(false) // Added for certificate eligibility
 
   @@map("user")
 }
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  ipAddress String?
+  userAgent String?
+
+  @@index([userId])
+  @@map("session")
+}
+
 
 model Account {
   id                   String    @id @default(cuid())
@@ -128,28 +154,15 @@ model Account {
   @@map("account")
 }
 
-model Session {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  ipAddress String?
-  userAgent String?
-
-  @@index([userId])
-  @@map("session")
-}
-
-model VerificationToken {
+model Verification {
+  id         String    @id
   identifier String
-  token      String   @unique
-  expires    DateTime
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
 
-  @@unique([identifier, token])
+  @@map("verification")
 }
 
 // ================================
@@ -160,7 +173,7 @@ model Course {
   id              Int           @id @default(autoincrement())
   title           String
   description     String?
-  jsonDescription String?
+  jsonDescription Json? @db.JsonB
   htmlDescription String?
   level           CourseLevel
   thumbnail       String?
@@ -170,7 +183,7 @@ model Course {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   authorId        String
-  author          User          @relation("CourseAuthor", fields: [authorId], references: [id])
+  author          User          @relation("CourseAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   modules         Module[]      @relation("CourseModules")
   liveSessions    LiveSession[] @relation("CourseLiveSessions")
   members         User[]        @relation("CourseMembers")
@@ -180,16 +193,18 @@ model Module {
   id              Int                    @id @default(autoincrement())
   title           String
   description     String
-  jsonDescription String
+  jsonDescription Json @db.JsonB
   htmlDescription String
   order           Int
-  isCompleted     Boolean                @default(false)
   isLocked        Boolean                @default(false)
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
   courseId        Int
-  course          Course                 @relation("CourseModules", fields: [courseId], references: [id])
+  course          Course                 @relation("CourseModules", fields: [courseId], references: [id], onDelete: Cascade)
   completions     UserModuleCompletion[]
+
+  @@index([courseId])
+  @@index([order])
 }
 
 model UserModuleCompletion {
@@ -199,10 +214,12 @@ model UserModuleCompletion {
   isCompleted Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  module      Module   @relation(fields: [moduleId], references: [id])
-  user        User     @relation(fields: [userId], references: [id])
+  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, moduleId])
+  @@index([userId])
+  @@index([moduleId])
 }
 
 model LiveSession {
@@ -220,23 +237,24 @@ model LiveSession {
   updatedAt      DateTime          @updatedAt
   creatorId      String
   courseId       Int
-  course         Course            @relation("CourseLiveSessions", fields: [courseId], references: [id])
-  creator        User              @relation("LiveSessionCreator", fields: [creatorId], references: [id])
+  course         Course            @relation("CourseLiveSessions", fields: [courseId], references: [id], onDelete: Cascade)
+  creator        User              @relation("LiveSessionCreator", fields: [creatorId], references: [id], onDelete: Cascade)
   participants   User[]            @relation("LiveSessionParticipants")
 
   @@index([streamCallId])
+  @@index([courseId])
 }
 
 model Article {
   id              Int      @id @default(autoincrement())
   title           String
   description     String?
-  jsonDescription String
+  jsonDescription Json @db.JsonB
   htmlDescription String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   authorId        String
-  author          User     @relation("ArticleAuthor", fields: [authorId], references: [id])
+  author          User     @relation("ArticleAuthor", fields: [authorId], references: [id], onDelete: Cascade)
 }
 
 // ================================
@@ -248,15 +266,19 @@ model KoleksiSoal {
   nama      String
   deskripsi String?
   isPrivate Boolean  @default(false)
+  userId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  user      User     @relation("KoleksiSoalAuthor", fields: [userId], references: [id], onDelete: Cascade)
   soals     Soal[]
   tryouts   Tryout[]
+
+  @@index([userId])
 }
 
 model Soal {
   id             Int         @id @default(autoincrement())
-  koleksiId      Int
+  koleksiSoalId  Int
   authorId       String // Changed to String to match existing User id type
   pertanyaan     String
   attachmentUrl  String?
@@ -266,8 +288,8 @@ model Soal {
   isActive       Boolean     @default(true)
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
-  koleksiSoal    KoleksiSoal @relation(fields: [koleksiId], references: [id])
-  author         User        @relation("SoalAuthor", fields: [authorId], references: [id])
+  koleksiSoal    KoleksiSoal @relation(fields: [koleksiSoalId], references: [id], onDelete: Cascade)
+  author         User        @relation("SoalAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   opsis          Opsi[]
 }
 
@@ -280,7 +302,7 @@ model Opsi {
   isCorrect      Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  soal           Soal     @relation(fields: [soalId], references: [id])
+  soal           Soal     @relation(fields: [soalId], references: [id], onDelete: Cascade)
 }
 
 model Tryout {
@@ -294,7 +316,8 @@ model Tryout {
   guruId        String
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
-  koleksiSoal   KoleksiSoal         @relation(fields: [koleksiSoalId], references: [id])
+  koleksiSoal   KoleksiSoal         @relation(fields: [koleksiSoalId], references: [id], onDelete: Cascade)
+  guru          User                @relation("TryoutGuru", fields: [guruId], references: [id], onDelete: Cascade)
   participants  TryoutParticipant[]
 }
 
@@ -307,8 +330,8 @@ model TryoutParticipant {
   timeTakenSeconds Int? // Nullable for backward compatibility with existing records
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
-  tryout           Tryout    @relation(fields: [tryoutId], references: [id])
-  user             User      @relation(fields: [userId], references: [id])
+  tryout           Tryout    @relation(fields: [tryoutId], references: [id], onDelete: Cascade)
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([tryoutId, userId])
 }
@@ -326,7 +349,7 @@ model VocabularyCollection {
   userId      String?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
-  user        User?            @relation(fields: [userId], references: [id])
+  user        User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
   items       VocabularyItem[]
 }
 
@@ -339,19 +362,21 @@ model VocabularyItem {
   collectionId Int
   createdAt    DateTime             @default(now())
   updatedAt    DateTime             @updatedAt
-  collection   VocabularyCollection @relation(fields: [collectionId], references: [id])
+  collection   VocabularyCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@index([collectionId])
 }
 
 model ExcalidrawDrawing {
   id        String   @id @default(cuid())
   name      String
-  elements  String   @db.Text // Serialized Excalidraw elements
-  appState  String?  @db.Text // Serialized Excalidraw app state
-  files     String?  @db.Text // Serialized files data
+  elements  Json     @db.JsonB // Excalidraw elements as JSON
+  appState  Json?    @db.JsonB // Excalidraw app state as JSON
+  files     Json?    @db.JsonB // Files data as JSON
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -380,8 +405,8 @@ model Subscription {
   userId          String
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   midtransOrderId String    @unique // Store the Midtrans order_id from createTransaction API
-  status          String // e.g., PENDING, SUCCESS, FAILED, CHALLENGE (maps to Midtrans status)
-  plan            UserPlan // The plan subscribed to (e.g., PREMIUM)
+  status          MidtransStatus // Midtrans payment status
+  accessTier      UserTier // The access tier subscribed to (e.g., PREMIUM)
   startDate       DateTime? // Set when payment is confirmed (settlement/capture+accept)
   endDate         DateTime? // Optional: For recurring/timed subscriptions
   createdAt       DateTime  @default(now())
@@ -405,22 +430,16 @@ model ActivityLog {
   newStreak      Int?
   previousLevel  Int?
   newLevel       Int?
-  metadata       String?      @db.Text // JSON string for additional metadata
+  metadata       Json?        @db.JsonB // JSON for additional metadata
   createdAt      DateTime     @default(now())
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([type])
   @@index([createdAt])
+  @@index([userId, type])
+  @@index([userId, createdAt])
+  @@index([type, createdAt])
 }
 
-model Verification {
-  id         String    @id
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime?
-  updatedAt  DateTime?
 
-  @@map("verification")
-}

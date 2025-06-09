@@ -10,6 +10,8 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.1",
+    "@prisma/adapter-neon": "^6.9.0",
     "@prisma/client": "^6.9.0",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-checkbox": "^1.3.2",
@@ -33,7 +35,8 @@
     "react-day-picker": "^9.7.0",
     "react-dom": "^19.0.0",
     "sonner": "^2.0.5",
-    "tailwind-merge": "^3.3.0"
+    "tailwind-merge": "^3.3.0",
+    "ws": "^8.18.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -41,6 +44,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
+    "bufferutil": "^4.0.9",
     "eslint": "^9",
     "eslint-config-next": "15.3.3",
     "tailwindcss": "^4",

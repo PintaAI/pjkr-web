@@ -3,6 +3,9 @@ import { ServerSessionDemo } from "@/components/server-session-demo";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
+// Force dynamic rendering since we use server session
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   return (
     <div className="container mx-auto p-4 space-y-8">

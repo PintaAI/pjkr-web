@@ -4,14 +4,20 @@ import { auth } from "./auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-type UserRole = "USER" | "GURU" | "ADMIN";
-type UserPlan = "FREE" | "PREMIUM" | "CUSTOM";
+type UserRole = "MURID" | "GURU" | "ADMIN";
+type UserTier = "FREE" | "PREMIUM" | "CUSTOM";
 
 interface AuthUser {
-  role: UserRole;
-  plan: UserPlan;
+  id: string;
   email: string;
-  [key: string]: unknown;
+  name?: string;
+  role: UserRole;
+  accessTier: UserTier;
+  currentStreak: number;
+  maxStreak: number;
+  xp: number;
+  level: number;
+  isCertificateEligible: boolean;
 }
 
 interface AuthSession {
@@ -51,7 +57,7 @@ export async function withRole<T extends unknown[], R>(
       redirect("/auth");
     }
     
-    const userRole = (session.user as any).role;
+    const userRole = (session.user as AuthUser).role;
     if (userRole !== requiredRole) {
       throw new Error(`Access denied. Required role: ${requiredRole}`);
     }
@@ -75,7 +81,7 @@ export async function withPlan<T extends unknown[], R>(
       redirect("/auth");
     }
     
-    const userPlan = (session.user as any).plan;
+    const userPlan = (session.user as AuthUser).accessTier;
     if (userPlan !== requiredPlan && userPlan !== "CUSTOM") {
       throw new Error(`Access denied. Required plan: ${requiredPlan}`);
     }
@@ -161,7 +167,7 @@ export async function assertAuthenticated() {
 
 export async function assertRole(requiredRole: string) {
   const session = await assertAuthenticated() as AuthSession;
-  const userRole = (session.user as any).role;
+  const userRole = (session.user as AuthUser).role;
   
   if (userRole !== requiredRole) {
     throw new Error(`Access denied. Required role: ${requiredRole}`);
@@ -172,7 +178,7 @@ export async function assertRole(requiredRole: string) {
 
 export async function assertPlan(requiredPlan: string) {
   const session = await assertAuthenticated() as AuthSession;
-  const userPlan = (session.user as any).plan;
+  const userPlan = (session.user as AuthUser).accessTier;
   
   if (userPlan !== requiredPlan && userPlan !== "CUSTOM") {
     throw new Error(`Access denied. Required plan: ${requiredPlan}`);

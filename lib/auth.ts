@@ -24,7 +24,7 @@ export const auth = betterAuth({
         type: "string",
         defaultValue: "MURID",
       },
-      plan: {
+      accessTier: {
         type: "string",
         defaultValue: "FREE",
       },
@@ -36,6 +36,10 @@ export const auth = betterAuth({
         type: "number",
         defaultValue: 0,
       },
+      lastActivityDate: {
+        type: "date",
+        required: false,
+      },
       xp: {
         type: "number",
         defaultValue: 0,
@@ -43,6 +47,10 @@ export const auth = betterAuth({
       level: {
         type: "number",
         defaultValue: 1,
+      },
+      isCertificateEligible: {
+        type: "boolean",
+        defaultValue: false,
       },
     }
   },
