@@ -5,6 +5,7 @@ import { Card, CardContent, CardTitle } from "./ui/card";
 import { BookOpen, Users, PlayCircle, LogIn } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { ModeToggle } from './mode-toggle';
 
 const features = [
   {
@@ -32,13 +33,14 @@ const Header = () => {
           <Image src="/small-logo.png" alt="Logo" width={36} height={36} className="rounded-lg" />
           <span className="font-semibold text-lg hidden sm:block">Pejuangkorea</span>
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" className="hidden md:inline-flex">
             Tentang
           </Button>
           <Button variant="ghost" size="sm" className="hidden md:inline-flex">
             Fitur
           </Button>
+          <ModeToggle />
           <Button variant="outline" size="sm" asChild className="shadow-sm">
             <Link href="/auth" className="flex items-center gap-2">
               <LogIn className="w-4 h-4" />
