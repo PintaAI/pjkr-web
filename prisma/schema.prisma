@@ -1,6 +1,5 @@
-
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["driverAdapters"]
 }
 
@@ -55,6 +54,14 @@ enum LiveSessionStatus {
 enum VocabularyType {
   WORD
   SENTENCE
+  IDIOM
+}
+
+enum PartOfSpeech {
+  KATA_KERJA // Verb
+  KATA_BENDA // Noun
+  KATA_SIFAT // Adjective
+  KATA_KETERANGAN // Adverb
 }
 
 enum ActivityType {
@@ -107,7 +114,7 @@ model User {
   authoredKelas         Kelas[]                @relation("KelasAuthor")
   createdLiveSessions   LiveSession[]          @relation("LiveSessionCreator")
   materiCompletions     UserMateriCompletion[]
-  vocabularyCollections VocabularyCollection[]
+  vocabularySets        VocabularySet[]
   pushNotifications     PushNotification[]
   joinedKelas           Kelas[]                @relation("KelasMembers")
   joinedLiveSessions    LiveSession[]          @relation("LiveSessionParticipants")
@@ -116,8 +123,8 @@ model User {
   tryoutParticipations  TryoutParticipant[]
   koleksiSoals          KoleksiSoal[]          @relation("KoleksiSoalAuthor")
   createdTryouts        Tryout[]               @relation("TryoutGuru")
-  subscriptions         Subscription[]         // Added relation to Subscription
-  activityLogs          ActivityLog[]          // Added relation to ActivityLog
+  subscriptions         Subscription[] // Added relation to Subscription
+  activityLogs          ActivityLog[] // Added relation to ActivityLog
   isCertificateEligible Boolean                @default(false) // Added for certificate eligibility
 
   @@map("user")
@@ -138,7 +145,6 @@ model Session {
   @@index([userId])
   @@map("session")
 }
-
 
 model Account {
   id                   String    @id @default(cuid())
@@ -178,31 +184,32 @@ model Verification {
 // ================================
 
 model Kelas {
-  id              Int           @id @default(autoincrement())
+  id              Int             @id @default(autoincrement())
   title           String
   description     String?
-  jsonDescription Json? @db.JsonB
+  jsonDescription Json?           @db.JsonB
   htmlDescription String?
-  type            KelasType     @default(REGULAR)
+  type            KelasType       @default(REGULAR)
   level           KelasLevel
   thumbnail       String?
   icon            String?
-  isCompleted     Boolean       @default(false)
-  isPaidClass     Boolean       @default(false)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  isCompleted     Boolean         @default(false)
+  isPaidClass     Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
   authorId        String
-  author          User          @relation("KelasAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  materis         Materi[]      @relation("KelasMateri")
-  liveSessions    LiveSession[] @relation("KelasLiveSessions")
-  members         User[]        @relation("KelasMembers")
+  author          User            @relation("KelasAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  materis         Materi[]        @relation("KelasMateri")
+  liveSessions    LiveSession[]   @relation("KelasLiveSessions")
+  members         User[]          @relation("KelasMembers")
+  vocabularySets  VocabularySet[] // Added inverse relation
 }
 
 model Materi {
   id              Int                    @id @default(autoincrement())
   title           String
   description     String
-  jsonDescription Json @db.JsonB
+  jsonDescription Json                   @db.JsonB
   htmlDescription String
   order           Int
   isDemo          Boolean                @default(false)
@@ -258,7 +265,7 @@ model Article {
   id              Int      @id @default(autoincrement())
   title           String
   description     String?
-  jsonDescription Json @db.JsonB
+  jsonDescription Json     @db.JsonB
   htmlDescription String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -349,29 +356,33 @@ model TryoutParticipant {
 // VOCABULARY & LEARNING TOOLS
 // ================================
 
-model VocabularyCollection {
+model VocabularySet {
   id          Int              @id @default(autoincrement())
   title       String
   description String?
   icon        String?          @default("FaBook")
   isPublic    Boolean          @default(false)
   userId      String?
+  kelasId     Int? // Optional relation to Kelas
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   user        User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kelas       Kelas?           @relation(fields: [kelasId], references: [id], onDelete: SetNull) // onDelete:SetNull or Cascade based on desired behavior
   items       VocabularyItem[]
 }
 
 model VocabularyItem {
-  id           Int                  @id @default(autoincrement())
+  id           Int            @id @default(autoincrement())
   korean       String
   indonesian   String
-  isChecked    Boolean              @default(false)
-  type         VocabularyType       @default(WORD)
+  isLearned    Boolean        @default(false)
+  type         VocabularyType @default(WORD)
+  pos          PartOfSpeech? // Part of Speech
+  audioUrl     String?
   collectionId Int
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-  collection   VocabularyCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  collection   VocabularySet  @relation(fields: [collectionId], references: [id], onDelete: Cascade)
 
   @@index([collectionId])
 }
@@ -410,16 +421,16 @@ model PushNotification {
 // Added Subscription model for Midtrans tracking
 
 model Subscription {
-  id              String    @id @default(cuid())
+  id              String         @id @default(cuid())
   userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  midtransOrderId String    @unique // Store the Midtrans order_id from createTransaction API
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  midtransOrderId String         @unique // Store the Midtrans order_id from createTransaction API
   status          MidtransStatus // Midtrans payment status
   accessTier      UserTier // The access tier subscribed to (e.g., PREMIUM)
   startDate       DateTime? // Set when payment is confirmed (settlement/capture+accept)
   endDate         DateTime? // Optional: For recurring/timed subscriptions
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
   // Index for faster lookup via webhook
   @@index([userId])
@@ -450,5 +461,3 @@ model ActivityLog {
   @@index([userId, createdAt])
   @@index([type, createdAt])
 }
-
-
