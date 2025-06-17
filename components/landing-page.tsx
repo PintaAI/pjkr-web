@@ -2,10 +2,11 @@
 import React from 'react';
 import { Button } from "./ui/button";
 import { Card, CardContent, CardTitle } from "./ui/card";
-import { BookOpen, Users, PlayCircle, LogIn } from 'lucide-react';
+import { BookOpen, Users, PlayCircle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ModeToggle } from './mode-toggle';
+import { AuthButton } from './auth-button';
 
 const features = [
   {
@@ -21,7 +22,8 @@ const features = [
   {
     icon: <Users className="w-8 h-8 text-primary" />,
     title: "Sesi Live",
-    description: "Bergabung dengan sesi live bersama guru bersertifikat."
+    description: "Bergabung dengan sesi live bersama guru bersertifikat.",
+    link: "/live-session"
   }
 ];
 
@@ -40,13 +42,13 @@ const Header = () => {
           <Button variant="ghost" size="sm" className="hidden md:inline-flex">
             Fitur
           </Button>
+          <Link href="/live-session">
+            <Button variant="ghost" size="sm" className="hidden md:inline-flex">
+              Live Sessions
+            </Button>
+          </Link>
           <ModeToggle />
-          <Button variant="outline" size="sm" asChild className="shadow-sm">
-            <Link href="/auth" className="flex items-center gap-2">
-              <LogIn className="w-4 h-4" />
-              Login
-            </Link>
-          </Button>
+          <AuthButton variant="outline" size="sm" className="shadow-sm" />
         </div>
       </div>
     </header>

@@ -26,7 +26,15 @@ enum UserTier {
   CUSTOM // Added Custom plan
 }
 
-enum CourseLevel {
+enum KelasType {
+  REGULAR
+  EVENT
+  GROUP
+  PRIVATE
+  FUN
+}
+
+enum KelasLevel {
   BEGINNER
   INTERMEDIATE
   ADVANCED
@@ -51,8 +59,8 @@ enum VocabularyType {
 
 enum ActivityType {
   LOGIN
-  COMPLETE_MODULE
-  COMPLETE_COURSE
+  COMPLETE_MATERI
+  COMPLETE_KELAS
   COMPLETE_QUIZ
   VOCABULARY_PRACTICE
   DAILY_CHALLENGE
@@ -96,12 +104,12 @@ model User {
   accounts              Account[]
   sessions              Session[]
   authoredArticles      Article[]              @relation("ArticleAuthor")
-  authoredCourses       Course[]               @relation("CourseAuthor")
+  authoredKelas         Kelas[]                @relation("KelasAuthor")
   createdLiveSessions   LiveSession[]          @relation("LiveSessionCreator")
-  moduleCompletions     UserModuleCompletion[]
+  materiCompletions     UserMateriCompletion[]
   vocabularyCollections VocabularyCollection[]
   pushNotifications     PushNotification[]
-  joinedCourses         Course[]               @relation("CourseMembers")
+  joinedKelas           Kelas[]                @relation("KelasMembers")
   joinedLiveSessions    LiveSession[]          @relation("LiveSessionParticipants")
   soals                 Soal[]                 @relation("SoalAuthor")
   drawings              ExcalidrawDrawing[]
@@ -169,57 +177,58 @@ model Verification {
 // COURSE & EDUCATION MODELS
 // ================================
 
-model Course {
+model Kelas {
   id              Int           @id @default(autoincrement())
   title           String
   description     String?
   jsonDescription Json? @db.JsonB
   htmlDescription String?
-  level           CourseLevel
+  type            KelasType     @default(REGULAR)
+  level           KelasLevel
   thumbnail       String?
   icon            String?
   isCompleted     Boolean       @default(false)
-  isLocked        Boolean       @default(false)
+  isPaidClass     Boolean       @default(false)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   authorId        String
-  author          User          @relation("CourseAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  modules         Module[]      @relation("CourseModules")
-  liveSessions    LiveSession[] @relation("CourseLiveSessions")
-  members         User[]        @relation("CourseMembers")
+  author          User          @relation("KelasAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  materis         Materi[]      @relation("KelasMateri")
+  liveSessions    LiveSession[] @relation("KelasLiveSessions")
+  members         User[]        @relation("KelasMembers")
 }
 
-model Module {
+model Materi {
   id              Int                    @id @default(autoincrement())
   title           String
   description     String
   jsonDescription Json @db.JsonB
   htmlDescription String
   order           Int
-  isLocked        Boolean                @default(false)
+  isDemo          Boolean                @default(false)
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
-  courseId        Int
-  course          Course                 @relation("CourseModules", fields: [courseId], references: [id], onDelete: Cascade)
-  completions     UserModuleCompletion[]
+  kelasId         Int
+  kelas           Kelas                  @relation("KelasMateri", fields: [kelasId], references: [id], onDelete: Cascade)
+  completions     UserMateriCompletion[]
 
-  @@index([courseId])
+  @@index([kelasId])
   @@index([order])
 }
 
-model UserModuleCompletion {
+model UserMateriCompletion {
   id          Int      @id @default(autoincrement())
   userId      String
-  moduleId    Int
+  materiId    Int
   isCompleted Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  materi      Materi   @relation(fields: [materiId], references: [id], onDelete: Cascade)
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, moduleId])
+  @@unique([userId, materiId])
   @@index([userId])
-  @@index([moduleId])
+  @@index([materiId])
 }
 
 model LiveSession {
@@ -236,13 +245,13 @@ model LiveSession {
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   creatorId      String
-  courseId       Int
-  course         Course            @relation("CourseLiveSessions", fields: [courseId], references: [id], onDelete: Cascade)
+  kelasId        Int
+  kelas          Kelas             @relation("KelasLiveSessions", fields: [kelasId], references: [id], onDelete: Cascade)
   creator        User              @relation("LiveSessionCreator", fields: [creatorId], references: [id], onDelete: Cascade)
   participants   User[]            @relation("LiveSessionParticipants")
 
   @@index([streamCallId])
-  @@index([courseId])
+  @@index([kelasId])
 }
 
 model Article {
