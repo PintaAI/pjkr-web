@@ -5,7 +5,7 @@ import { NovelReadonly } from "@/components/novel/novel-readonly";
 import { useState } from "react";
 
 export default function EditorPage() {
-  const [content, setContent] = useState<{ json: any; html: string } | null>(null);
+  const [content, setContent] = useState<{ json: Record<string, unknown>; html: string } | null>(null);
 
   return (
     <div className="container mx-auto py-8">

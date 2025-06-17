@@ -9,14 +9,11 @@ import {
   Users,
   PlayCircle,
   Trophy,
-  Flame,
   Star,
   Zap,
   Clock,
   Calendar,
   ArrowRight,
-  Target,
-  Award
 } from 'lucide-react';
 import Link from 'next/link';
 
