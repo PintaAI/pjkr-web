@@ -1,10 +1,10 @@
 "use client";
 
-import { NovelEditor } from "@/components/novel-editor";
+import { NovelEditor } from "@/components/novel/novel-editor";
 import { NovelReadonly } from "@/components/novel/novel-readonly";
 import { useState } from "react";
 
-export default function EditorPage() {
+export default function NovelDemo() {
   const [content, setContent] = useState<{ json: Record<string, unknown>; html: string } | null>(null);
 
   return (

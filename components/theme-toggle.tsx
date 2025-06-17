@@ -6,7 +6,7 @@ import { useTheme } from "next-themes"
 
 import { Button } from "@/components/ui/button"
 
-export function ModeToggle() {
+export function ThemeToggle() {
   const { theme, setTheme } = useTheme() // Removed resolvedTheme as we'll show a specific system icon
   const [mounted, setMounted] = React.useState(false)
 

@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithGoogle, signOut, signInWithEmailPassword, signUpWithEmailPassword } from "../lib/auth-client";
-import { useSession, usePermissions } from "../lib/hooks/use-session";
-import { DEFAULT_LOGIN_REDIRECT } from "../lib/routes";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { signInWithGoogle, signOut, signInWithEmailPassword, signUpWithEmailPassword } from "../../lib/auth-client";
+import { useSession, usePermissions } from "../../lib/hooks/use-session";
+import { DEFAULT_LOGIN_REDIRECT } from "../../lib/routes";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
 export function AuthCard() {
   const { user, isAuthenticated, isLoading: sessionLoading } = useSession();

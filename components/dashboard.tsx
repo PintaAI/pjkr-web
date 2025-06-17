@@ -1,6 +1,6 @@
 "use client";
 
-import { AuthButton } from "./auth-button";
+import { AuthButton } from "./auth/auth-button";
 
 type UserRoles = "GURU" | "MURID" | "ADMIN";
 

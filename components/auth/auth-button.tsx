@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signOut } from "../lib/auth-client";
-import { useSession } from "../lib/hooks/use-session";
-import { DEFAULT_LOGOUT_REDIRECT, DEFAULT_AUTH_REDIRECT } from "../lib/routes";
-import { Button } from "./ui/button";
+import { signOut } from "../../lib/auth-client";
+import { useSession } from "../../lib/hooks/use-session";
+import { DEFAULT_LOGOUT_REDIRECT, DEFAULT_AUTH_REDIRECT } from "../../lib/routes";
+import { Button } from "../ui/button";
 
 interface AuthButtonProps {
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";

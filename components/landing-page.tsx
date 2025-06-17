@@ -5,8 +5,8 @@ import { Card, CardContent, CardTitle } from "./ui/card";
 import { BookOpen, Users, PlayCircle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ModeToggle } from './mode-toggle';
-import { AuthButton } from './auth-button';
+import { ThemeToggle } from './theme-toggle';
+import { AuthButton } from './auth/auth-button';
 
 const features = [
   {
@@ -47,7 +47,7 @@ const Header = () => {
               Live Sessions
             </Button>
           </Link>
-          <ModeToggle />
+          <ThemeToggle />
           <AuthButton variant="outline" size="sm" className="shadow-sm" />
         </div>
       </div>

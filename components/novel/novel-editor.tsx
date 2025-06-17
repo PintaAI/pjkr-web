@@ -11,14 +11,14 @@ import {
   EditorCommandList,
   handleCommandNavigation,
 } from "novel";
-import { defaultExtensions } from "./novel/extensions";
-import { suggestionItems } from "./novel/slash-command";
-import { TextButtons } from "./novel/text-buttons";
-import { ColorSelector } from "./novel/color-selector";
+import { defaultExtensions } from "./extensions";
+import { suggestionItems } from "./slash-command";
+import { TextButtons } from "./text-buttons";
+import { ColorSelector } from "./color-selector";
 import { useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { jsonToHTML } from "@/lib/novel-utils";
-import { YoutubeDialogHandler } from "./novel/youtube-dialog-handler";
+import { YoutubeDialogHandler } from "./youtube-dialog-handler";
 
 interface NovelEditorProps {
   initialContent?: any;

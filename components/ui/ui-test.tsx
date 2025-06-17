@@ -35,7 +35,7 @@ import { Skeleton } from "./skeleton"
 import { Switch } from "./switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs"
-import { ModeToggle } from "@/components/mode-toggle"
+import { ModeToggle } from "@/components/theme-toggle"
 import { 
   Heart, 
   Star, 
