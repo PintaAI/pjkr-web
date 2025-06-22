@@ -16,6 +16,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import Link from 'next/link';
+import { AuthButton } from "./auth/auth-button";
 
 
 interface User {
@@ -71,7 +72,10 @@ const mockData = {
 export default function Homescreen({ user }: HomescreenProps) {
   return (
     <div className="bg-background text-foreground min-h-screen">     
-      <div className="container mx-auto px-6 py-8 max-w-6xl">
+      <div className="container mx-auto px-6 py-8 max-w-6xl flex flex-col gap-4">
+        <div className="flex justify-end">
+          <AuthButton variant="outline" />
+        </div>
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">
@@ -80,6 +84,15 @@ export default function Homescreen({ user }: HomescreenProps) {
           <p className="text-muted-foreground">
             Ready to continue your Korean learning journey?
           </p>
+          {(user.role === "ADMIN" || user.role === "GURU") && (
+            <div className="mt-4">
+              <Link href="/dashboard">
+                <Button>
+                  Go to Dashboard <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* User Progress Section */}

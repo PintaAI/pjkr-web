@@ -1,7 +1,8 @@
 import { auth } from "../../lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { Dashboard } from "../../components/dashboard";
+import { AdminDashboard } from "../../components/dashboard/admin-dashboard";
+import { GuruDashboard } from "../../components/dashboard/guru-dashboard";
 
 type UserRoles = "GURU" | "MURID" | "ADMIN";
 
@@ -23,9 +24,9 @@ export default async function DashboardPage() {
 
   // Only allow admin and guru roles access to this dashboard
   if (user.role === "ADMIN") {
-    return <Dashboard user={user} mode="admin" />;
+    return <AdminDashboard user={user} />;
   } else if (user.role === "GURU") {
-    return <Dashboard user={user} mode="teacher" />;
+    return <GuruDashboard user={user} />;
   }
 
   // Redirect students to another page (they shouldn't access this dashboard)

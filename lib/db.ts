@@ -25,14 +25,23 @@ const globalForPrisma = globalThis as unknown as {
 function createPrismaClient() {
   const connectionString = process.env.DATABASE_URL!
   
-  // Use Neon serverless adapter for better performance in serverless environments
-  const adapter = new PrismaNeon({ connectionString })
-  
-  return new PrismaClient({
-    adapter,
-    log: process.env.NODE_ENV === 'development' ? ['info', 'warn', 'error'] : ['error'],
-    errorFormat: 'pretty',
-  })
+  try {
+    // Use Neon serverless adapter for better performance in serverless environments
+    const adapter = new PrismaNeon({ connectionString })
+    
+    return new PrismaClient({
+      adapter,
+      log: process.env.NODE_ENV === 'development' ? ['info', 'warn', 'error'] : ['error'],
+      errorFormat: 'pretty',
+    })
+  } catch (error) {
+    // Fallback to direct connection if adapter fails
+    console.warn('Failed to initialize Neon adapter, falling back to direct connection:', error)
+    return new PrismaClient({
+      log: process.env.NODE_ENV === 'development' ? ['info', 'warn', 'error'] : ['error'],
+      errorFormat: 'pretty',
+    })
+  }
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient()
