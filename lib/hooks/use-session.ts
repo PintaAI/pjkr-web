@@ -125,3 +125,29 @@ export function usePermissions() {
     user,
   };
 }
+
+/**
+ * Get permissions from session data without hook
+ */
+export function getPermissions(user: ExtendedUser | null) {
+  if (!user) return {
+    canCreateCourse: false,
+    canManageUsers: false,
+    canAccessPremium: false,
+    isGuru: false,
+    isAdmin: false,
+    isMurid: false,
+  };
+
+  const role = user.role;
+  const plan = user.plan;
+
+  return {
+    canCreateCourse: role === "GURU" || role === "ADMIN",
+    canManageUsers: role === "ADMIN",
+    canAccessPremium: plan === "PREMIUM" || plan === "CUSTOM" || role === "ADMIN",
+    isGuru: role === "GURU",
+    isAdmin: role === "ADMIN", 
+    isMurid: role === "MURID",
+  };
+}

@@ -1,5 +1,5 @@
 import { createAuthClient } from "better-auth/react";
-import { DEFAULT_LOGIN_REDIRECT } from "./routes";
+import { getRedirectUrl, DEFAULT_LOGIN_REDIRECT } from "./routes";
 
 export const authClient = createAuthClient({
   baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000",
@@ -40,4 +40,3 @@ export const signUpWithEmailPassword = async (email: string, password: string, n
   });
   return data;
 };
-

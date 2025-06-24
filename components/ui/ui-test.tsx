@@ -35,7 +35,7 @@ import { Skeleton } from "./skeleton"
 import { Switch } from "./switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs"
-import { ModeToggle } from "@/components/theme-toggle"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { 
   Heart, 
   Star, 
@@ -71,7 +71,7 @@ export function UITest() {
             <h2 className="text-2xl font-semibold text-center text-muted-foreground">UI 컴포넌트 및 색상 테스트</h2>
           </div>
           <div className="flex-shrink-0">
-            <ModeToggle />
+            
           </div>
         </div>
         
@@ -512,7 +512,7 @@ export function UITest() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <ModeToggle />
+                <ThemeToggle />
               </div>
             </CardContent>
           </Card>

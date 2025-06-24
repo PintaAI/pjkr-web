@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithGoogle, signOut, signInWithEmailPassword, signUpWithEmailPassword } from "../../lib/auth-client";
-import { useSession, usePermissions } from "../../lib/hooks/use-session";
+import { useSessionContext } from "../session-provider";
+import { getPermissions } from "../../lib/hooks/use-session";
 import { DEFAULT_LOGIN_REDIRECT } from "../../lib/routes";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -12,8 +13,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
 export function AuthCard() {
-  const { user, isAuthenticated, isLoading: sessionLoading } = useSession();
-  const { canCreateCourse, canManageUsers, canAccessPremium, isGuru, isAdmin } = usePermissions();
+  const { user, isAuthenticated, isLoading: sessionLoading } = useSessionContext();
+  const { canCreateCourse, canManageUsers, canAccessPremium, isGuru, isAdmin } = getPermissions(user);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();

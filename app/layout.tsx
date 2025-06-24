@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Architects_Daughter, Geist_Mono } from "next/font/google"; // Replaced Geist with Architects_Daughter
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { LayoutWrapper } from "@/components/layout-wrapper";
+import { SessionProvider } from "@/components/session-provider";
 
 // Instantiate Architects Daughter for --font-sans
 const architectsDaughter = Architects_Daughter({
@@ -37,7 +39,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <SessionProvider>
+            <LayoutWrapper>
+              {children}
+            </LayoutWrapper>
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>

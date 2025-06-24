@@ -20,12 +20,14 @@ export const authRoutes = [
 
 // Protected routes that require authentication
 export const protectedRoutes = [
+  "/home",
   "/dashboard",
   "/profile",
   "/settings",
-  "/courses",
-  "/learning",
-  "/progress",
+  "/kelas",
+  "/vocabulary",
+  "/soal",
+  "/game",
 ] as const;
 
 // Admin routes that require admin role
@@ -47,7 +49,7 @@ export const guruRoutes = [
 /**
  * Default redirect paths
  */
-export const DEFAULT_LOGIN_REDIRECT = "/dashboard";
+export const DEFAULT_LOGIN_REDIRECT = "/home"; // For MURID
 export const DEFAULT_LOGOUT_REDIRECT = "/";
 export const DEFAULT_AUTH_REDIRECT = "/auth";
 
@@ -80,10 +82,11 @@ export function isGuruRoute(pathname: string): boolean {
 export function getRedirectUrl(userRole?: string): string {
   switch (userRole) {
     case "ADMIN":
-      return "/admin";
+      return "/dashboard";
     case "GURU":
-      return "/guru";
+      return "/dashboard";
+    case "MURID":
     default:
-      return DEFAULT_LOGIN_REDIRECT;
+      return "/home";
   }
 }
