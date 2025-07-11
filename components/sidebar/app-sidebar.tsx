@@ -16,14 +16,14 @@ import { SidebarNav } from "./sidebar-nav"
 import { SidebarDevTools } from "./sidebar-devtools"
 import { AppSidebarFooter } from "./sidebar-footer"
 import { getSidebarData } from "./sidebar-data"
-import { useSessionContext } from "@/components/session-provider"
+import { useSession } from "@/lib/hooks/use-session"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   session?: ReturnType<typeof import("@/lib/hooks/use-session").useSession>
 }
 
 export function AppSidebar({ session: passedSession, ...props }: AppSidebarProps) {
-  const contextSession = useSessionContext()
+  const contextSession = useSession()
   const session = passedSession || contextSession
   const { user } = session
   const sidebarData = useMemo(() => getSidebarData(user?.role), [user?.role])

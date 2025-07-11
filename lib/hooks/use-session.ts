@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession as useBetterAuthSession } from "../auth-client";
-import { useMemo } from "react";
+import { useMemo, } from "react";
 
 type UserRole = "MURID" | "GURU" | "ADMIN";
 type UserPlan = "FREE" | "PREMIUM" | "CUSTOM";
@@ -42,13 +42,13 @@ export function useSession() {
   const isAuthenticated = !!session;
   const isLoading = isPending;
 
-  return {
+  return useMemo(() => ({
     session,
     user,
     isAuthenticated,
     isLoading,
     error,
-  };
+  }), [session, user, isAuthenticated, isLoading, error]);
 }
 
 /**
@@ -57,11 +57,11 @@ export function useSession() {
 export function useRole(requiredRole: string) {
   const { user, isLoading } = useSession();
   
-  return {
+  return useMemo(() => ({
     hasRole: user?.role === requiredRole,
     isLoading,
     userRole: user?.role,
-  };
+  }), [user?.role, requiredRole, isLoading]);
 }
 
 /**
@@ -70,11 +70,11 @@ export function useRole(requiredRole: string) {
 export function usePlan(requiredPlan: string) {
   const { user, isLoading } = useSession();
   
-  return {
+  return useMemo(() => ({
     hasPlan: user?.plan === requiredPlan,
     isLoading,
     userPlan: user?.plan,
-  };
+  }), [user?.plan, requiredPlan, isLoading]);
 }
 
 /**
@@ -119,11 +119,11 @@ export function usePermissions() {
     };
   }, [user]);
 
-  return {
+  return useMemo(() => ({
     ...permissions,
     isLoading,
     user,
-  };
+  }), [permissions, isLoading, user]);
 }
 
 /**

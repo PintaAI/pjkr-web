@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "../../lib/auth-client";
-import { useSessionContext } from "../session-provider";
+import { useSession } from "../../lib/hooks/use-session";
 import { DEFAULT_LOGOUT_REDIRECT, DEFAULT_AUTH_REDIRECT } from "../../lib/routes";
 import { Button } from "../ui/button";
 
@@ -19,7 +19,7 @@ export function AuthButton({
   className 
 }: AuthButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const { isAuthenticated, isLoading: sessionLoading } = useSessionContext();
+  const { isAuthenticated, isLoading: sessionLoading } = useSession();
   const router = useRouter();
 
   const handleSignOut = async () => {

@@ -30,21 +30,11 @@ export const protectedRoutes = [
   "/game",
 ] as const;
 
-// Admin routes that require admin role
-export const adminRoutes = [
-  "/admin",
-  "/admin/users",
-  "/admin/courses",
-  "/admin/analytics",
-] as const;
+// Admin routes that require admin role (currently none - using dashboard with role checks)
+export const adminRoutes = [] as const;
 
-// Guru routes that require guru role
-export const guruRoutes = [
-  "/guru",
-  "/guru/courses",
-  "/guru/students",
-  "/guru/analytics",
-] as const;
+// Guru routes that require guru role (currently none - using dashboard with role checks)
+export const guruRoutes = [] as const;
 
 /**
  * Default redirect paths
@@ -74,6 +64,19 @@ export function isAdminRoute(pathname: string): boolean {
 
 export function isGuruRoute(pathname: string): boolean {
   return guruRoutes.some(route => pathname.startsWith(route));
+}
+
+/**
+ * Check if route requires specific role-based access
+ * Since we don't have dedicated admin/guru routes, we handle this in components
+ */
+export function requiresRoleBasedAccess(pathname: string): { route: string; roles: string[] } | null {
+  // Dashboard is accessible to GURU and ADMIN, but MURID gets redirected to /home
+  if (pathname === "/dashboard") {
+    return { route: "/dashboard", roles: ["GURU", "ADMIN"] };
+  }
+  
+  return null;
 }
 
 /**

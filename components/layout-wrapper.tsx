@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/sidebar"
-import { useSessionContext } from "@/components/session-provider"
+import { useSession } from "@/lib/hooks/use-session"
 import { getRedirectUrl } from "@/lib/routes"
 
 interface LayoutWrapperProps {
@@ -20,7 +20,7 @@ const noSidebarRoutes = [
 export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const session = useSessionContext()
+  const session = useSession()
   const { user, isAuthenticated, isLoading } = session
   
   // Handle role-based redirects for authenticated users
