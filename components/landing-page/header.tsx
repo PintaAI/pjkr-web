@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { Button } from "../ui/button";
-import { GraduationCap, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import Link from 'next/link';
 import { ThemeToggle } from '../theme-toggle';
 import { AuthButton } from '../auth/auth-button';

@@ -12,7 +12,6 @@ import {
   Star, 
   Calendar, 
   MessageSquare,
-  CheckCircle,
   TrendingUp,
   Award
 } from "lucide-react";

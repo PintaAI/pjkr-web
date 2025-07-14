@@ -5,7 +5,6 @@ import { useEffect } from "react"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/sidebar"
 import { useSession } from "@/lib/hooks/use-session"
-import { getRedirectUrl } from "@/lib/routes"
 
 interface LayoutWrapperProps {
   children: React.ReactNode

@@ -1,7 +1,6 @@
 "use client";
 import React from 'react';
 import { Button } from "../ui/button";
-import { GraduationCap } from 'lucide-react';
 import Image from 'next/image';
 
 export const Hero = () => {

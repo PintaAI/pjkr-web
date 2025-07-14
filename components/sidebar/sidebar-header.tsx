@@ -1,15 +1,14 @@
 "use client"
 
-import { Command, ChevronLeft } from "lucide-react"
 import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarTrigger,
+
 } from "@/components/ui/sidebar"
 import Image from "next/image"
-import { useTheme } from "next-themes"
+import Link from "next/link"
 
 export function AppSidebarHeader() {
   return (
@@ -22,7 +21,7 @@ export function AppSidebarHeader() {
               asChild 
               className="group-data-[collapsible=icon]:w-fit group-data-[collapsible=icon]:justify-center"
             >
-              <a href="/" className="flex items-center gap-2">
+              <Link href="/" className="flex items-center gap-2">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
                   <Image
                     src="/logo/hakgyo-light.png"
@@ -43,7 +42,7 @@ export function AppSidebarHeader() {
                   <span className="truncate font-semibold">Hakgyo</span>
                   <span className="truncate text-xs">Learning Platform</span>
                 </div>
-              </a>
+              </Link>
             </SidebarMenuButton>
       
           </div>

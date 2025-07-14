@@ -6,7 +6,6 @@ import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import {
   BookOpen,
-  Users,
   PlayCircle,
   Star,
   Clock,
@@ -18,16 +17,6 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-interface User {
-  id: string;
-  email: string;
-  name?: string;
-  role?: string;
-}
-
-interface ExplorePageProps {
-  user: User;
-}
 
 // Simplified mock data
 const mockData = {
@@ -132,7 +121,7 @@ const mockData = {
   ],
 };
 
-export default function ExplorePage({ user }: ExplorePageProps) {
+export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const getDifficultyColor = (difficulty: string) => {

@@ -13,5 +13,5 @@ export default async function Explore() {
     redirect('/');
   }
   
-  return <ExplorePage user={session.user} />;
+  return <ExplorePage />;
 }

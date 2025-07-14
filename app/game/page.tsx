@@ -5,8 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Gamepad2, Trophy, Target, Clock, Star, Zap, Users, Award, Play, Pause } from "lucide-react"
-import Link from "next/link"
+import { Gamepad2, Trophy, Target, Clock, Star, Zap, Users, Award, Play, } from "lucide-react"
 
 const gameStats = {
   totalGames: 45,

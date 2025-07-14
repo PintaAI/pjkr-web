@@ -1,11 +1,10 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Search, FileText, Clock, Trophy, Target, Users, BookOpen, Brain } from "lucide-react"
+import { FileText, Clock, Trophy, Target, Users, BookOpen, Brain } from "lucide-react"
 import Link from "next/link"
 
 const soalStats = {
@@ -78,7 +77,6 @@ const recentActivity = [
 ]
 
 export default function SoalPage() {
-  const [searchTerm, setSearchTerm] = useState("")
 
   return (
     <div className="container mx-auto px-6 py-8 max-w-6xl flex flex-col gap-6">

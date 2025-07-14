@@ -8,10 +8,11 @@ import {
 } from "@/components/ui/breadcrumb";
 
 interface TryoutDetailPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export default function TryoutDetailPage({ params }: TryoutDetailPageProps) {
+export default async function TryoutDetailPage(props: TryoutDetailPageProps) {
+  const params = await props.params;
   const { id } = params;
 
   // Mock data for demonstration

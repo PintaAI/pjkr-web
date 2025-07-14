@@ -75,12 +75,13 @@ const liveSessions = [
 ]
 
 interface LiveSessionPageProps {
-  params: {
+  params: Promise<{
     roomId: string
-  }
+  }>
 }
 
-export default function LiveSessionPage({ params }: LiveSessionPageProps) {
+export default async function LiveSessionPage(props: LiveSessionPageProps) {
+  const params = await props.params;
   const session = liveSessions.find(s => s.id === params.roomId)
 
   if (!session) {
@@ -98,9 +99,10 @@ export async function generateStaticParams() {
 }
 
 // Generate metadata for each session
-export async function generateMetadata({ params }: LiveSessionPageProps) {
+export async function generateMetadata(props: LiveSessionPageProps) {
+  const params = await props.params;
   const session = liveSessions.find(s => s.id === params.roomId)
-  
+
   if (!session) {
     return {
       title: 'Live Session Not Found',

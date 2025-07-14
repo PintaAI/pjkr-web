@@ -8,10 +8,11 @@ import {
 } from "@/components/ui/breadcrumb";
 
 interface SoalDetailPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export default function SoalDetailPage({ params }: SoalDetailPageProps) {
+export default async function SoalDetailPage(props: SoalDetailPageProps) {
+  const params = await props.params;
   const { id } = params;
 
   // Mock data for demonstration
