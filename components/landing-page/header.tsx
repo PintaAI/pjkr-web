@@ -5,6 +5,7 @@ import { GraduationCap, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { ThemeToggle } from '../theme-toggle';
 import { AuthButton } from '../auth/auth-button';
+import Image from 'next/image';
 
 const navigation = [
   { name: 'About', href: '#about' },
@@ -20,10 +21,23 @@ export const Header = () => {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-all duration-200">
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-sm">
-                <GraduationCap className="w-6 h-6 text-primary-foreground" />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm">
+                <Image
+                  src="/logo/hakgyo-light.png"
+                  alt="Hakgyo Logo"
+                  width={40}
+                  height={40}
+                  className="dark:hidden"
+                />
+                <Image
+                  src="/logo/hakgyo-dark.png"
+                  alt="Hakgyo Logo"
+                  width={40}
+                  height={40}
+                  className="hidden dark:block"
+                />
               </div>
-              <span className="font-bold text-xl hidden sm:block text-foreground">Your App Name</span>
+              <span className="font-bold text-xl hidden sm:block text-foreground">Hakgyo</span>
             </Link>
           </div>
 

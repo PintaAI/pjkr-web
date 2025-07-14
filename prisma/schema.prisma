@@ -19,11 +19,6 @@ enum UserRoles {
   ADMIN
 }
 
-enum UserTier {
-  FREE
-  PREMIUM
-  CUSTOM // Added Custom plan
-}
 
 enum KelasType {
   REGULAR
@@ -33,17 +28,12 @@ enum KelasType {
   FUN
 }
 
-enum KelasLevel {
-  BEGINNER
-  INTERMEDIATE
-  ADVANCED
-}
-
 enum Difficulty {
   BEGINNER
   INTERMEDIATE
   ADVANCED
 }
+
 
 enum LiveSessionStatus {
   SCHEDULED
@@ -73,7 +63,29 @@ enum ActivityType {
   DAILY_CHALLENGE
   PARTICIPATE_LIVE_SESSION
   PLAY_GAME
+  CREATE_POST
+  COMMENT_POST
+  LIKE_POST
+  LIKE_COMMENT
+  SHARE_POST
   OTHER
+}
+
+enum PostType {
+  DISCUSSION
+  ANNOUNCEMENT
+  QUESTION
+  SHARE
+  TUTORIAL
+}
+
+enum SharePlatform {
+  TWITTER
+  FACEBOOK
+  TELEGRAM
+  WHATSAPP
+  COPY_LINK
+  EMAIL
 }
 
 enum MidtransStatus {
@@ -92,40 +104,53 @@ enum MidtransStatus {
 // ================================
 
 model User {
-  id                    String                 @id @default(cuid())
-  email                 String                 @unique
-  name                  String?
-  role                  UserRoles              @default(MURID)
-  accessTier            UserTier               @default(FREE)
-  emailVerified         Boolean                @default(false) // Boolean for Better Auth compatibility
-  image                 String?
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
-  // Streak related fields
-  currentStreak         Int                    @default(0)
-  maxStreak             Int                    @default(0)
-  lastActivityDate      DateTime?
-  // XP and Level fields
-  xp                    Int                    @default(0)
-  level                 Int                    @default(1)
-  accounts              Account[]
-  sessions              Session[]
-  authoredArticles      Article[]              @relation("ArticleAuthor")
-  authoredKelas         Kelas[]                @relation("KelasAuthor")
-  createdLiveSessions   LiveSession[]          @relation("LiveSessionCreator")
-  materiCompletions     UserMateriCompletion[]
-  vocabularySets        VocabularySet[]
-  pushNotifications     PushNotification[]
-  joinedKelas           Kelas[]                @relation("KelasMembers")
-  joinedLiveSessions    LiveSession[]          @relation("LiveSessionParticipants")
-  soals                 Soal[]                 @relation("SoalAuthor")
-  drawings              ExcalidrawDrawing[]
-  tryoutParticipations  TryoutParticipant[]
-  koleksiSoals          KoleksiSoal[]          @relation("KoleksiSoalAuthor")
-  createdTryouts        Tryout[]               @relation("TryoutGuru")
-  subscriptions         Subscription[] // Added relation to Subscription
-  activityLogs          ActivityLog[] // Added relation to ActivityLog
-  isCertificateEligible Boolean                @default(false) // Added for certificate eligibility
+  id                  String                 @id @default(cuid())
+  email               String                 @unique
+  name                String?
+  role                UserRoles              @default(MURID)
+  emailVerified       Boolean                @default(false)
+  image               String?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  // Core user stats - simplified
+  currentStreak       Int                    @default(0)
+  xp                  Int                    @default(0)
+  level               Int                    @default(1)
+  
+  // Auth relations
+  accounts            Account[]
+  sessions            Session[]
+  
+  // Social/Post relations
+  authoredPosts       Post[]                 @relation("PostAuthor")
+  comments            Comment[]              @relation("CommentAuthor")
+  postLikes           PostLike[]             @relation("UserPostLikes")
+  commentLikes        CommentLike[]          @relation("UserCommentLikes")
+  postShares          PostShare[]            @relation("UserPostShares")
+  
+  // Education relations - core only
+  authoredKelas       Kelas[]                @relation("KelasAuthor")
+  joinedKelas         Kelas[]                @relation("KelasMembers")
+  materiCompletions   UserMateriCompletion[]
+  kelasCompletions    UserKelasCompletion[]
+  createdLiveSessions LiveSession[]          @relation("LiveSessionCreator")
+  joinedLiveSessions  LiveSession[]          @relation("LiveSessionParticipants")
+  vocabularySets      VocabularySet[]
+  vocabularyItems     VocabularyItem[]       @relation("VocabularyItemCreator")
+  
+  // Assessment relations - simplified
+  soals               Soal[]                 @relation("SoalAuthor")
+  koleksiSoals        KoleksiSoal[]          @relation("KoleksiSoalAuthor")
+  createdTryouts      Tryout[]               @relation("TryoutGuru")
+  tryoutParticipations TryoutParticipant[]
+  
+  // Utility relations
+  drawings            ExcalidrawDrawing[]
+  pushNotifications   PushNotification[]
+  
+  // Activity tracking
+  activityLogs        ActivityLog[]
+  subscriptions       Subscription[]
 
   @@map("user")
 }
@@ -184,25 +209,29 @@ model Verification {
 // ================================
 
 model Kelas {
-  id              Int             @id @default(autoincrement())
+  id              Int                   @id @default(autoincrement())
   title           String
   description     String?
-  jsonDescription Json?           @db.JsonB
+  jsonDescription Json?                 @db.JsonB
   htmlDescription String?
-  type            KelasType       @default(REGULAR)
-  level           KelasLevel
+  type            KelasType             @default(REGULAR)
+  level           Difficulty
   thumbnail       String?
   icon            String?
-  isCompleted     Boolean         @default(false)
-  isPaidClass     Boolean         @default(false)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  isPaidClass     Boolean               @default(false)
+  price           Decimal?              @db.Decimal(10,2) // Price for paid classes
+  discount        Decimal?              @db.Decimal(10,2) // Discount amount
+  promoCode       String?               // Promo code for discounts
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
   authorId        String
-  author          User            @relation("KelasAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  materis         Materi[]        @relation("KelasMateri")
-  liveSessions    LiveSession[]   @relation("KelasLiveSessions")
-  members         User[]          @relation("KelasMembers")
-  vocabularySets  VocabularySet[] // Added inverse relation
+  author          User                  @relation("KelasAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  materis         Materi[]              @relation("KelasMateri")
+  liveSessions    LiveSession[]         @relation("KelasLiveSessions")
+  members         User[]                @relation("KelasMembers")
+  vocabularySets  VocabularySet[]       // Added inverse relation
+  completions     UserKelasCompletion[] // Track individual user completions
+  posts           Post[]                @relation("KelasPosts") // Class discussion posts
 }
 
 model Materi {
@@ -238,6 +267,22 @@ model UserMateriCompletion {
   @@index([materiId])
 }
 
+model UserKelasCompletion {
+  id          Int      @id @default(autoincrement())
+  userId      String
+  kelasId     Int
+  isCompleted Boolean  @default(false)
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  kelas       Kelas    @relation(fields: [kelasId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, kelasId])
+  @@index([userId])
+  @@index([kelasId])
+}
+
 model LiveSession {
   id             String            @id @default(cuid())
   name           String
@@ -261,16 +306,104 @@ model LiveSession {
   @@index([kelasId])
 }
 
-model Article {
-  id              Int      @id @default(autoincrement())
+model Post {
+  id              Int           @id @default(autoincrement())
   title           String
   description     String?
-  jsonDescription Json     @db.JsonB
+  jsonDescription Json          @db.JsonB
   htmlDescription String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  type            PostType      @default(DISCUSSION)
+  isPublished     Boolean       @default(true)
+  isPinned        Boolean       @default(false)
+  viewCount       Int           @default(0)
+  likeCount       Int           @default(0)  // Denormalized for performance
+  commentCount    Int           @default(0)  // Denormalized for performance
+  shareCount      Int           @default(0)  // Denormalized for performance
+  tags            String[]      @default([]) // Array of tags
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
   authorId        String
-  author          User     @relation("ArticleAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  kelasId         Int?          // Optional relation to Kelas for class discussions
+  author          User          @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  kelas           Kelas?        @relation("KelasPosts", fields: [kelasId], references: [id], onDelete: Cascade)
+  comments        Comment[]     @relation("PostComments")
+  likes           PostLike[]    @relation("PostLikes")
+  shares          PostShare[]   @relation("PostShares")
+
+  @@index([authorId])
+  @@index([createdAt])
+  @@index([isPublished])
+  @@index([type])
+  @@index([isPinned])
+  @@index([likeCount])
+  @@index([tags])
+}
+
+model Comment {
+  id            Int            @id @default(autoincrement())
+  content       String
+  jsonContent   Json?          @db.JsonB
+  htmlContent   String?
+  isEdited      Boolean        @default(false)
+  likeCount     Int            @default(0)  // Denormalized for performance
+  replyCount    Int            @default(0)  // Denormalized for performance
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  authorId      String
+  postId        Int
+  parentId      Int?           // For nested comments/replies
+  author        User           @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  post          Post           @relation("PostComments", fields: [postId], references: [id], onDelete: Cascade)
+  parent        Comment?       @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies       Comment[]      @relation("CommentReplies")
+  likes         CommentLike[]  @relation("CommentLikes")
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+  @@index([createdAt])
+  @@index([likeCount])
+}
+
+model PostLike {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  userId    String
+  postId    Int
+  user      User     @relation("UserPostLikes", fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation("PostLikes", fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([postId])
+  @@index([userId])
+}
+
+model CommentLike {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  userId    String
+  commentId Int
+  user      User     @relation("UserCommentLikes", fields: [userId], references: [id], onDelete: Cascade)
+  comment   Comment  @relation("CommentLikes", fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, commentId])
+  @@index([commentId])
+  @@index([userId])
+}
+
+model PostShare {
+  id        Int           @id @default(autoincrement())
+  createdAt DateTime      @default(now())
+  userId    String
+  postId    Int
+  platform  SharePlatform @default(COPY_LINK)
+  user      User          @relation("UserPostShares", fields: [userId], references: [id], onDelete: Cascade)
+  post      Post          @relation("PostShares", fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([userId])
+  @@index([platform])
+  @@index([createdAt])
 }
 
 // ================================
@@ -293,32 +426,68 @@ model KoleksiSoal {
 }
 
 model Soal {
-  id             Int         @id @default(autoincrement())
+  id             Int               @id @default(autoincrement())
   koleksiSoalId  Int
-  authorId       String // Changed to String to match existing User id type
+  authorId       String
   pertanyaan     String
-  attachmentUrl  String?
-  attachmentType String?
   difficulty     Difficulty?
   explanation    String?
-  isActive       Boolean     @default(true)
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  koleksiSoal    KoleksiSoal @relation(fields: [koleksiSoalId], references: [id], onDelete: Cascade)
-  author         User        @relation("SoalAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  isActive       Boolean           @default(true)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  koleksiSoal    KoleksiSoal       @relation(fields: [koleksiSoalId], references: [id], onDelete: Cascade)
+  author         User              @relation("SoalAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   opsis          Opsi[]
+  attachments    SoalAttachment[]  @relation("SoalAttachments")
+}
+
+model SoalAttachment {
+  id             Int      @id @default(autoincrement())
+  soalId         Int
+  url            String
+  type           String   // "image", "audio", "video", "document", etc.
+  filename       String?
+  size           Int?     // File size in bytes
+  mimeType       String?
+  order          Int      @default(0) // For ordering multiple attachments
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  soal           Soal     @relation("SoalAttachments", fields: [soalId], references: [id], onDelete: Cascade)
+
+  @@index([soalId])
+  @@index([type])
 }
 
 model Opsi {
-  id             Int      @id @default(autoincrement())
+  id             Int                @id @default(autoincrement())
   soalId         Int
   opsiText       String
-  attachmentUrl  String?
-  attachmentType String?
-  isCorrect      Boolean  @default(false)
+  isCorrect      Boolean            @default(false)
+  order          Int                @default(0) // For ordering options
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  soal           Soal               @relation(fields: [soalId], references: [id], onDelete: Cascade)
+  attachments    OpsiAttachment[]   @relation("OpsiAttachments")
+
+  @@index([soalId])
+  @@index([order])
+}
+
+model OpsiAttachment {
+  id             Int      @id @default(autoincrement())
+  opsiId         Int
+  url            String
+  type           String   // "image", "audio", "video", "document", etc.
+  filename       String?
+  size           Int?     // File size in bytes
+  mimeType       String?
+  order          Int      @default(0) // For ordering multiple attachments
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  soal           Soal     @relation(fields: [soalId], references: [id], onDelete: Cascade)
+  opsi           Opsi     @relation("OpsiAttachments", fields: [opsiId], references: [id], onDelete: Cascade)
+
+  @@index([opsiId])
+  @@index([type])
 }
 
 model Tryout {
@@ -372,18 +541,22 @@ model VocabularySet {
 }
 
 model VocabularyItem {
-  id           Int            @id @default(autoincrement())
-  korean       String
-  indonesian   String
-  isLearned    Boolean        @default(false)
-  type         VocabularyType @default(WORD)
-  pos          PartOfSpeech? // Part of Speech
-  audioUrl     String?
-  collectionId Int
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  collection   VocabularySet  @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  id               Int            @id @default(autoincrement())
+  korean           String
+  indonesian       String
+  isLearned        Boolean        @default(false)
+  type             VocabularyType @default(WORD)
+  pos              PartOfSpeech? // Part of Speech
+  audioUrl         String?
+  exampleSentences String[]       @default([]) // Array of example sentences
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  creatorId        String // User who created this vocabulary item
+  collectionId     Int? // Optional relation to VocabularySet
+  creator          User           @relation("VocabularyItemCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  collection       VocabularySet? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
 
+  @@index([creatorId])
   @@index([collectionId])
 }
 
@@ -426,7 +599,7 @@ model Subscription {
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   midtransOrderId String         @unique // Store the Midtrans order_id from createTransaction API
   status          MidtransStatus // Midtrans payment status
-  accessTier      UserTier // The access tier subscribed to (e.g., PREMIUM)
+  accessTier      String // The access tier subscribed to (e.g., "FREE", "PREMIUM")
   startDate       DateTime? // Set when payment is confirmed (settlement/capture+accept)
   endDate         DateTime? // Optional: For recurring/timed subscriptions
   createdAt       DateTime       @default(now())

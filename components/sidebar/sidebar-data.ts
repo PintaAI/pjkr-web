@@ -10,6 +10,7 @@ import {
   Edit3,
   Presentation,
   LayoutDashboard,
+  Compass,
 } from "lucide-react"
 
 export interface SidebarUser {
@@ -129,6 +130,27 @@ export function getSidebarData(userRole?: UserRole) {
     url: "/home",
     icon: Home,
     isActive: userRole === "MURID",
+  });
+
+  // Add Explore section
+  navMain.push({
+    title: "Explore",
+    url: "/explore",
+    icon: Compass,
+    items: [
+      {
+        title: "All Content",
+        url: "/explore",
+      },
+      {
+        title: "Quizzes",
+        url: "/explore/quizzes",
+      },
+      {
+        title: "Teachers",
+        url: "/explore/teachers",
+      },
+    ],
   });
 
   // Add base navigation items for all users
