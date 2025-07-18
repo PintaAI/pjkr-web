@@ -222,6 +222,7 @@ model Kelas {
   price           Decimal?              @db.Decimal(10,2) // Price for paid classes
   discount        Decimal?              @db.Decimal(10,2) // Discount amount
   promoCode       String?               // Promo code for discounts
+  isDraft         Boolean               @default(true) // Draft vs Published
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
   authorId        String
@@ -242,6 +243,7 @@ model Materi {
   htmlDescription String
   order           Int
   isDemo          Boolean                @default(false)
+  isDraft         Boolean                @default(true) // Draft vs Published
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
   kelasId         Int
@@ -415,6 +417,7 @@ model KoleksiSoal {
   nama      String
   deskripsi String?
   isPrivate Boolean  @default(false)
+  isDraft   Boolean  @default(true) // Draft vs Published
   userId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -536,7 +539,7 @@ model VocabularySet {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   user        User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  kelas       Kelas?           @relation(fields: [kelasId], references: [id], onDelete: SetNull) // onDelete:SetNull or Cascade based on desired behavior
+  kelas       Kelas?           @relation(fields: [kelasId], references: [id], onDelete: Cascade) // Cascade when Kelas is deleted
   items       VocabularyItem[]
 }
 
@@ -549,6 +552,7 @@ model VocabularyItem {
   pos              PartOfSpeech? // Part of Speech
   audioUrl         String?
   exampleSentences String[]       @default([]) // Array of example sentences
+  order            Int            @default(0) // For ordering vocabulary items
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   creatorId        String // User who created this vocabulary item
@@ -558,6 +562,7 @@ model VocabularyItem {
 
   @@index([creatorId])
   @@index([collectionId])
+  @@index([order])
 }
 
 model ExcalidrawDrawing {
