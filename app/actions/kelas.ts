@@ -27,40 +27,67 @@ export class NotFoundError extends Error {
   }
 }
 
+// Types for better type safety
+export type ActionResult<T = any> = {
+  success: boolean;
+  data?: T;
+  message?: string;
+  error?: string;
+};
+
+export type KelasWithDetails = {
+  id: number;
+  title: string;
+  description?: string | null;
+  isDraft: boolean;
+  authorId: string;
+  author: {
+    id: string;
+    name: string | null;
+    email: string;
+    image?: string | null;
+  };
+  _count: {
+    materis: number;
+    members: number;
+    completions: number;
+  };
+};
+
 // Validation schemas
 const createDraftKelasSchema = z.object({
-  title: z.string().min(1, "Title is required").max(255),
+  title: z.string().min(1, "Title is required").max(255).trim(),
   description: z.string().optional(),
   jsonDescription: z.any().optional(),
   htmlDescription: z.string().optional(),
   type: z.nativeEnum(KelasType).default(KelasType.REGULAR),
   level: z.nativeEnum(Difficulty),
-  thumbnail: z.string().url().optional(),
+  thumbnail: z.string().url("Invalid thumbnail URL").optional(),
   icon: z.string().optional(),
   isPaidClass: z.boolean().default(false),
-  price: z.number().min(0).optional(),
-  discount: z.number().min(0).optional(),
-  promoCode: z.string().optional(),
+  price: z.number().min(0, "Price must be non-negative").optional(),
+  discount: z.number().min(0, "Discount must be non-negative").max(100, "Discount cannot exceed 100%").optional(),
+  promoCode: z.string().max(50, "Promo code too long").optional(),
 });
 
 const updateKelasMetaSchema = z.object({
-  title: z.string().min(1).max(255).optional(),
+  title: z.string().min(1, "Title is required").max(255).trim().optional(),
   description: z.string().optional(),
   jsonDescription: z.any().optional(),
   htmlDescription: z.string().optional(),
   type: z.nativeEnum(KelasType).optional(),
   level: z.nativeEnum(Difficulty).optional(),
-  thumbnail: z.string().url().optional(),
+  thumbnail: z.string().url("Invalid thumbnail URL").optional(),
   icon: z.string().optional(),
   isPaidClass: z.boolean().optional(),
-  price: z.number().min(0).optional(),
-  discount: z.number().min(0).optional(),
-  promoCode: z.string().optional(),
+  price: z.number().min(0, "Price must be non-negative").optional(),
+  discount: z.number().min(0, "Discount must be non-negative").max(100, "Discount cannot exceed 100%").optional(),
+  promoCode: z.string().max(50, "Promo code too long").optional(),
 });
 
 const materiSchema = z.object({
-  title: z.string().min(1, "Title is required").max(255),
-  description: z.string().min(1, "Description is required"),
+  title: z.string().min(1, "Title is required").max(255).trim(),
+  description: z.string().min(1, "Description is required").trim(),
   jsonDescription: z.any().default({}),
   htmlDescription: z.string().min(1, "HTML description is required"),
   order: z.number().int().min(0).optional(),
@@ -68,234 +95,218 @@ const materiSchema = z.object({
 });
 
 const vocabularyItemSchema = z.object({
-  korean: z.string().min(1, "Korean word is required"),
-  indonesian: z.string().min(1, "Indonesian translation is required"),
+  korean: z.string().min(1, "Korean word is required").trim(),
+  indonesian: z.string().min(1, "Indonesian translation is required").trim(),
   type: z.enum(["WORD", "SENTENCE", "IDIOM"]).default("WORD"),
   pos: z.enum(["KATA_KERJA", "KATA_BENDA", "KATA_SIFAT", "KATA_KETERANGAN"]).optional(),
-  audioUrl: z.string().url().optional(),
+  audioUrl: z.string().url("Invalid audio URL").optional(),
   exampleSentences: z.array(z.string()).default([]),
   order: z.number().int().min(0).optional(),
 });
 
 const vocabularySetSchema = z.object({
-  title: z.string().min(1, "Title is required").max(255),
+  title: z.string().min(1, "Title is required").max(255).trim(),
   description: z.string().optional(),
   icon: z.string().default("FaBook"),
   isPublic: z.boolean().default(false),
   items: z.array(vocabularyItemSchema).min(1, "At least one vocabulary item is required"),
 });
 
-// Action 1: Create Draft Kelas
-export async function createDraftKelas(payload: z.infer<typeof createDraftKelasSchema>) {
+const reorderSchema = z.object({
+  id: z.number().int().positive(),
+  order: z.number().int().min(0),
+});
+
+// Helper functions
+async function validateKelasOwnership(kelasId: number, userId: string) {
+  const kelas = await prisma.kelas.findUnique({
+    where: { id: kelasId },
+    select: { authorId: true, isDraft: true },
+  });
+
+  if (!kelas) {
+    throw new NotFoundError("Kelas not found");
+  }
+
+  if (kelas.authorId !== userId) {
+    throw new AuthError("You can only modify your own kelas");
+  }
+
+  return kelas;
+}
+
+function handleActionError(error: unknown, defaultMessage: string): never {
+  if (error instanceof z.ZodError) {
+    throw new ValidationError(`Validation error: ${error.errors.map(e => e.message).join(", ")}`);
+  }
+  if (error instanceof AuthError || error instanceof NotFoundError || error instanceof ValidationError) {
+    throw error;
+  }
+  throw new Error(defaultMessage);
+}
+
+const kelasInclude = {
+  author: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+    },
+  },
+  _count: {
+    select: {
+      materis: true,
+      members: true,
+      completions: true,
+    },
+  },
+} as const;
+
+/**
+ * Creates a new draft kelas (course)
+ * @param payload - The kelas data to create
+ * @returns Promise<ActionResult<KelasWithDetails>>
+ */
+export async function createDraftKelas(payload: z.infer<typeof createDraftKelasSchema>): Promise<ActionResult<KelasWithDetails>> {
   try {
-    // Validate authentication
     const session = await assertAuthenticated();
     const userId = session.user.id;
 
-    // Validate input
     const validatedData = createDraftKelasSchema.parse(payload);
 
-    // Create draft kelas
+    // Validate pricing logic
+    if (validatedData.isPaidClass && (!validatedData.price || validatedData.price <= 0)) {
+      throw new ValidationError("Price is required for paid classes");
+    }
+
     const kelas = await prisma.kelas.create({
       data: {
         ...validatedData,
         isDraft: true,
         authorId: userId,
       },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
-          },
-        },
-        _count: {
-          select: {
-            materis: true,
-            members: true,
-            completions: true,
-          },
-        },
-      },
+      include: kelasInclude,
     });
 
     return { success: true, data: kelas };
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      throw new ValidationError(`Validation error: ${error.errors.map(e => e.message).join(", ")}`);
-    }
-    if (error instanceof AuthError) {
-      throw error;
-    }
-    throw new Error("Failed to create draft kelas");
+    handleActionError(error, "Failed to create draft kelas");
   }
 }
 
-// Action 2: Update Kelas Meta
-export async function updateKelasMeta(id: number, payload: z.infer<typeof updateKelasMetaSchema>) {
+/**
+ * Updates kelas metadata
+ * @param id - The kelas ID
+ * @param payload - The updated kelas data
+ * @returns Promise<ActionResult<KelasWithDetails>>
+ */
+export async function updateKelasMeta(id: number, payload: z.infer<typeof updateKelasMetaSchema>): Promise<ActionResult<KelasWithDetails>> {
   try {
-    // Validate authentication
     const session = await assertAuthenticated();
     const userId = session.user.id;
 
-    // Validate input
     const validatedData = updateKelasMetaSchema.parse(payload);
 
-    // Check if kelas exists and user is the author
-    const existingKelas = await prisma.kelas.findUnique({
-      where: { id },
-      select: { authorId: true, isDraft: true },
-    });
-
-    if (!existingKelas) {
-      throw new NotFoundError("Kelas not found");
+    // Validate pricing logic
+    if (validatedData.isPaidClass && (!validatedData.price || validatedData.price <= 0)) {
+      throw new ValidationError("Price is required for paid classes");
     }
 
-    if (existingKelas.authorId !== userId) {
-      throw new AuthError("You can only update your own kelas");
-    }
+    await validateKelasOwnership(id, userId);
 
-    // Update kelas
     const updatedKelas = await prisma.kelas.update({
       where: { id },
       data: validatedData,
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
-          },
-        },
-        _count: {
-          select: {
-            materis: true,
-            members: true,
-            completions: true,
-          },
-        },
-      },
+      include: kelasInclude,
     });
 
     return { success: true, data: updatedKelas };
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      throw new ValidationError(`Validation error: ${error.errors.map(e => e.message).join(", ")}`);
-    }
-    if (error instanceof AuthError || error instanceof NotFoundError) {
-      throw error;
-    }
-    throw new Error("Failed to update kelas meta");
+    handleActionError(error, "Failed to update kelas meta");
   }
 }
 
-// Action 3: Add Materi Quick (Bulk)
-export async function addMateriQuick(id: number, materiList: z.infer<typeof materiSchema>[]) {
+/**
+ * Bulk adds materi (learning materials) to a kelas
+ * @param id - The kelas ID
+ * @param materiList - Array of materi to add
+ * @returns Promise<ActionResult>
+ */
+export async function addMateriQuick(id: number, materiList: z.infer<typeof materiSchema>[]): Promise<ActionResult> {
   try {
-    // Validate authentication
     const session = await assertAuthenticated();
     const userId = session.user.id;
 
-    // Validate input
+    if (!materiList.length) {
+      throw new ValidationError("At least one materi is required");
+    }
+
     const validatedMateris = materiList.map(materi => materiSchema.parse(materi));
 
-    // Check if kelas exists and user is the author
-    const existingKelas = await prisma.kelas.findUnique({
-      where: { id },
-      select: { authorId: true, isDraft: true },
-    });
+    await validateKelasOwnership(id, userId);
 
-    if (!existingKelas) {
-      throw new NotFoundError("Kelas not found");
-    }
+    // Use transaction for atomicity
+    const result = await prisma.$transaction(async (tx) => {
+      // Get current max order
+      const maxOrder = await tx.materi.findFirst({
+        where: { kelasId: id },
+        orderBy: { order: "desc" },
+        select: { order: true },
+      });
 
-    if (existingKelas.authorId !== userId) {
-      throw new AuthError("You can only add materis to your own kelas");
-    }
+      let currentOrder = maxOrder?.order ?? -1;
 
-    // Get current max order
-    const maxOrder = await prisma.materi.findFirst({
-      where: { kelasId: id },
-      orderBy: { order: "desc" },
-      select: { order: true },
-    });
+      // Prepare materi data with incremented order
+      const materiData = validatedMateris.map(materi => ({
+        title: materi.title,
+        description: materi.description,
+        jsonDescription: materi.jsonDescription,
+        htmlDescription: materi.htmlDescription,
+        isDemo: materi.isDemo,
+        kelasId: id,
+        order: materi.order ?? ++currentOrder,
+        isDraft: true,
+      }));
 
-    let currentOrder = maxOrder?.order ?? -1;
+      // Bulk create materis
+      await tx.materi.createMany({
+        data: materiData,
+      });
 
-    // Prepare materi data with incremented order
-    const materiData = validatedMateris.map(materi => ({
-      title: materi.title,
-      description: materi.description,
-      jsonDescription: materi.jsonDescription,
-      htmlDescription: materi.htmlDescription,
-      isDemo: materi.isDemo,
-      kelasId: id,
-      order: materi.order ?? ++currentOrder,
-      isDraft: true,
-    }));
-
-    // Bulk create materis
-    await prisma.materi.createMany({
-      data: materiData,
-    });
-
-    // Return updated kelas with new materis
-    const updatedKelas = await prisma.kelas.findUnique({
-      where: { id },
-      include: {
-        materis: {
-          orderBy: { order: "asc" },
-        },
-        _count: {
-          select: {
-            materis: true,
-            members: true,
-            completions: true,
+      // Return updated kelas with new materis
+      return await tx.kelas.findUnique({
+        where: { id },
+        include: {
+          materis: {
+            orderBy: { order: "asc" },
           },
+          ...kelasInclude,
         },
-      },
+      });
     });
 
-    return { success: true, data: updatedKelas };
+    return { success: true, data: result };
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      throw new ValidationError(`Validation error: ${error.errors.map(e => e.message).join(", ")}`);
-    }
-    if (error instanceof AuthError || error instanceof NotFoundError) {
-      throw error;
-    }
-    throw new Error("Failed to add materis");
+    handleActionError(error, "Failed to add materis");
   }
 }
 
-// Action 4: Add Vocabulary Set Quick
-export async function addVocabularySetQuick(id: number, set: z.infer<typeof vocabularySetSchema>) {
+/**
+ * Adds a vocabulary set to a kelas
+ * @param id - The kelas ID
+ * @param set - The vocabulary set data
+ * @returns Promise<ActionResult>
+ */
+export async function addVocabularySetQuick(id: number, set: z.infer<typeof vocabularySetSchema>): Promise<ActionResult> {
   try {
-    // Validate authentication
     const session = await assertAuthenticated();
     const userId = session.user.id;
 
-    // Validate input
     const validatedSet = vocabularySetSchema.parse(set);
 
-    // Check if kelas exists and user is the author
-    const existingKelas = await prisma.kelas.findUnique({
-      where: { id },
-      select: { authorId: true, isDraft: true },
-    });
+    await validateKelasOwnership(id, userId);
 
-    if (!existingKelas) {
-      throw new NotFoundError("Kelas not found");
-    }
-
-    if (existingKelas.authorId !== userId) {
-      throw new AuthError("You can only add vocabulary sets to your own kelas");
-    }
-
-    // Create vocabulary set with items
     const vocabularySet = await prisma.vocabularySet.create({
       data: {
         title: validatedSet.title,
@@ -319,43 +330,29 @@ export async function addVocabularySetQuick(id: number, set: z.infer<typeof voca
       },
     });
 
-    return { success: true, data: vocabularySet, setId: vocabularySet.id };
+    return { success: true, data: vocabularySet, message: "Vocabulary set added successfully" };
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      throw new ValidationError(`Validation error: ${error.errors.map(e => e.message).join(", ")}`);
-    }
-    if (error instanceof AuthError || error instanceof NotFoundError) {
-      throw error;
-    }
-    throw new Error("Failed to add vocabulary set");
+    handleActionError(error, "Failed to add vocabulary set");
   }
 }
 
-// Action 5: Add Soal Set Quick
-export async function addSoalSetQuick(id: number, koleksiSoalId: number) {
+/**
+ * Links a soal set (question set) to a kelas
+ * @param id - The kelas ID
+ * @param koleksiSoalId - The koleksi soal ID to link
+ * @returns Promise<ActionResult>
+ */
+export async function addSoalSetQuick(id: number, koleksiSoalId: number): Promise<ActionResult> {
   try {
-    // Validate authentication
     const session = await assertAuthenticated();
     const userId = session.user.id;
 
-    // Check if kelas exists and user is the author
-    const existingKelas = await prisma.kelas.findUnique({
-      where: { id },
-      select: { authorId: true, isDraft: true },
-    });
-
-    if (!existingKelas) {
-      throw new NotFoundError("Kelas not found");
-    }
-
-    if (existingKelas.authorId !== userId) {
-      throw new AuthError("You can only add soal sets to your own kelas");
-    }
+    await validateKelasOwnership(id, userId);
 
     // Check if koleksi soal exists and user owns it
     const koleksiSoal = await prisma.koleksiSoal.findUnique({
       where: { id: koleksiSoalId },
-      select: { userId: true },
+      select: { userId: true, nama: true, _count: { select: { soals: true } } },
     });
 
     if (!koleksiSoal) {
@@ -366,47 +363,49 @@ export async function addSoalSetQuick(id: number, koleksiSoalId: number) {
       throw new AuthError("You can only link your own koleksi soal");
     }
 
-    // For now, we'll just return success since there's no direct relation
-    // between Kelas and KoleksiSoal in the schema
-    // In a real implementation, you might want to create a junction table
-    // or add this relationship to the schema
-    
+    if (koleksiSoal._count.soals === 0) {
+      throw new ValidationError("Cannot link empty koleksi soal");
+    }
+
+    // TODO: Implement actual linking logic when schema supports it
+    // For now, return success with metadata
     return { 
       success: true, 
       message: "Soal set linked successfully",
-      data: { kelasId: id, koleksiSoalId }
+      data: { 
+        kelasId: id, 
+        koleksiSoalId,
+        koleksiSoalTitle: koleksiSoal.nama,
+        soalCount: koleksiSoal._count.soals
+      }
     };
   } catch (error) {
-    if (error instanceof AuthError || error instanceof NotFoundError) {
-      throw error;
-    }
-    throw new Error("Failed to add soal set");
+    handleActionError(error, "Failed to add soal set");
   }
 }
 
-// Action 6: Reorder Materi
-export async function reorderMateri(id: number, newOrder: { id: number; order: number }[]) {
+/**
+ * Reorders materi within a kelas
+ * @param id - The kelas ID
+ * @param newOrder - Array of materi IDs with their new order positions
+ * @returns Promise<ActionResult>
+ */
+export async function reorderMateri(id: number, newOrder: { id: number; order: number }[]): Promise<ActionResult> {
   try {
-    // Validate authentication
     const session = await assertAuthenticated();
     const userId = session.user.id;
 
-    // Check if kelas exists and user is the author
-    const existingKelas = await prisma.kelas.findUnique({
-      where: { id },
-      select: { authorId: true, isDraft: true },
-    });
-
-    if (!existingKelas) {
-      throw new NotFoundError("Kelas not found");
+    if (!newOrder.length) {
+      throw new ValidationError("Order array cannot be empty");
     }
 
-    if (existingKelas.authorId !== userId) {
-      throw new AuthError("You can only reorder materis in your own kelas");
-    }
+    // Validate input schema
+    const validatedOrder = newOrder.map(item => reorderSchema.parse(item));
+
+    await validateKelasOwnership(id, userId);
 
     // Validate that all materi IDs belong to this kelas
-    const materiIds = newOrder.map(item => item.id);
+    const materiIds = validatedOrder.map(item => item.id);
     const existingMateris = await prisma.materi.findMany({
       where: {
         id: { in: materiIds },
@@ -419,44 +418,52 @@ export async function reorderMateri(id: number, newOrder: { id: number; order: n
       throw new ValidationError("Some materi IDs are invalid or don't belong to this kelas");
     }
 
-    // Update orders in a transaction
-    await prisma.$transaction(
-      newOrder.map(item =>
-        prisma.materi.update({
-          where: { id: item.id },
-          data: { order: item.order },
-        })
-      )
-    );
+    // Check for duplicate orders
+    const orders = validatedOrder.map(item => item.order);
+    const uniqueOrders = new Set(orders);
+    if (uniqueOrders.size !== orders.length) {
+      throw new ValidationError("Duplicate order values are not allowed");
+    }
 
-    // Return updated materis
-    const updatedMateris = await prisma.materi.findMany({
-      where: { kelasId: id },
-      orderBy: { order: "asc" },
+    // Update orders in a transaction
+    const updatedMateris = await prisma.$transaction(async (tx) => {
+      await Promise.all(
+        validatedOrder.map(item =>
+          tx.materi.update({
+            where: { id: item.id },
+            data: { order: item.order },
+          })
+        )
+      );
+
+      return await tx.materi.findMany({
+        where: { kelasId: id },
+        orderBy: { order: "asc" },
+      });
     });
 
-    return { success: true, data: updatedMateris };
+    return { success: true, data: updatedMateris, message: "Materi reordered successfully" };
   } catch (error) {
-    if (error instanceof AuthError || error instanceof NotFoundError || error instanceof ValidationError) {
-      throw error;
-    }
-    throw new Error("Failed to reorder materis");
+    handleActionError(error, "Failed to reorder materis");
   }
 }
 
-// Action 7: Publish Kelas
-export async function publishKelas(id: number) {
+/**
+ * Publishes a draft kelas, making it available to users
+ * @param id - The kelas ID
+ * @returns Promise<ActionResult<KelasWithDetails>>
+ */
+export async function publishKelas(id: number): Promise<ActionResult<KelasWithDetails>> {
   try {
-    // Validate authentication
     const session = await assertAuthenticated();
     const userId = session.user.id;
 
-    // Check if kelas exists and user is the author
+    // Get kelas with validation requirements
     const existingKelas = await prisma.kelas.findUnique({
       where: { id },
       include: {
         materis: {
-          select: { id: true },
+          select: { id: true, isDraft: true },
         },
         _count: {
           select: { materis: true },
@@ -476,70 +483,67 @@ export async function publishKelas(id: number) {
       throw new ValidationError("Kelas is already published");
     }
 
-    // Validate required fields for publishing
-    if (!existingKelas.title || !existingKelas.description) {
-      throw new ValidationError("Title and description are required for publishing");
+    // Comprehensive validation for publishing
+    const validationErrors: string[] = [];
+
+    if (!existingKelas.title?.trim()) {
+      validationErrors.push("Title is required");
+    }
+
+    if (!existingKelas.description?.trim()) {
+      validationErrors.push("Description is required");
     }
 
     if (existingKelas._count.materis === 0) {
-      throw new ValidationError("At least one materi is required for publishing");
+      validationErrors.push("At least one materi is required");
     }
 
-    // Publish kelas
-    const publishedKelas = await prisma.kelas.update({
-      where: { id },
-      data: { isDraft: false },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
+    if (existingKelas.isPaidClass && (!existingKelas.price || existingKelas.price.toNumber() <= 0)) {
+      validationErrors.push("Price is required for paid classes");
+    }
+
+    if (validationErrors.length > 0) {
+      throw new ValidationError(validationErrors.join(", "));
+    }
+
+    // Publish kelas and its materis in a transaction
+    const publishedKelas = await prisma.$transaction(async (tx) => {
+      // Update all materis to published state
+      await tx.materi.updateMany({
+        where: { kelasId: id },
+        data: { isDraft: false },
+      });
+
+      // Publish the kelas
+      return await tx.kelas.update({
+        where: { id },
+        data: { isDraft: false },
+        include: {
+          ...kelasInclude,
+          materis: {
+            orderBy: { order: "asc" },
           },
         },
-        materis: {
-          orderBy: { order: "asc" },
-        },
-        _count: {
-          select: {
-            materis: true,
-            members: true,
-            completions: true,
-          },
-        },
-      },
+      });
     });
 
-    return { success: true, data: publishedKelas };
+    return { success: true, data: publishedKelas, message: "Kelas published successfully" };
   } catch (error) {
-    if (error instanceof AuthError || error instanceof NotFoundError || error instanceof ValidationError) {
-      throw error;
-    }
-    throw new Error("Failed to publish kelas");
+    handleActionError(error, "Failed to publish kelas");
   }
 }
 
-// Action 8: Delete Draft Kelas
-export async function deleteDraftKelas(id: number) {
+/**
+ * Deletes a draft kelas (only draft kelas can be deleted)
+ * @param id - The kelas ID
+ * @returns Promise<ActionResult>
+ */
+export async function deleteDraftKelas(id: number): Promise<ActionResult> {
   try {
-    // Validate authentication
     const session = await assertAuthenticated();
     const userId = session.user.id;
 
-    // Check if kelas exists and user is the author
-    const existingKelas = await prisma.kelas.findUnique({
-      where: { id },
-      select: { authorId: true, isDraft: true },
-    });
-
-    if (!existingKelas) {
-      throw new NotFoundError("Kelas not found");
-    }
-
-    if (existingKelas.authorId !== userId) {
-      throw new AuthError("You can only delete your own kelas");
-    }
+    const existingKelas = await validateKelasOwnership(id, userId);
 
     if (!existingKelas.isDraft) {
       throw new ValidationError("Only draft kelas can be deleted");
@@ -552,9 +556,41 @@ export async function deleteDraftKelas(id: number) {
 
     return { success: true, message: "Draft kelas deleted successfully" };
   } catch (error) {
-    if (error instanceof AuthError || error instanceof NotFoundError || error instanceof ValidationError) {
-      throw error;
+    handleActionError(error, "Failed to delete draft kelas");
+  }
+}
+
+/**
+ * Gets a kelas by ID with full details (for authorized users)
+ * @param id - The kelas ID
+ * @returns Promise<ActionResult<KelasWithDetails>>
+ */
+export async function getKelasById(id: number): Promise<ActionResult<KelasWithDetails>> {
+  try {
+    const session = await assertAuthenticated();
+    const userId = session.user.id;
+
+    const kelas = await prisma.kelas.findUnique({
+      where: { id },
+      include: {
+        ...kelasInclude,
+        materis: {
+          orderBy: { order: "asc" },
+        },
+      },
+    });
+
+    if (!kelas) {
+      throw new NotFoundError("Kelas not found");
     }
-    throw new Error("Failed to delete draft kelas");
+
+    // Check if user has access to this kelas
+    if (kelas.isDraft && kelas.authorId !== userId) {
+      throw new AuthError("You don't have access to this draft kelas");
+    }
+
+    return { success: true, data: kelas };
+  } catch (error) {
+    handleActionError(error, "Failed to get kelas");
   }
 }

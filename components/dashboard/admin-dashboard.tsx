@@ -152,7 +152,7 @@ export function AdminDashboard({ user }: AdminDashboardProps) {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Link href="/admin/users">
+                <Link href="dashboard/admin/users">
                   <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">

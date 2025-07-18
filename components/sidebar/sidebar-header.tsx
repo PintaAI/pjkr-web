@@ -22,7 +22,7 @@ export function AppSidebarHeader() {
               className="group-data-[collapsible=icon]:w-fit group-data-[collapsible=icon]:justify-center"
             >
               <Link href="/" className="flex items-center gap-2">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg border-2 border-border p-0.5">
                   <Image
                     src="/logo/hakgyo-light.png"
                     alt="Hakgyo Logo"
