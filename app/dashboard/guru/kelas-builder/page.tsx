@@ -27,7 +27,7 @@ export default function KelasBuilderPage() {
     reset
   } = useKelasBuilderStore();
 
-  // Handle edit mode
+  // Handle edit mode - only load draft on initial mount
   useEffect(() => {
     const editId = searchParams.get('edit');
     if (editId && !draftId) {
@@ -35,11 +35,9 @@ export default function KelasBuilderPage() {
       if (!isNaN(kelasId)) {
         loadDraft(kelasId);
       }
-    } else if (!editId && draftId) {
-      // If no edit param but we have a draft loaded, reset to clean state
-      reset();
     }
-  }, [searchParams, draftId, loadDraft, reset]);
+    // Removed the reset logic that was causing data to be cleared during step navigation
+  }, [searchParams, draftId, loadDraft]);
 
   const renderCurrentStep = () => {
     switch (currentStep) {

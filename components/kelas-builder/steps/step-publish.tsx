@@ -242,53 +242,61 @@ export function StepPublish() {
 
       {/* Publish Actions */}
       {isReadyToPublish ? (
-        <Card>
+        <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-300">
               <Rocket className="h-5 w-5" />
               Ready to Publish
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Alert className="mb-4">
-              <CheckCircle className="h-4 w-4" />
-              <AlertDescription>
+            <Alert className="mb-6 border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-700 dark:text-green-300">
                 Your course meets all requirements and is ready to be published. Once published, students will be able to enroll and access your content.
               </AlertDescription>
             </Alert>
             
-            <div className="flex gap-4">
+            {/* Prominent Publish Button */}
+            <div className="text-center space-y-4">
               <Button 
                 onClick={handlePublish}
                 disabled={isPublishing || !draftId}
-                className="flex items-center gap-2"
+                className="w-full max-w-md mx-auto h-14 text-lg font-semibold bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                 size="lg"
               >
                 {isPublishing ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Publishing...
+                    <Loader2 className="h-6 w-6 animate-spin mr-3" />
+                    Publishing Your Course...
                   </>
                 ) : (
                   <>
-                    <Rocket className="h-4 w-4" />
-                    Publish Course
+                    <Rocket className="h-6 w-6 mr-3" />
+                    Publish Course Now
                     {!draftId && " (No Draft ID)"}
                   </>
                 )}
               </Button>
               
+              <p className="text-sm text-muted-foreground">
+                This will make your course live and available to students
+              </p>
+            </div>
+            
+            <div className="flex justify-center mt-6">
               <Button 
-                variant="outline"
+                variant="ghost"
                 onClick={handleGoToDashboard}
                 disabled={isPublishing}
+                className="text-muted-foreground hover:text-foreground"
               >
-                Save as Draft
+                Save as Draft & Return Later
               </Button>
             </div>
             
             {!draftId && (
-              <Alert variant="destructive" className="mt-4">
+              <Alert variant="destructive" className="mt-6">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   <strong>Missing Draft ID:</strong> You need to create a draft first before publishing. 

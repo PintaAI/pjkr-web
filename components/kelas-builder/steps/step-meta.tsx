@@ -390,26 +390,8 @@ export function StepMeta() {
             </CardContent>
           </Card>
 
-          {/* Save Button */}
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="flex items-center gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <Settings className="h-4 w-4 animate-spin" />
-                  {draftId ? "Saving..." : "Creating Draft..."}
-                </>
-              ) : (
-                <>
-                  <Settings className="h-4 w-4" />
-                  {draftId ? "Save Changes" : "Create Draft"}
-                </>
-              )}
-            </Button>
-          </div>
+          {/* Note: Save functionality is handled automatically when form values change */}
+          {/* Use the "Save" button in the header to manually save changes */}
         </form>
       </Form>
     </div>

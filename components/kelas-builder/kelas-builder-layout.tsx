@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -18,7 +19,10 @@ import {
   Rocket,
   CheckCircle,
   Clock,
-  AlertCircle
+  AlertCircle,
+  XCircle,
+  MinusCircle,
+  AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -120,6 +124,72 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
     }
   };
 
+  const getStepCompletionStatus = (stepId: string) => {
+    // Check if this is a fresh/new session (no title and no existing materials)
+    const isFirstTime = !meta.title.trim() && materis.length === 0 && !draftId;
+    
+    switch (stepId) {
+      case 'meta':
+        const hasTitle = meta.title.trim() !== '';
+        const hasDescription = meta.description && meta.description.trim() !== '';
+        const hasLevel = meta.level;
+        const hasType = meta.type;
+        
+        if (hasTitle && hasDescription && hasLevel && hasType) {
+          return { status: 'complete', hasRequiredData: true, message: 'All required info provided' };
+        } else if (hasTitle) {
+          return { status: 'partial', hasRequiredData: false, message: 'Missing description or settings' };
+        } else if (isFirstTime) {
+          return { status: 'neutral', hasRequiredData: true, message: 'Start by adding your course title and description' };
+        } else {
+          return { status: 'empty', hasRequiredData: false, message: 'Title required' };
+        }
+        
+      case 'content':
+        if (materis.length > 0) {
+          return { status: 'complete', hasRequiredData: true, message: `${materis.length} lesson(s) added` };
+        } else if (isFirstTime) {
+          return { status: 'neutral', hasRequiredData: true, message: 'Add lessons and learning materials' };
+        } else {
+          return { status: 'empty', hasRequiredData: false, message: 'At least 1 lesson required' };
+        }
+        
+      case 'vocabulary':
+        // Optional step
+        return { status: 'optional', hasRequiredData: true, message: 'Optional: Add vocabulary sets to enhance learning' };
+        
+      case 'assessment':
+        // Optional step
+        return { status: 'optional', hasRequiredData: true, message: 'Optional: Link question sets for assessments' };
+        
+      case 'review':
+        const metaComplete = meta.title.trim() !== '' && meta.description;
+        const contentComplete = materis.length > 0;
+        
+        if (metaComplete && contentComplete) {
+          return { status: 'complete', hasRequiredData: true, message: 'Ready for review' };
+        } else if (isFirstTime) {
+          return { status: 'neutral', hasRequiredData: true, message: 'Review and finalize your course before publishing' };
+        } else {
+          return { status: 'blocked', hasRequiredData: false, message: 'Complete previous steps first' };
+        }
+        
+      case 'publish':
+        const allRequired = meta.title.trim() !== '' && meta.description && materis.length > 0;
+        
+        if (allRequired) {
+          return { status: 'complete', hasRequiredData: true, message: 'Ready to publish' };
+        } else if (isFirstTime) {
+          return { status: 'neutral', hasRequiredData: true, message: 'Publish your course to make it available to students' };
+        } else {
+          return { status: 'blocked', hasRequiredData: false, message: 'Complete required steps first' };
+        }
+        
+      default:
+        return { status: 'upcoming', hasRequiredData: true, message: '' };
+    }
+  };
+
   const handleSave = async () => {
     try {
       switch (currentStep) {
@@ -137,8 +207,9 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+    <TooltipProvider>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -204,63 +275,141 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
               <CardContent className="space-y-1">
                 {steps.map((step) => {
                   const status = getStepStatus(step.id);
+                  const completion = getStepCompletionStatus(step.id);
                   const Icon = step.icon;
                   
+                  // Determine colors based on completion status
+                  let borderColor, bgColor, textColor, iconColor, statusIcon;
+                  
+                  if (status === 'current') {
+                    borderColor = "border-primary";
+                    bgColor = "bg-primary/10 dark:bg-primary/20";
+                    textColor = "text-primary";
+                    iconColor = "bg-primary/20 text-primary dark:bg-primary/30";
+                    
+                    if (!completion.hasRequiredData) {
+                      statusIcon = <AlertTriangle className="h-4 w-4 text-orange-500 dark:text-orange-400" />;
+                    } else {
+                      statusIcon = <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />;
+                    }
+                  } else if (status === 'completed') {
+                    if (completion.status === 'complete') {
+                      borderColor = "border-green-500 dark:border-green-400";
+                      bgColor = "bg-green-50 hover:bg-green-100 dark:bg-green-950/50 dark:hover:bg-green-950/70";
+                      textColor = "text-green-700 dark:text-green-300";
+                      iconColor = "bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400";
+                      statusIcon = <CheckCircle className="h-4 w-4 text-green-500 dark:text-green-400" />;
+                    } else if (completion.status === 'partial') {
+                      borderColor = "border-yellow-500 dark:border-yellow-400";
+                      bgColor = "bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-950/50 dark:hover:bg-yellow-950/70";
+                      textColor = "text-yellow-700 dark:text-yellow-300";
+                      iconColor = "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/50 dark:text-yellow-400";
+                      statusIcon = <AlertTriangle className="h-4 w-4 text-yellow-500 dark:text-yellow-400" />;
+                    } else if (completion.status === 'optional') {
+                      borderColor = "border-blue-500 dark:border-blue-400";
+                      bgColor = "bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-950/70";
+                      textColor = "text-blue-700 dark:text-blue-300";
+                      iconColor = "bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400";
+                      statusIcon = <MinusCircle className="h-4 w-4 text-blue-500 dark:text-blue-400" />;
+                    } else if (completion.status === 'neutral') {
+                      borderColor = "border-muted";
+                      bgColor = "bg-muted/30 hover:bg-muted/50";
+                      textColor = "text-muted-foreground";
+                      iconColor = "bg-muted/50 text-muted-foreground";
+                      statusIcon = null;
+                    } else {
+                      borderColor = "border-gray-400 dark:border-gray-500";
+                      bgColor = "bg-gray-50 hover:bg-gray-100 dark:bg-gray-900/50 dark:hover:bg-gray-900/70";
+                      textColor = "text-gray-700 dark:text-gray-300";
+                      iconColor = "bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400";
+                      statusIcon = <XCircle className="h-4 w-4 text-gray-500 dark:text-gray-400" />;
+                    }
+                  } else {
+                    // Upcoming
+                    if (completion.status === 'blocked') {
+                      borderColor = "border-red-300 dark:border-red-600";
+                      bgColor = "bg-red-50 hover:bg-red-100 dark:bg-red-950/50 dark:hover:bg-red-950/70";
+                      textColor = "text-red-600 dark:text-red-400";
+                      iconColor = "bg-red-100 text-red-500 dark:bg-red-900/50 dark:text-red-400";
+                      statusIcon = <XCircle className="h-4 w-4 text-red-400 dark:text-red-500" />;
+                    } else if (completion.status === 'optional') {
+                      borderColor = "border-blue-300 dark:border-blue-600";
+                      bgColor = "bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-950/70";
+                      textColor = "text-blue-600 dark:text-blue-400";
+                      iconColor = "bg-blue-100 text-blue-500 dark:bg-blue-900/50 dark:text-blue-400";
+                      statusIcon = <MinusCircle className="h-4 w-4 text-blue-400 dark:text-blue-500" />;
+                    } else if (completion.status === 'neutral') {
+                      borderColor = "border-muted";
+                      bgColor = "bg-muted/30 hover:bg-muted/50";
+                      textColor = "text-muted-foreground";
+                      iconColor = "bg-muted/50 text-muted-foreground";
+                      statusIcon = null;
+                    } else {
+                      borderColor = "border-muted";
+                      bgColor = "bg-muted/30 hover:bg-muted/50";
+                      textColor = "text-muted-foreground";
+                      iconColor = "bg-muted/50 text-muted-foreground";
+                      statusIcon = null;
+                    }
+                  }
+                  
                   return (
-                    <button
-                      key={step.id}
-                      onClick={async () => await setCurrentStep(step.id as any)}
-                      className={cn(
-                        "w-full text-left p-3 rounded-lg border-2 transition-all duration-200 group hover:shadow-md",
-                        status === 'current' && "border-primary bg-primary/10 shadow-sm",
-                        status === 'completed' && "border-green-500 bg-green-50 hover:bg-green-100",
-                        status === 'upcoming' && "border-muted bg-muted/30 hover:bg-muted/50"
+                    <Tooltip key={step.id}>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={async () => await setCurrentStep(step.id as any)}
+                          className={cn(
+                            "w-full text-left p-3 rounded-lg border-2 transition-all duration-200 group hover:shadow-md",
+                            borderColor,
+                            bgColor
+                          )}
+                        >
+                          <div className="flex items-center gap-3">
+                            {/* Step Icon */}
+                            <div className={cn(
+                              "flex items-center justify-center w-10 h-10 rounded-full",
+                              iconColor
+                            )}>
+                              <Icon className="h-5 w-5" />
+                            </div>
+                            
+                            {/* Step Content */}
+                            <div className="flex-1 min-w-0">
+                              <div className={cn("font-semibold text-sm", textColor)}>
+                                {step.title}
+                                {!completion.hasRequiredData && status !== 'upcoming' && (
+                                  <span className="ml-1 text-orange-500">*</span>
+                                )}
+                              </div>
+                              <div className={cn(
+                                "text-xs mt-1 leading-tight",
+                                status === 'current' && "text-primary/70 dark:text-primary/80",
+                                status === 'completed' && completion.status === 'complete' && "text-green-600/70 dark:text-green-400/80",
+                                status === 'completed' && completion.status === 'partial' && "text-yellow-600/70 dark:text-yellow-400/80",
+                                status === 'completed' && completion.status === 'optional' && "text-blue-600/70 dark:text-blue-400/80",
+                                status === 'upcoming' && completion.status === 'blocked' && "text-red-500/70 dark:text-red-400/80",
+                                status === 'upcoming' && completion.status === 'optional' && "text-blue-500/70 dark:text-blue-400/80",
+                                status === 'upcoming' && completion.status === 'upcoming' && "text-muted-foreground/70"
+                              )}>
+                                {step.description}
+                              </div>
+                            </div>
+                            
+                            {/* Status Indicator */}
+                            {statusIcon && (
+                              <div className="flex-shrink-0">
+                                {statusIcon}
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      </TooltipTrigger>
+                      {completion.message && (
+                        <TooltipContent side="right" className="max-w-xs">
+                          <p className="text-sm">{completion.message}</p>
+                        </TooltipContent>
                       )}
-                    >
-                      <div className="flex items-center gap-3">
-                        {/* Step Icon */}
-                        <div className={cn(
-                          "flex items-center justify-center w-10 h-10 rounded-full",
-                          status === 'current' && "bg-primary/20 text-primary",
-                          status === 'completed' && "bg-green-100 text-green-600",
-                          status === 'upcoming' && "bg-muted/50 text-muted-foreground"
-                        )}>
-                          <Icon className="h-5 w-5" />
-                        </div>
-                        
-                        {/* Step Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className={cn(
-                            "font-semibold text-sm",
-                            status === 'current' && "text-primary",
-                            status === 'completed' && "text-green-700",
-                            status === 'upcoming' && "text-muted-foreground"
-                          )}>
-                            {step.title}
-                          </div>
-                          <div className={cn(
-                            "text-xs mt-1 leading-tight",
-                            status === 'current' && "text-primary/70",
-                            status === 'completed' && "text-green-600/70",
-                            status === 'upcoming' && "text-muted-foreground/70"
-                          )}>
-                            {step.description}
-                          </div>
-                        </div>
-                        
-                        {/* Status Indicator */}
-                        {status === 'completed' && (
-                          <div className="flex-shrink-0">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                          </div>
-                        )}
-                        {status === 'current' && (
-                          <div className="flex-shrink-0">
-                            <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                          </div>
-                        )}
-                      </div>
-                    </button>
+                    </Tooltip>
                   );
                 })}
               </CardContent>
@@ -328,18 +477,27 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                 </span>
               </div>
 
-              <Button
-                onClick={async () => await nextStep()}
-                disabled={!canGoNext() || isLoading}
-                className="flex items-center gap-2"
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+              {/* Hide next button on publish step since it's the last step */}
+              {currentStep !== 'publish' && (
+                <Button
+                  onClick={async () => await nextStep()}
+                  disabled={!canGoNext() || isLoading}
+                  className="flex items-center gap-2"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              )}
+              
+              {/* Add invisible spacer when next button is hidden to maintain layout */}
+              {currentStep === 'publish' && (
+                <div className="w-[88px]" /> 
+              )}
             </div>
           </div>
         </div>
       </div>
     </div>
+      </TooltipProvider>
   );
 }
