@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { KelasBuilderLayout } from "@/components/kelas-builder/kelas-builder-layout";
 import { StepMeta } from "@/components/kelas-builder/steps/step-meta";
@@ -15,15 +16,30 @@ import { AlertCircle, Loader2 } from "lucide-react";
 
 export default function KelasBuilderPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { 
     currentStep, 
     isLoading, 
     error, 
-    clearError 
+    clearError,
+    loadDraft,
+    draftId,
+    reset
   } = useKelasBuilderStore();
 
-  // Remove the problematic useEffect that was resetting data during navigation
-  // The store should persist data between navigation steps
+  // Handle edit mode
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (editId && !draftId) {
+      const kelasId = parseInt(editId, 10);
+      if (!isNaN(kelasId)) {
+        loadDraft(kelasId);
+      }
+    } else if (!editId && draftId) {
+      // If no edit param but we have a draft loaded, reset to clean state
+      reset();
+    }
+  }, [searchParams, draftId, loadDraft, reset]);
 
   const renderCurrentStep = () => {
     switch (currentStep) {

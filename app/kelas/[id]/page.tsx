@@ -10,7 +10,8 @@ interface KelasDetailProps {
 }
 
 export default async function KelasDetail({ params }: KelasDetailProps) {
-  const result = await getKelasDetail(params.id);
+  const { id } = await params;
+  const result = await getKelasDetail(id);
 
   if (!result.success || !result.data) {
     notFound();

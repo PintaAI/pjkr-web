@@ -231,7 +231,7 @@ export function GuruDashboard({ user }: GuruDashboardProps) {
                   </Card>
                 </Link>
 
-                <Link href="/guru/classes">
+                <Link href="dashboard/guru/classes">
                   <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">

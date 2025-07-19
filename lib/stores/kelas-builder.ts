@@ -123,6 +123,7 @@ interface KelasBuilderActions {
   
   // Global actions
   createDraft: (initialMeta: KelasMetaData) => Promise<void>;
+  loadDraft: (kelasId: number) => Promise<void>;
   publishDraft: () => Promise<void>;
   deleteDraft: () => Promise<void>;
   reset: () => void;
@@ -229,7 +230,15 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           });
 
           try {
-            const result = await updateKelas(draftId, meta);
+            // Serialize JSON data to ensure it's safe for server actions
+            const serializedMeta = {
+              ...meta,
+              jsonDescription: meta.jsonDescription 
+                ? JSON.parse(JSON.stringify(meta.jsonDescription))
+                : undefined
+            };
+            
+            const result = await updateKelas(draftId, serializedMeta);
             if (result.success) {
               set((state) => {
                 state.isDirty = false;
@@ -318,7 +327,13 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             const newMateris = materis.filter(m => m.tempId);
             
             if (newMateris.length > 0) {
-              const result = await addMateris(draftId, newMateris);
+              // Serialize JSON data to ensure it's safe for server actions
+              const serializedMateris = newMateris.map(materi => ({
+                ...materi,
+                jsonDescription: JSON.parse(JSON.stringify(materi.jsonDescription || {}))
+              }));
+              
+              const result = await addMateris(draftId, serializedMateris);
               if (result.success) {
                 // Clear optimistic updates
                 set((state) => {
@@ -492,7 +507,15 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           });
 
           try {
-            const result = await createDraftKelas(initialMeta);
+            // Serialize JSON data to ensure it's safe for server actions
+            const serializedMeta = {
+              ...initialMeta,
+              jsonDescription: initialMeta.jsonDescription 
+                ? JSON.parse(JSON.stringify(initialMeta.jsonDescription))
+                : undefined
+            };
+            
+            const result = await createDraftKelas(serializedMeta);
             
             if (result.success && result.data) {
               set((state) => {
@@ -511,6 +534,70 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
               state.error = error instanceof Error ? error.message : 'Failed to create draft';
             });
             toast.error('Failed to create draft');
+          }
+        },
+
+        loadDraft: async (kelasId: number) => {
+          set((state) => {
+            state.isLoading = true;
+            state.error = null;
+          });
+
+          try {
+            const { getKelasById } = await import('@/app/actions/kelas');
+            const result = await getKelasById(kelasId);
+            
+            if (result.success && result.data) {
+              const kelas = result.data;
+              
+              // Check if it's a draft
+              if (!kelas.isDraft) {
+                throw new Error('Can only edit draft classes');
+              }
+
+              set((state) => {
+                state.draftId = kelas.id;
+                state.meta = {
+                  title: kelas.title,
+                  description: kelas.description || '',
+                  jsonDescription: kelas.jsonDescription,
+                  htmlDescription: kelas.htmlDescription || '',
+                  type: kelas.type,
+                  level: kelas.level,
+                  thumbnail: kelas.thumbnail || '',
+                  icon: kelas.icon || '',
+                  isPaidClass: kelas.isPaidClass,
+                  price: kelas.price ? Number(kelas.price) : undefined,
+                  discount: kelas.discount ? Number(kelas.discount) : undefined,
+                  promoCode: kelas.promoCode || '',
+                };
+                
+                // Load existing materis
+                state.materis = kelas.materis.map((materi: any) => ({
+                  id: materi.id,
+                  title: materi.title,
+                  description: materi.description,
+                  jsonDescription: materi.jsonDescription,
+                  htmlDescription: materi.htmlDescription,
+                  order: materi.order,
+                  isDemo: materi.isDemo,
+                }));
+
+                state.isDirty = false;
+                state.isLoading = false;
+                state.currentStep = 'meta';
+              });
+              
+              toast.success('Draft loaded successfully');
+            } else {
+              throw new Error(result.error || 'Failed to load draft');
+            }
+          } catch (error) {
+            set((state) => {
+              state.isLoading = false;
+              state.error = error instanceof Error ? error.message : 'Failed to load draft';
+            });
+            toast.error('Failed to load draft');
           }
         },
 
