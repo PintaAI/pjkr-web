@@ -1,14 +1,16 @@
 import { create } from 'zustand';
 import { devtools, subscribeWithSelector } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
+import { enableMapSet } from 'immer';
 import { KelasType, Difficulty, VocabularyType, PartOfSpeech } from '@prisma/client';
+
+// Enable MapSet plugin for Immer before using it
+enableMapSet();
 import { 
   createDraftKelas, 
-  updateKelasMeta, 
-  addMateriQuick, 
-  addVocabularySetQuick, 
-  addSoalSetQuick, 
-  reorderMateri, 
+  updateKelas, 
+  addMateris, 
+  reorderMateris, 
   publishKelas, 
   deleteDraftKelas 
 } from '@/app/actions/kelas';
@@ -197,12 +199,16 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           });
 
           try {
-            await updateKelasMeta(draftId, meta);
-            set((state) => {
-              state.isDirty = false;
-              state.isLoading = false;
-            });
-            toast.success('Meta information updated successfully');
+            const result = await updateKelas(draftId, meta);
+            if (result.success) {
+              set((state) => {
+                state.isDirty = false;
+                state.isLoading = false;
+              });
+              toast.success('Meta information updated successfully');
+            } else {
+              throw new Error(result.error || 'Failed to update meta');
+            }
           } catch (error) {
             set((state) => {
               state.isLoading = false;
@@ -282,24 +288,30 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             const newMateris = materis.filter(m => m.tempId);
             
             if (newMateris.length > 0) {
-              await addMateriQuick(draftId, newMateris);
-              
-              // Clear optimistic updates
-              set((state) => {
-                state.materis.forEach((m: MateriData) => {
-                  if (m.tempId) {
-                    state.optimisticUpdates.delete(m.tempId);
-                    delete m.tempId;
-                  }
+              const result = await addMateris(draftId, newMateris);
+              if (result.success) {
+                // Clear optimistic updates
+                set((state) => {
+                  state.materis.forEach((m: MateriData) => {
+                    if (m.tempId) {
+                      state.optimisticUpdates.delete(m.tempId);
+                      delete m.tempId;
+                    }
+                  });
                 });
-              });
+              } else {
+                throw new Error(result.error || 'Failed to save materis');
+              }
             }
 
             // Handle reordering if needed
             const existingMateris = materis.filter(m => m.id && !m.tempId);
             if (existingMateris.length > 0) {
               const reorderData = existingMateris.map(m => ({ id: m.id!, order: m.order }));
-              await reorderMateri(draftId, reorderData);
+              const reorderResult = await reorderMateris(draftId, reorderData);
+              if (!reorderResult.success) {
+                throw new Error(reorderResult.error || 'Failed to reorder materis');
+              }
             }
 
             set((state) => {
@@ -358,8 +370,8 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
         },
 
         saveVocabularySet: async (index: number) => {
-          const { draftId, vocabSets } = get();
-          if (!draftId || !vocabSets[index]) return;
+          const { vocabSets } = get();
+          if (!vocabSets[index]) return;
 
           const vocabSet = vocabSets[index];
           if (!vocabSet.tempId) return; // Already saved
@@ -370,19 +382,13 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           });
 
           try {
-            const result = await addVocabularySetQuick(draftId, vocabSet);
+            // Note: Vocabulary functionality not implemented in simplified actions
+            // This would need to be implemented if vocabulary features are needed
+            toast.info('Vocabulary functionality not implemented yet');
             
             set((state) => {
-              if (state.vocabSets[index]) {
-                state.vocabSets[index].id = result.setId;
-                if (state.vocabSets[index].tempId) {
-                  state.optimisticUpdates.delete(state.vocabSets[index].tempId!);
-                  delete state.vocabSets[index].tempId;
-                }
-              }
               state.isLoading = false;
             });
-            toast.success('Vocabulary set saved successfully');
           } catch (error) {
             set((state) => {
               state.isLoading = false;
@@ -420,8 +426,8 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
         },
 
         saveSoalSet: async (index: number) => {
-          const { draftId, soalSets } = get();
-          if (!draftId || !soalSets[index]) return;
+          const { soalSets } = get();
+          if (!soalSets[index]) return;
 
           const soalSet = soalSets[index];
           if (!soalSet.tempId) return; // Already saved
@@ -432,16 +438,13 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           });
 
           try {
-            const result = await addSoalSetQuick(draftId, soalSet.koleksiSoalId);
+            // Note: Soal set functionality not implemented in simplified actions
+            // This would need to be implemented if assessment features are needed
+            toast.info('Question set functionality not implemented yet');
             
             set((state) => {
-              if (state.soalSets[index] && state.soalSets[index].tempId) {
-                state.optimisticUpdates.delete(state.soalSets[index].tempId!);
-                delete state.soalSets[index].tempId;
-              }
               state.isLoading = false;
             });
-            toast.success('Question set linked successfully');
           } catch (error) {
             set((state) => {
               state.isLoading = false;
@@ -461,13 +464,17 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           try {
             const result = await createDraftKelas(initialMeta);
             
-            set((state) => {
-              state.draftId = result.data.id;
-              state.meta = initialMeta;
-              state.isDirty = false;
-              state.isLoading = false;
-            });
-            toast.success('Draft created successfully');
+            if (result.success && result.data) {
+              set((state) => {
+                state.draftId = result.data.id;
+                state.meta = initialMeta;
+                state.isDirty = false;
+                state.isLoading = false;
+              });
+              toast.success('Draft created successfully');
+            } else {
+              throw new Error(result.error || 'Failed to create draft');
+            }
           } catch (error) {
             set((state) => {
               state.isLoading = false;
@@ -487,12 +494,16 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           });
 
           try {
-            await publishKelas(draftId);
+            const result = await publishKelas(draftId);
             
-            set((state) => {
-              state.isLoading = false;
-            });
-            toast.success('Class published successfully');
+            if (result.success) {
+              set((state) => {
+                state.isLoading = false;
+              });
+              toast.success('Class published successfully');
+            } else {
+              throw new Error(result.error || 'Failed to publish class');
+            }
           } catch (error) {
             set((state) => {
               state.isLoading = false;
@@ -512,21 +523,25 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           });
 
           try {
-            await deleteDraftKelas(draftId);
+            const result = await deleteDraftKelas(draftId);
             
-            set((state) => {
-              // Reset state
-              state.draftId = null;
-              state.currentStep = 'meta';
-              state.meta = initialMeta;
-              state.materis = [];
-              state.vocabSets = [];
-              state.soalSets = [];
-              state.isDirty = false;
-              state.optimisticUpdates.clear();
-              state.isLoading = false;
-            });
-            toast.success('Draft deleted successfully');
+            if (result.success) {
+              set((state) => {
+                // Reset state
+                state.draftId = null;
+                state.currentStep = 'meta';
+                state.meta = initialMeta;
+                state.materis = [];
+                state.vocabSets = [];
+                state.soalSets = [];
+                state.isDirty = false;
+                state.optimisticUpdates.clear();
+                state.isLoading = false;
+              });
+              toast.success('Draft deleted successfully');
+            } else {
+              throw new Error(result.error || 'Failed to delete draft');
+            }
           } catch (error) {
             set((state) => {
               state.isLoading = false;

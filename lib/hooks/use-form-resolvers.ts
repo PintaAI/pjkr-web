@@ -119,27 +119,27 @@ export const stepPricingDefaults: Partial<StepPricingFormData> = {
 export const getFormResolver = (formType: string) => {
   switch (formType) {
     case 'kelas-meta':
-      return useKelasMetaResolver();
+      return zodResolver(KelasMetaSchema);
     case 'refined-kelas-meta':
-      return useRefinedKelasMetaResolver();
+      return zodResolver(RefinedKelasMetaSchema);
     case 'materi-quick':
-      return useMateriQuickResolver();
+      return zodResolver(MateriQuickSchema);
     case 'vocabulary-quick':
-      return useVocabularyQuickResolver();
+      return zodResolver(VocabularyQuickSchema);
     case 'vocabulary-item':
-      return useVocabularyItemResolver();
+      return zodResolver(VocabularyItemSchema);
     case 'soal-set-link':
-      return useSoalSetLinkResolver();
+      return zodResolver(SoalSetLinkSchema);
     case 'reorder':
-      return useReorderResolver();
+      return zodResolver(ReorderSchema);
     case 'step-meta':
-      return useStepMetaResolver();
+      return zodResolver(StepMetaSchema);
     case 'step-content':
-      return useStepContentResolver();
+      return zodResolver(StepContentSchema);
     case 'step-pricing':
-      return useStepPricingResolver();
+      return zodResolver(StepPricingSchema);
     case 'complete-kelas':
-      return useCompleteKelasResolver();
+      return zodResolver(CompleteKelasSchema);
     default:
       throw new Error(`Unknown form type: ${formType}`);
   }

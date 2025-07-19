@@ -321,7 +321,7 @@ export function UITest() {
           <div className="flex flex-wrap gap-4">
             <Button>기본값</Button>
             <Button variant="secondary">보조</Button>
-            <Button variant="accent">강조</Button>
+            <Button variant="default">강조</Button>
             <Button variant="destructive">위험</Button>
             <Button variant="outline">외곽선</Button>
             <Button variant="ghost">투명</Button>

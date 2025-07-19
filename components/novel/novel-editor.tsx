@@ -19,18 +19,22 @@ import { useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { jsonToHTML } from "@/lib/novel-utils";
 import { YoutubeDialogHandler } from "./youtube-dialog-handler";
+import { Check, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface NovelEditorProps {
   initialContent?: any;
   onUpdate?: (data: { json: any; html: string }) => void;
   placeholder?: string;
   className?: string;
+  compact?: boolean;
 }
 
 export function NovelEditor({
   initialContent,
   onUpdate,
   className,
+  compact = false,
 }: NovelEditorProps) {
   const [content, setContent] = useState(initialContent);
   const [saveStatus, setSaveStatus] = useState("Saved");
@@ -57,11 +61,21 @@ export function NovelEditor({
   return (
     <YoutubeDialogHandler>
       <div className={className}>
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-sm text-muted-foreground">
-          Status: {saveStatus}
+        <div className="flex items-center justify-end mb-2">
+          <div className="flex items-center gap-1.5">
+            {saveStatus === "Saving..." ? (
+              <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+            ) : (
+              <div className={cn(
+                "h-2 w-2 rounded-full",
+                saveStatus === "Saved" ? "bg-green-500" : "bg-muted-foreground"
+              )} />
+            )}
+            <span className="text-xs text-muted-foreground">
+              {saveStatus === "Saving..." ? "Saving" : "Saved"}
+            </span>
+          </div>
         </div>
-      </div>
       
       <EditorRoot>
         <EditorContent
@@ -69,7 +83,7 @@ export function NovelEditor({
           initialContent={content}
           onUpdate={({ editor }) => debouncedUpdates(editor)}
           extensions={defaultExtensions}
-          className="relative min-h-[500px] w-full max-w-screen-lg border border-border bg-background sm:mb-[calc(20vh)] sm:rounded-lg sm:shadow-lg"
+          className={`relative min-h-[500px] w-full max-w-screen-lg border border-border bg-background ${compact ? '' : 'sm:mb-[calc(20vh)]'} sm:rounded-lg sm:shadow-lg`}
           editorProps={{
             handleDOMEvents: {
               keydown: (_view, event) => handleCommandNavigation(event),

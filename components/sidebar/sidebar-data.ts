@@ -11,6 +11,7 @@ import {
   Presentation,
   LayoutDashboard,
   Compass,
+  Palette,
 } from "lucide-react"
 
 export interface SidebarUser {
@@ -195,6 +196,11 @@ export function getSidebarData(userRole?: UserRole) {
         name: "UI Test",
         url: "/ui",
         icon: Frame,
+      },
+      {
+        name: "Generate Color Scheme",
+        url: "/color-scheme",
+        icon: Palette,
       },
     ] as SidebarProject[],
   };

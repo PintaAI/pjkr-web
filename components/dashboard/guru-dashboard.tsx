@@ -13,7 +13,8 @@ import {
   Calendar, 
   MessageSquare,
   TrendingUp,
-  Award
+  Award,
+  PlusCircle
 } from "lucide-react";
 import Link from "next/link";
 import { AuthButton } from "../auth/auth-button";
@@ -183,7 +184,30 @@ export function GuruDashboard({ user }: GuruDashboardProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <Link href="/dashboard/guru/kelas-builder">
+                  <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <PlusCircle className="h-6 w-6 text-emerald-500" />
+                        <Badge variant="default" className="text-xs bg-emerald-100 text-emerald-800">
+                          New
+                        </Badge>
+                      </div>
+                      <CardTitle className="text-lg">Kelas Builder</CardTitle>
+                      <CardDescription>
+                        Create comprehensive Korean language classes with guided steps
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Build Classes</span>
+                        <span className="font-medium">Step-by-step</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+
                 <Link href="/guru/content">
                   <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
                     <CardHeader className="pb-3">

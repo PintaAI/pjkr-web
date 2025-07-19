@@ -48,9 +48,9 @@ export function useUserManagement(initialData: UserManagementData) {
       setUsers(usersData.users);
       setCurrentPage(usersData.currentPage);
       setHasNextPage(usersData.hasNextPage);
-    } catch (error) {
+    } catch (err) {
       toast.error("Failed to load users");
-      console.error("Error loading users:", error);
+      console.error("Error loading users:", err);
     } finally {
       setIsLoading(false);
     }
@@ -74,9 +74,9 @@ export function useUserManagement(initialData: UserManagementData) {
       setUsers(prevUsers => [...prevUsers, ...usersData.users]);
       setCurrentPage(usersData.currentPage);
       setHasNextPage(usersData.hasNextPage);
-    } catch (error) {
+    } catch (err) {
       toast.error("Failed to load more users");
-      console.error("Error loading more users:", error);
+      console.error("Error loading more users:", err);
     } finally {
       setIsLoadingMore(false);
     }
@@ -115,7 +115,7 @@ export function useUserManagement(initialData: UserManagementData) {
       await toggleUserEmailVerification(user.id);
       toast.success(`Email verification ${user.emailVerified ? 'disabled' : 'enabled'}`);
       loadUsers();
-    } catch (error) {
+    } catch {
       toast.error("Failed to toggle email verification");
     }
   };
@@ -128,7 +128,7 @@ export function useUserManagement(initialData: UserManagementData) {
         setDeleteDialogOpen(false);
         setSelectedUser(null);
         loadUsers();
-      } catch (error) {
+      } catch {
         toast.error("Failed to delete user");
       }
     }
@@ -142,7 +142,7 @@ export function useUserManagement(initialData: UserManagementData) {
         setEditDialogOpen(false);
         setSelectedUser(null);
         loadUsers();
-      } catch (error) {
+      } catch {
         toast.error("Failed to update user");
       }
     }
