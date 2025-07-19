@@ -46,6 +46,11 @@ export function StepPublish() {
     try {
       await publishDraft();
       setIsPublished(true);
+      
+      // Navigate to dashboard after successful publish
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 2000); // Wait 2 seconds to show success message
     } catch (error) {
       console.error('Error publishing course:', error);
     } finally {
@@ -59,7 +64,7 @@ export function StepPublish() {
   };
 
   const handleGoToDashboard = () => {
-    router.push('/dashboard/guru');
+    router.push('/dashboard');
   };
 
   if (isPublished) {
@@ -128,6 +133,7 @@ export function StepPublish() {
           Ready to make your course available to students? Review the final details and publish.
         </p>
       </div>
+
 
       {/* Publishing Requirements */}
       <Card>
@@ -254,7 +260,7 @@ export function StepPublish() {
             <div className="flex gap-4">
               <Button 
                 onClick={handlePublish}
-                disabled={isPublishing}
+                disabled={isPublishing || !draftId}
                 className="flex items-center gap-2"
                 size="lg"
               >
@@ -267,6 +273,7 @@ export function StepPublish() {
                   <>
                     <Rocket className="h-4 w-4" />
                     Publish Course
+                    {!draftId && " (No Draft ID)"}
                   </>
                 )}
               </Button>
@@ -279,6 +286,16 @@ export function StepPublish() {
                 Save as Draft
               </Button>
             </div>
+            
+            {!draftId && (
+              <Alert variant="destructive" className="mt-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Missing Draft ID:</strong> You need to create a draft first before publishing. 
+                  Go back to the Meta step and save your course information.
+                </AlertDescription>
+              </Alert>
+            )}
           </CardContent>
         </Card>
       ) : (

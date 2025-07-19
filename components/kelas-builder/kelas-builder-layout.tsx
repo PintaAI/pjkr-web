@@ -209,7 +209,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                   return (
                     <button
                       key={step.id}
-                      onClick={() => setCurrentStep(step.id as any)}
+                      onClick={async () => await setCurrentStep(step.id as any)}
                       className={cn(
                         "w-full text-left p-3 rounded-lg border-2 transition-all duration-200 group hover:shadow-md",
                         status === 'current' && "border-primary bg-primary/10 shadow-sm",
@@ -329,7 +329,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
               </div>
 
               <Button
-                onClick={nextStep}
+                onClick={async () => await nextStep()}
                 disabled={!canGoNext() || isLoading}
                 className="flex items-center gap-2"
               >

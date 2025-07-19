@@ -88,7 +88,7 @@
   --success-foreground: oklch(1.0000 0 0);
   --fail: oklch(0.6500 0.0800 0);
   --fail-foreground: oklch(1.0000 0 0);
-  --border: oklch(0.2167 0.0015 197.0424);
+  --border: oklch(0.3500 0.0015 197.0424);
   --input: oklch(0.4017 0 0);
   --ring: oklch(0.7817 0.0456 154.3341);
   --chart-1: oklch(0.7817 0.0456 154.3341);

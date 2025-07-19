@@ -25,14 +25,8 @@ export default function KelasBuilderPage() {
     clearError 
   } = useKelasBuilderStore();
 
-  useEffect(() => {
-    // Reset store when component mounts to ensure clean state
-    return () => {
-      if (!draftId) {
-        reset();
-      }
-    };
-  }, [draftId, reset]);
+  // Remove the problematic useEffect that was resetting data during navigation
+  // The store should persist data between navigation steps
 
   const renderCurrentStep = () => {
     switch (currentStep) {

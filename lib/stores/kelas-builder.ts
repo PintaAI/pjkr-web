@@ -157,13 +157,43 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
         optimisticUpdates: new Set(),
 
         // Step navigation
-        setCurrentStep: (step: BuilderStep) => {
+        setCurrentStep: async (step: BuilderStep) => {
+          const { draftId, meta, createDraft } = get();
+          
+          // Auto-create draft if navigating away from meta and no draft exists
+          if (step !== 'meta' && !draftId && meta.title.trim() !== '') {
+            try {
+              await createDraft(meta);
+            } catch (error) {
+              console.error('Failed to auto-create draft:', error);
+              // Set error state so user knows what happened
+              set((state) => {
+                state.error = 'Failed to create draft: ' + (error instanceof Error ? error.message : 'Unknown error');
+              });
+            }
+          }
+          
           set((state) => {
             state.currentStep = step;
           });
         },
 
-        nextStep: () => {
+        nextStep: async () => {
+          const { currentStep, draftId, meta, createDraft } = get();
+          
+          // Auto-create draft if leaving meta step and no draft exists
+          if (currentStep === 'meta' && !draftId && meta.title.trim() !== '') {
+            try {
+              await createDraft(meta);
+            } catch (error) {
+              console.error('Failed to auto-create draft in nextStep:', error);
+              // Set error state
+              set((state) => {
+                state.error = 'Failed to create draft: ' + (error instanceof Error ? error.message : 'Unknown error');
+              });
+            }
+          }
+          
           set((state) => {
             const currentIndex = stepOrder.indexOf(state.currentStep);
             if (currentIndex < stepOrder.length - 1) {
@@ -485,7 +515,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
         },
 
         publishDraft: async () => {
-          const { draftId } = get();
+          const { draftId, materis, saveMateris } = get();
           if (!draftId) return;
 
           set((state) => {
@@ -494,6 +524,12 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           });
 
           try {
+            // Save any unsaved materis before publishing
+            const unsavedMateris = materis.filter(m => m.tempId);
+            if (unsavedMateris.length > 0) {
+              await saveMateris();
+            }
+
             const result = await publishKelas(draftId);
             
             if (result.success) {
