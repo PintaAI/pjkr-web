@@ -250,12 +250,13 @@ export default function KelasListPage({ initialKelas, initialStats, initialMeta 
         {kelas.map((kelasItem) => (
           <Card key={kelasItem.id} className="overflow-hidden hover:shadow-lg transition-shadow">
             <div className="relative">
-              <div className="w-full h-48 bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
+              <div className="relative w-full h-48 bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
                 {kelasItem.thumbnail ? (
                   <Image 
                     src={kelasItem.thumbnail} 
                     alt={kelasItem.title}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
                   />
                 ) : (
                   <BookOpen className="h-16 w-16 text-muted-foreground" />

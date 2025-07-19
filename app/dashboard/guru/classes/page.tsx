@@ -17,7 +17,7 @@ export default async function Page() {
       throw new Error(result.error);
     }
 
-    return <GuruClassesPage classes={result.data || []} user={session.user} />;
+    return <GuruClassesPage classes={result.data || []} />;
   } catch (error) {
     console.error("Guru classes page error:", error);
     redirect("/dashboard");

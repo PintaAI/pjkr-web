@@ -193,6 +193,44 @@ export async function publishKelas(id: number) {
   }
 }
 
+// Unpublish kelas
+export async function unpublishKelas(id: number) {
+  try {
+    const session = await assertAuthenticated();
+
+    // Check ownership
+    const kelas = await prisma.kelas.findUnique({
+      where: { id },
+      select: { authorId: true, isDraft: true },
+    });
+
+    if (!kelas || kelas.authorId !== session.user.id) {
+      return { success: false, error: "Not authorized" };
+    }
+
+    if (kelas.isDraft) {
+      return { success: false, error: "Already unpublished" };
+    }
+
+    // Unpublish kelas and materis
+    await prisma.$transaction([
+      prisma.kelas.update({
+        where: { id },
+        data: { isDraft: true },
+      }),
+      prisma.materi.updateMany({
+        where: { kelasId: id },
+        data: { isDraft: true },
+      }),
+    ]);
+
+    return { success: true, message: "Kelas unpublished successfully" };
+  } catch (error) {
+    console.error("Unpublish kelas error:", error);
+    return { success: false, error: "Failed to unpublish kelas" };
+  }
+}
+
 // Delete draft kelas
 export async function deleteDraftKelas(id: number) {
   try {

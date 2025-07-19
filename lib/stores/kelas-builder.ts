@@ -549,11 +549,6 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             
             if (result.success && result.data) {
               const kelas = result.data;
-              
-              // Check if it's a draft
-              if (!kelas.isDraft) {
-                throw new Error('Can only edit draft classes');
-              }
 
               set((state) => {
                 state.draftId = kelas.id;
@@ -588,7 +583,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                 state.currentStep = 'meta';
               });
               
-              toast.success('Draft loaded successfully');
+              toast.success('Class loaded successfully');
             } else {
               throw new Error(result.error || 'Failed to load draft');
             }

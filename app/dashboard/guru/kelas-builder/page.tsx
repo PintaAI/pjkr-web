@@ -23,8 +23,7 @@ export default function KelasBuilderPage() {
     error, 
     clearError,
     loadDraft,
-    draftId,
-    reset
+    draftId
   } = useKelasBuilderStore();
 
   // Handle edit mode - only load draft on initial mount

@@ -3,10 +3,10 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Image from "next/image";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { KelasMetaSchema } from "@/lib/validation/kelas-schemas";
 import { KelasType, Difficulty } from "@prisma/client";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,10 +14,11 @@ import { Switch } from "@/components/ui/switch";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { NovelEditor } from "@/components/novel/novel-editor";
+import { MediaUpload } from "@/components/ui/media-upload";
+import { CloudinaryImage } from "@/components/ui/cloudinary-image";
 import { 
   BookOpen, 
   DollarSign, 
-  Settings, 
   Image as ImageIcon,
   Hash,
   Percent
@@ -27,7 +28,6 @@ export function StepMeta() {
   const { 
     meta, 
     draftId, 
-    isLoading, 
     updateMeta, 
     createDraft, 
     saveMeta 
@@ -41,10 +41,13 @@ export function StepMeta() {
   const { watch } = form;
   const watchedValues = watch();
 
-  // Update store when form values change
+  // Update store when form values change, but only if values actually changed
   useEffect(() => {
-    updateMeta(watchedValues);
-  }, [watchedValues, updateMeta]);
+    const hasActualChanges = JSON.stringify(watchedValues) !== JSON.stringify(meta);
+    if (hasActualChanges) {
+      updateMeta(watchedValues);
+    }
+  }, [watchedValues, updateMeta, meta]);
 
   const onSubmit = async (data: any) => {
     try {
@@ -62,12 +65,7 @@ export function StepMeta() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold tracking-tight">Course Information</h2>
-        <p className="text-muted-foreground">
-          Provide basic information about your course. This will help students understand what they&apos;ll learn.
-        </p>
-      </div>
+
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -237,16 +235,74 @@ export function StepMeta() {
                 name="thumbnail"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Thumbnail URL</FormLabel>
+                    <FormLabel>Course Thumbnail</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="https://example.com/thumbnail.jpg"
-                        {...field}
-                        value={field.value || ""}
-                      />
+                      <div className="space-y-4">
+                        <MediaUpload
+                          onUpload={(files) => {
+                            if (files.length > 0) {
+                              field.onChange(files[0].url);
+                            }
+                          }}
+                          maxFiles={1}
+                          maxSize={5}
+                          allowedTypes={['image']}
+                          accept="image/*"
+                          className="max-w-md"
+                        />
+                        
+                        {field.value && (
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">Current Thumbnail:</p>
+                            <div className="relative w-48 h-32 border rounded-lg overflow-hidden">
+                              {field.value.includes('cloudinary.com') ? (
+                                <CloudinaryImage
+                                  publicId={(() => {
+                                    // Extract public ID from Cloudinary URL
+                                    // Handle different Cloudinary URL formats
+                                    const url = field.value;
+                                    if (url.includes('/upload/')) {
+                                      const uploadIndex = url.indexOf('/upload/');
+                                      const afterUpload = url.substring(uploadIndex + 8);
+                                      // Remove version if present (v1234567890/)
+                                      const withoutVersion = afterUpload.replace(/^v\d+\//, '');
+                                      // Remove file extension
+                                      const parts = withoutVersion.split('.');
+                                      return parts[0];
+                                    } else {
+                                      // Fallback for simple URLs
+                                      const parts = url.split('/');
+                                      const lastPart = parts[parts.length - 1];
+                                      return lastPart.split('.')[0];
+                                    }
+                                  })()}
+                                  alt="Course thumbnail"
+                                  width={192}
+                                  height={128}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <Image
+                                  src={field.value}
+                                  alt="Course thumbnail"
+                                  width={192}
+                                  height={128}
+                                  className="w-full h-full object-cover"
+                                />
+                              )}
+                            </div>
+                            <Input
+                              placeholder="Or paste thumbnail URL"
+                              value={field.value || ""}
+                              onChange={(e) => field.onChange(e.target.value)}
+                              className="text-sm"
+                            />
+                          </div>
+                        )}
+                      </div>
                     </FormControl>
                     <FormDescription>
-                      A URL to an image that represents your course (optional).
+                      Upload an image or provide a URL for your course thumbnail. This will be displayed in course listings and previews.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

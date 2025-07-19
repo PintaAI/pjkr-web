@@ -1,22 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { NovelEditor } from "@/components/novel/novel-editor";
-import { jsonToPlainText } from "@/lib/novel-utils";
-import { AddLessonForm } from "./add-lesson-form";
+import { LessonForm } from "./add-lesson-form";
 import { 
-  Plus, 
   FileText, 
   Trash2, 
-  GripVertical,
-  Edit2
+  GripVertical
 } from "lucide-react";
 import {
   DndContext,
@@ -40,35 +32,16 @@ import { CSS } from "@dnd-kit/utilities";
 interface SortableMateriItemProps {
   materi: any;
   index: number;
-  editingMateri: number | null;
-  onEditMateri: (index: number) => void;
-  onSaveEdit: () => void;
-  onCancelEdit: () => void;
   onUpdateMateri: (index: number, data: Partial<any>) => void;
   onRemoveMateri: (index: number) => void;
-  onEditContentUpdate: (index: number, data: { json: any; html: string }) => void;
 }
 
 function SortableMateriItem({
   materi,
   index,
-  editingMateri,
-  onEditMateri,
-  onSaveEdit,
-  onCancelEdit,
   onUpdateMateri,
   onRemoveMateri,
-  onEditContentUpdate,
 }: SortableMateriItemProps) {
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editForm, setEditForm] = useState({
-    title: materi.title,
-    description: materi.description,
-    jsonDescription: materi.jsonDescription,
-    htmlDescription: materi.htmlDescription,
-    isDemo: materi.isDemo,
-  });
-
   const {
     attributes,
     listeners,
@@ -83,28 +56,8 @@ function SortableMateriItem({
     transition: isDragging ? 'none' : transition,
   };
 
-  const handleSaveEdit = () => {
-    onUpdateMateri(index, editForm);
-    setIsEditDialogOpen(false);
-  };
-
-  const handleCancelEdit = () => {
-    setEditForm({
-      title: materi.title,
-      description: materi.description,
-      jsonDescription: materi.jsonDescription,
-      htmlDescription: materi.htmlDescription,
-      isDemo: materi.isDemo,
-    });
-    setIsEditDialogOpen(false);
-  };
-
-  const handleEditContentUpdate = (data: { json: any; html: string }) => {
-    setEditForm(prev => ({
-      ...prev,
-      jsonDescription: data.json,
-      htmlDescription: data.html
-    }));
+  const handleEditSubmit = (updatedData: any) => {
+    onUpdateMateri(index, updatedData);
   };
 
   return (
@@ -138,14 +91,11 @@ function SortableMateriItem({
               {materi.tempId && (
                 <Badge key={`unsaved-${index}`} variant="outline" className="text-xs">Unsaved</Badge>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsEditDialogOpen(true)}
-                className="h-8 w-8 p-0"
-              >
-                <Edit2 className="h-4 w-4" />
-              </Button>
+              <LessonForm
+                mode="edit"
+                initialData={materi}
+                onSubmit={handleEditSubmit}
+              />
               <Button
                 variant="ghost"
                 size="sm"
@@ -159,55 +109,6 @@ function SortableMateriItem({
         </CardContent>
       </Card>
 
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Lesson</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Title</Label>
-              <Input
-                value={editForm.title}
-                onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Input
-                value={editForm.description}
-                onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Content</Label>
-              <NovelEditor
-                initialContent={editForm.jsonDescription}
-                onUpdate={handleEditContentUpdate}
-                className="min-h-[300px]"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id={`edit-demo-dialog-${index}`}
-                checked={editForm.isDemo}
-                onChange={(e) => setEditForm(prev => ({ ...prev, isDemo: e.target.checked }))}
-              />
-              <Label htmlFor={`edit-demo-dialog-${index}`}>Mark as demo lesson (free preview)</Label>
-            </div>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={handleCancelEdit}>
-                Cancel
-              </Button>
-              <Button onClick={handleSaveEdit}>
-                Save Changes
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
@@ -215,17 +116,11 @@ function SortableMateriItem({
 export function StepContent() {
   const { 
     materis, 
-    draftId, 
-    isLoading, 
     addMateri, 
     removeMateri, 
     updateMateri,
-    reorderMateris,
-    saveMateris 
+    reorderMateris
   } = useKelasBuilderStore();
-
-  const [isAddingMateri, setIsAddingMateri] = useState(false);
-  const [editingMateri, setEditingMateri] = useState<number | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -260,93 +155,10 @@ export function StepContent() {
     isDemo: boolean;
   }) => {
     addMateri(lesson);
-    setIsAddingMateri(false);
-  };
-
-  const handleEditMateri = (index: number) => {
-    setEditingMateri(index);
-  };
-
-  const handleSaveEdit = () => {
-    setEditingMateri(null);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingMateri(null);
-  };
-
-  const handleEditContentUpdate = (index: number, data: { json: any; html: string }) => {
-    updateMateri(index, {
-      jsonDescription: data.json,
-      htmlDescription: data.html
-    });
-  };
-
-  const handleSaveMateris = async () => {
-    if (draftId) {
-      await saveMateris();
-    }
   };
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold tracking-tight">Course Content</h2>
-        <p className="text-muted-foreground">
-          Add lessons and learning materials to your course. Each lesson should have a clear title and comprehensive content.
-        </p>
-      </div>
-
-      {/* Existing Materis */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={materis.map((_, index) => `materi-${index}`)}
-          strategy={verticalListSortingStrategy}
-        >
-          <div className="space-y-4">
-            {materis.map((materi, index) => (
-              <SortableMateriItem
-                key={materi.tempId || materi.id || `materi-${index}`}
-                materi={materi}
-                index={index}
-                editingMateri={editingMateri}
-                onEditMateri={handleEditMateri}
-                onSaveEdit={handleSaveEdit}
-                onCancelEdit={handleCancelEdit}
-                onUpdateMateri={updateMateri}
-                onRemoveMateri={removeMateri}
-                onEditContentUpdate={handleEditContentUpdate}
-              />
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
-
-      {/* Add New Materi */}
-      <Dialog open={isAddingMateri} onOpenChange={setIsAddingMateri}>
-        <DialogTrigger asChild>
-          <Button
-            className="flex items-center gap-2"
-            variant="outline"
-          >
-            <Plus className="h-4 w-4" />
-            Add New Lesson
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Add New Lesson</DialogTitle>
-          </DialogHeader>
-          <AddLessonForm 
-            onAdd={handleAddMateri}
-            onCancel={() => setIsAddingMateri(false)}
-          />
-        </DialogContent>
-      </Dialog>
 
       {/* Summary */}
       <Card>
@@ -378,12 +190,40 @@ export function StepContent() {
         </CardContent>
       </Card>
 
+      {/* Existing Materis */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={materis.map((_, index) => `materi-${index}`)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="space-y-4">
+            {materis.map((materi, index) => (
+              <SortableMateriItem
+                key={materi.tempId || materi.id || `materi-${index}`}
+                materi={materi}
+                index={index}
+                onUpdateMateri={updateMateri}
+                onRemoveMateri={removeMateri}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+
+      {/* Add New Materi */}
+      <LessonForm onSubmit={handleAddMateri} />
+
+
       {/* Note: Global save button is available in the header when there are unsaved changes */}
       {materis.filter(m => m.tempId).length > 0 && (
         <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
           <p className="text-sm text-blue-700 dark:text-blue-300">
             You have {materis.filter(m => m.tempId).length} unsaved lesson(s). 
-            Use the "Save" button in the header to save your changes.
+            Use the Save button in the header to save your changes.
           </p>
         </div>
       )}

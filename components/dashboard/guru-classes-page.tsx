@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -14,19 +14,17 @@ import {
   Plus,
   Edit3,
   Eye,
+  EyeOff,
   Trash2,
   Calendar,
-  Star,
   DollarSign,
-  Clock,
   FileText,
   Settings,
   MoreVertical,
-  Filter
 } from "lucide-react";
 import { KelasType, Difficulty } from "@prisma/client";
 import Link from "next/link";
-import { deleteDraftKelas, publishKelas } from "@/app/actions/kelas";
+import { deleteDraftKelas, publishKelas, unpublishKelas } from "@/app/actions/kelas";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -96,13 +94,14 @@ const levelColors: Record<Difficulty, string> = {
   ADVANCED: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
 };
 
-export function GuruClassesPage({ classes: initialClasses, user }: GuruClassesPageProps) {
+export function GuruClassesPage({ classes: initialClasses }: Omit<GuruClassesPageProps, 'user'>) {
   const [classes, setClasses] = useState(initialClasses);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<KelasType | "ALL">("ALL");
   const [filterLevel, setFilterLevel] = useState<Difficulty | "ALL">("ALL");
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
   const [isPublishing, setIsPublishing] = useState<number | null>(null);
+  const [isUnpublishing, setIsUnpublishing] = useState<number | null>(null);
 
   const draftClasses = classes.filter(cls => cls.isDraft);
   const publishedClasses = classes.filter(cls => !cls.isDraft);
@@ -149,6 +148,24 @@ export function GuruClassesPage({ classes: initialClasses, user }: GuruClassesPa
       console.error("Publish error:", error);
     } finally {
       setIsPublishing(null);
+    }
+  };
+
+  const handleUnpublishClass = async (id: number) => {
+    setIsUnpublishing(id);
+    try {
+      const result = await unpublishKelas(id);
+      if (result.success) {
+        setClasses(prev => prev.map(cls => 
+          cls.id === id ? { ...cls, isDraft: true } : cls
+        ));
+      } else {
+        console.error("Failed to unpublish class:", result.error);
+      }
+    } catch (error) {
+      console.error("Unpublish error:", error);
+    } finally {
+      setIsUnpublishing(null);
     }
   };
 
@@ -217,6 +234,13 @@ export function GuruClassesPage({ classes: initialClasses, user }: GuruClassesPa
               ) : (
                 <>
                   <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/guru/kelas-builder?edit=${cls.id}`}>
+                      <Edit3 className="h-4 w-4 mr-2" />
+                      Edit
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
                     <Link href={`/guru/classes/${cls.id}/analytics`}>
                       <Settings className="h-4 w-4 mr-2" />
                       Analytics
@@ -228,6 +252,36 @@ export function GuruClassesPage({ classes: initialClasses, user }: GuruClassesPa
                       Settings
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <DropdownMenuItem 
+                        className="text-orange-600"
+                        onSelect={(e) => e.preventDefault()}
+                        disabled={isUnpublishing === cls.id}
+                      >
+                        <EyeOff className="h-4 w-4 mr-2" />
+                        {isUnpublishing === cls.id ? "Unpublishing..." : "Unpublish"}
+                      </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Unpublish Class</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to unpublish {cls.title}? This will move the class back to drafts and students will no longer be able to access it.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={() => handleUnpublishClass(cls.id)}
+                          className="bg-orange-600 hover:bg-orange-700"
+                        >
+                          Unpublish
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </>
               )}
             </DropdownMenuContent>
@@ -277,7 +331,7 @@ export function GuruClassesPage({ classes: initialClasses, user }: GuruClassesPa
                 <AlertDialogHeader>
                   <AlertDialogTitle>Publish Class</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to publish "{cls.title}"? Once published, students will be able to enroll in this class.
+                    Are you sure you want to publish {cls.title}? Once published, students will be able to enroll in this class.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

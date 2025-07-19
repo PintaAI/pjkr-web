@@ -19,7 +19,24 @@ export async function getKelasDetail(id: string) {
         id: kelasId,
         isDraft: false, // Only show published classes
       },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        jsonDescription: true,
+        htmlDescription: true,
+        type: true,
+        level: true,
+        thumbnail: true, // Add thumbnail field
+        icon: true,
+        isPaidClass: true,
+        price: true,
+        discount: true,
+        promoCode: true,
+        isDraft: true,
+        createdAt: true,
+        updatedAt: true,
+        authorId: true,
         author: {
           select: {
             id: true,

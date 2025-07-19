@@ -3,14 +3,17 @@
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+
 import { 
-  BookOpen, 
+  
   FileText, 
-  CheckCircle,
+  
   AlertCircle,
-  DollarSign
+  
+  Eye
 } from "lucide-react";
+import KelasDetailPage from "@/components/kelas/kelas-detail-page";
+import { useSession } from "@/lib/hooks/use-session";
 
 export function StepReview() {
   const { 
@@ -19,6 +22,8 @@ export function StepReview() {
     vocabSets, 
     soalSets 
   } = useKelasBuilderStore();
+  
+  const { session } = useSession();
 
   const hasTitle = meta.title && meta.title.trim() !== '';
   const hasDescription = meta.description && meta.description.trim() !== '';
@@ -27,70 +32,70 @@ export function StepReview() {
 
   const isReadyToPublish = hasTitle && hasDescription && hasContent && hasValidPricing;
 
+  // Create mock kelas data from the store for preview
+  const mockKelasData = {
+    id: 999,
+    title: meta.title || "Your Course Title",
+    description: meta.description || "Your course description will appear here",
+    jsonDescription: meta.jsonDescription || null,
+    htmlDescription: meta.htmlDescription || null,
+    type: meta.type as any,
+    level: meta.level as any,
+    thumbnail: meta.thumbnail || null,
+    icon: meta.icon || null,
+    isPaidClass: meta.isPaidClass,
+    price: meta.price || 0,
+    discount: meta.discount || 0,
+    promoCode: meta.promoCode || null,
+    isDraft: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    authorId: session?.user?.id || "preview-author",
+    author: {
+      id: session?.user?.id || "preview-author",
+      name: session?.user?.name || "Course Creator",
+      image: session?.user?.image || null,
+    },
+    materis: materis.map((materi, index) => ({
+      id: materi.id || index,
+      title: materi.title,
+      description: materi.description,
+      order: index + 1,
+      isDemo: materi.isDemo,
+      createdAt: new Date(),
+    })),
+    liveSessions: [],
+    vocabularySets: vocabSets.map((set, index) => ({
+      id: set.id || index,
+      title: set.title,
+      description: set.description || null,
+      icon: null,
+      _count: { items: set.items?.length || 0 },
+    })),
+    posts: [],
+    _count: {
+      members: 0,
+      materis: materis.length,
+      liveSessions: 0,
+      vocabularySets: vocabSets.length,
+      posts: 0,
+    },
+  };
+
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold tracking-tight">Review Your Course</h2>
-        <p className="text-muted-foreground">
-          Review all the information and content before publishing your course.
-        </p>
-      </div>
-
-      {/* Course Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5" />
-            Course Overview
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h4 className="font-semibold mb-2">Title</h4>
-              <p className="text-sm text-muted-foreground">
-                {meta.title || 'No title set'}
-              </p>
+    
+    
+      {!isReadyToPublish && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center text-muted-foreground">
+              <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+              <p>Please complete all requirements before proceeding to publish.</p>
             </div>
-            <div>
-              <h4 className="font-semibold mb-2">Type & Level</h4>
-              <div className="flex gap-2">
-                <Badge variant="outline">{meta.type}</Badge>
-                <Badge variant={
-                  meta.level === 'BEGINNER' ? 'default' :
-                  meta.level === 'INTERMEDIATE' ? 'secondary' :
-                  'destructive'
-                }>
-                  {meta.level}
-                </Badge>
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <h4 className="font-semibold mb-2">Description</h4>
-            <p className="text-sm text-muted-foreground">
-              {meta.description || 'No description set'}
-            </p>
-          </div>
-
-          {meta.isPaidClass && (
-            <div>
-              <h4 className="font-semibold mb-2 flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                Pricing
-              </h4>
-              <div className="flex gap-4 text-sm">
-                <span>Price: ${meta.price || 0}</span>
-                {meta.discount && <span>Discount: {meta.discount}%</span>}
-                {meta.promoCode && <span>Promo: {meta.promoCode}</span>}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Content Summary */}
+          </CardContent>
+        </Card>
+      )}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -122,6 +127,25 @@ export function StepReview() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Eye className="h-5 w-5" />
+            Course Preview
+            <Badge variant="secondary" className="ml-auto">How it will look</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4">
+          <div className="border rounded-lg overflow-hidden max-h-[700px] overflow-y-auto">
+            <div className="scale-75 mt-6 origin-top-left" style={{ width: '133.33%' }}>
+              <KelasDetailPage kelas={mockKelasData} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+
+
       {/* Lessons List */}
       {materis.length > 0 && (
         <Card>
@@ -152,95 +176,6 @@ export function StepReview() {
         </Card>
       )}
 
-      {/* Readiness Check */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5" />
-            Publishing Readiness
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              {hasTitle ? (
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-red-600" />
-              )}
-              <span className={hasTitle ? 'text-green-600' : 'text-red-600'}>
-                Course title is set
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {hasDescription ? (
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-red-600" />
-              )}
-              <span className={hasDescription ? 'text-green-600' : 'text-red-600'}>
-                Course description is set
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {hasContent ? (
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-red-600" />
-              )}
-              <span className={hasContent ? 'text-green-600' : 'text-red-600'}>
-                At least one lesson is added
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {hasValidPricing ? (
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-red-600" />
-              )}
-              <span className={hasValidPricing ? 'text-green-600' : 'text-red-600'}>
-                Pricing is configured correctly
-              </span>
-            </div>
-          </div>
-
-          <Separator className="my-4" />
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {isReadyToPublish ? (
-                <>
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="font-medium text-green-600">Ready to publish</span>
-                </>
-              ) : (
-                <>
-                  <AlertCircle className="h-5 w-5 text-red-600" />
-                  <span className="font-medium text-red-600">Not ready to publish</span>
-                </>
-              )}
-            </div>
-            
-            {isReadyToPublish && (
-              <Badge variant="default">All requirements met</Badge>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {!isReadyToPublish && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center text-muted-foreground">
-              <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-              <p>Please complete all requirements before proceeding to publish.</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

@@ -22,7 +22,8 @@ import {
   AlertCircle,
   XCircle,
   MinusCircle,
-  AlertTriangle
+  AlertTriangle,
+  ArrowLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -83,7 +84,8 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
     prevStep,
     saveMeta,
     saveMateris,
-    clearError
+    clearError,
+    reset
   } = useKelasBuilderStore();
 
   const currentStepIndex = steps.findIndex(step => step.id === currentStep);
@@ -212,6 +214,23 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
         <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
+          {/* Navigation Row */}
+          <div className="flex items-start mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                reset();
+                window.location.href = '/dashboard/guru/classes';
+              }}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Classes
+            </Button>
+          </div>
+
+          {/* Title Row */}
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Course Builder</h1>
@@ -405,7 +424,24 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                         </button>
                       </TooltipTrigger>
                       {completion.message && (
-                        <TooltipContent side="right" className="max-w-xs">
+                        <TooltipContent 
+                          side="right" 
+                          className={cn(
+                            "max-w-xs",
+                            completion.status === 'complete' && "border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200",
+                            completion.status === 'partial' && "border-yellow-200 bg-yellow-50 text-yellow-800 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-200",
+                            completion.status === 'optional' && "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200",
+                            completion.status === 'blocked' && "border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200",
+                            completion.status === 'empty' && "border-gray-200 bg-gray-50 text-gray-800 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+                          )}
+                          arrowClassName={cn(
+                            completion.status === 'complete' && "bg-green-50 fill-green-50 dark:bg-green-950 dark:fill-green-950",
+                            completion.status === 'partial' && "bg-yellow-50 fill-yellow-50 dark:bg-yellow-950 dark:fill-yellow-950",
+                            completion.status === 'optional' && "bg-blue-50 fill-blue-50 dark:bg-blue-950 dark:fill-blue-950",
+                            completion.status === 'blocked' && "bg-red-50 fill-red-50 dark:bg-red-950 dark:fill-red-950",
+                            completion.status === 'empty' && "bg-gray-50 fill-gray-50 dark:bg-gray-950 dark:fill-gray-950"
+                          )}
+                        >
                           <p className="text-sm">{completion.message}</p>
                         </TooltipContent>
                       )}
