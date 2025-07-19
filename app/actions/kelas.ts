@@ -5,25 +5,35 @@ import { assertAuthenticated } from "@/lib/auth-actions";
 import { KelasType, Difficulty } from "@prisma/client";
 import { z } from "zod";
 
-// Simple validation schemas
+// Simple validation schemas - Use z.any() for JSON fields to ensure compatibility with Prisma
 const createKelasSchema = z.object({
   title: z.string().min(1).max(255),
   description: z.string().optional(),
+  jsonDescription: z.any().optional(),
+  htmlDescription: z.string().optional(),
   type: z.nativeEnum(KelasType).default(KelasType.REGULAR),
   level: z.nativeEnum(Difficulty),
   thumbnail: z.string().optional(),
+  icon: z.string().optional(),
   isPaidClass: z.boolean().default(false),
   price: z.number().min(0).optional(),
+  discount: z.number().min(0).optional(),
+  promoCode: z.string().optional(),
 });
 
 const updateKelasSchema = z.object({
   title: z.string().min(1).max(255).optional(),
   description: z.string().optional(),
+  jsonDescription: z.any().optional(),
+  htmlDescription: z.string().optional(),
   type: z.nativeEnum(KelasType).optional(),
   level: z.nativeEnum(Difficulty).optional(),
   thumbnail: z.string().optional(),
+  icon: z.string().optional(),
   isPaidClass: z.boolean().optional(),
   price: z.number().min(0).optional(),
+  discount: z.number().min(0).optional(),
+  promoCode: z.string().optional(),
 });
 
 const materiSchema = z.object({

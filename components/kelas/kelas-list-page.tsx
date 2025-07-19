@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { BookOpen, Users, Search, Filter, Star, Clock, DollarSign } from "lucide
 import { KelasType, Difficulty } from "@prisma/client";
 import Link from "next/link";
 import { filterKelas } from "@/app/actions/kelas-public";
+import Image from "next/image";
 
 interface KelasItem {
   id: number;
@@ -70,14 +71,14 @@ const levelColors: Record<Difficulty, string> = {
 
 export default function KelasListPage({ initialKelas, initialStats, initialMeta }: KelasListPageProps) {
   const [kelas, setKelas] = useState<KelasItem[]>(initialKelas);
-  const [stats, setStats] = useState(initialStats);
+  const [stats] = useState(initialStats);
   const [meta, setMeta] = useState(initialMeta);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<KelasType | "ALL">("ALL");
   const [levelFilter, setLevelFilter] = useState<Difficulty | "ALL">("ALL");
 
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     setLoading(true);
     try {
       const params = {
@@ -99,7 +100,7 @@ export default function KelasListPage({ initialKelas, initialStats, initialMeta 
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, typeFilter, levelFilter]);
 
   const handleLoadMore = async () => {
     if (!meta.hasMore || loading) return;
@@ -135,7 +136,7 @@ export default function KelasListPage({ initialKelas, initialStats, initialMeta 
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [search, typeFilter, levelFilter]);
+  }, [search, typeFilter, levelFilter, handleSearch]);
 
   return (
     <div className="container mx-auto px-6 py-8 max-w-7xl">
@@ -251,7 +252,7 @@ export default function KelasListPage({ initialKelas, initialStats, initialMeta 
             <div className="relative">
               <div className="w-full h-48 bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
                 {kelasItem.thumbnail ? (
-                  <img 
+                  <Image 
                     src={kelasItem.thumbnail} 
                     alt={kelasItem.title}
                     className="w-full h-full object-cover"

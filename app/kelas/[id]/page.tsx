@@ -1,0 +1,20 @@
+import { getKelasDetail } from "@/app/actions/kelas-detail";
+import KelasDetailPage from "@/components/kelas/kelas-detail-page";
+import { notFound } from "next/navigation";
+
+// Force dynamic rendering to ensure fresh data
+export const dynamic = 'force-dynamic';
+
+interface KelasDetailProps {
+  params: { id: string };
+}
+
+export default async function KelasDetail({ params }: KelasDetailProps) {
+  const result = await getKelasDetail(params.id);
+
+  if (!result.success || !result.data) {
+    notFound();
+  }
+
+  return <KelasDetailPage kelas={result.data} />;
+}

@@ -127,7 +127,7 @@ export function StepMeta() {
               <FormField
                 control={form.control}
                 name="htmlDescription"
-                render={({ field }) => (
+                render={() => (
                   <FormItem>
                     <FormLabel>Detailed Description</FormLabel>
                     <FormControl>

@@ -88,7 +88,7 @@ export function DebugPublishState() {
               ) : (
                 <XCircle className="h-4 w-4 text-red-600" />
               )}
-              <span>Title: "{meta.title}"</span>
+              <span>Title: &quot;{meta.title}&quot;</span>
             </div>
             <div className="flex items-center gap-2">
               {hasDescription ? (

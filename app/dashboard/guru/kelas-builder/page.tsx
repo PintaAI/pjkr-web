@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { KelasBuilderLayout } from "@/components/kelas-builder/kelas-builder-layout";
@@ -20,8 +19,6 @@ export default function KelasBuilderPage() {
     currentStep, 
     isLoading, 
     error, 
-    draftId, 
-    reset, 
     clearError 
   } = useKelasBuilderStore();
 

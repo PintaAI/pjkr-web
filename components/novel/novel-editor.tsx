@@ -19,7 +19,7 @@ import { useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { jsonToHTML } from "@/lib/novel-utils";
 import { YoutubeDialogHandler } from "./youtube-dialog-handler";
-import { Check, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NovelEditorProps {

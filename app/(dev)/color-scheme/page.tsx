@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Upload, Download, Palette, Copy } from "lucide-react"
 import { ColorExtractor } from "react-color-extractor"
-import { useColorExtraction, exportPalette, colorUtils, type ColorPalette } from "@/lib/color-extractor"
+import {  exportPalette, type ColorPalette } from "@/lib/color-extractor"
+import Image from "next/image"
 
 export default function ColorSchemePage() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>("")
   const [colorPalette, setColorPalette] = useState<ColorPalette | null>(null)
-  const [isGenerating, setIsGenerating] = useState(false)
+
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -37,7 +38,7 @@ export default function ColorSchemePage() {
     }
     
     setColorPalette(extractedPalette)
-    setIsGenerating(false)
+    
   }
 
 
@@ -78,7 +79,7 @@ export default function ColorSchemePage() {
             >
               {imagePreview ? (
                 <div className="space-y-4">
-                  <img 
+                  <Image 
                     src={imagePreview} 
                     alt="Preview" 
                     className="max-h-48 mx-auto rounded-lg shadow-md"

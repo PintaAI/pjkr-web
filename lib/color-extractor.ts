@@ -1,5 +1,4 @@
 import React from "react"
-import { ColorExtractor } from "react-color-extractor"
 
 export interface ColorPalette {
   primary: string
@@ -20,34 +19,13 @@ export interface ColorExtractionOptions {
  * @param options - Color extraction options
  * @returns Promise that resolves to a ColorPalette
  */
-export const extractColorPalette = (
-  imageSrc: string, 
-  options: ColorExtractionOptions = {}
-): Promise<ColorPalette> => {
-  const { maxColors = 5, format = 'hex' } = options
-  
+export const extractColorPalette = (): Promise<ColorPalette> => {
   return new Promise((resolve, reject) => {
     try {
       // Create a temporary div to render ColorExtractor
       const tempDiv = document.createElement('div')
       tempDiv.style.display = 'none'
       document.body.appendChild(tempDiv)
-      
-      // Use ColorExtractor programmatically
-      const handleColorExtraction = (colors: string[]) => {
-        // Map extracted colors to our color scheme
-        const palette: ColorPalette = {
-          primary: colors[0] || "#3B82F6",
-          secondary: colors[1] || "#8B5CF6", 
-          accent: colors[2] || "#F59E0B",
-          background: colors[3] || "#F8FAFC",
-          foreground: colors[4] || "#1E293B"
-        }
-        
-        // Cleanup
-        document.body.removeChild(tempDiv)
-        resolve(palette)
-      }
       
       // This approach won't work directly since ColorExtractor is a React component
       // We need a different approach for programmatic usage
