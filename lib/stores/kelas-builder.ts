@@ -65,6 +65,34 @@ export interface VocabularySetData {
   tempId?: string; // For optimistic updates
 }
 
+export interface SoalOpsiData {
+  id?: number;
+  opsiText: string;
+  isCorrect: boolean;
+  order: number;
+  tempId?: string;
+}
+
+export interface SoalData {
+  id?: number;
+  pertanyaan: string;
+  difficulty?: Difficulty;
+  explanation?: string;
+  isActive: boolean;
+  opsis: SoalOpsiData[];
+  tempId?: string;
+}
+
+export interface KoleksiSoalData {
+  id?: number;
+  nama: string;
+  deskripsi?: string;
+  isPrivate: boolean;
+  isDraft: boolean;
+  soals: SoalData[];
+  tempId?: string;
+}
+
 export interface SoalSetData {
   id?: number;
   koleksiSoalId: number;
@@ -87,6 +115,7 @@ interface KelasBuilderState {
   materis: MateriData[];
   vocabSets: VocabularySetData[];
   soalSets: SoalSetData[];
+  koleksiSoals: KoleksiSoalData[];
   
   // UI state
   isDirty: boolean;
@@ -121,6 +150,22 @@ interface KelasBuilderActions {
   removeSoalSet: (index: number) => void;
   saveSoalSet: (index: number) => Promise<void>;
   
+  // Koleksi Soal actions
+  addKoleksiSoal: (koleksiSoal: Omit<KoleksiSoalData, 'id' | 'soals'> & { soals?: Omit<SoalData, 'opsis'>[] }) => void;
+  updateKoleksiSoal: (index: number, koleksiSoal: Partial<KoleksiSoalData>) => void;
+  removeKoleksiSoal: (index: number) => void;
+  saveKoleksiSoal: (index: number) => Promise<void>;
+  
+  // Individual Soal actions within KoleksiSoal
+  addSoal: (koleksiIndex: number, soal: Omit<SoalData, 'id' | 'opsis'> & { opsis?: Omit<SoalOpsiData, 'id'>[] }) => void;
+  updateSoal: (koleksiIndex: number, soalIndex: number, soal: Partial<SoalData>) => void;
+  removeSoal: (koleksiIndex: number, soalIndex: number) => void;
+  
+  // Opsi actions within Soal
+  addOpsi: (koleksiIndex: number, soalIndex: number, opsi: Omit<SoalOpsiData, 'id'>) => void;
+  updateOpsi: (koleksiIndex: number, soalIndex: number, opsiIndex: number, opsi: Partial<SoalOpsiData>) => void;
+  removeOpsi: (koleksiIndex: number, soalIndex: number, opsiIndex: number) => void;
+  
   // Global actions
   createDraft: (initialMeta: KelasMetaData) => Promise<void>;
   loadDraft: (kelasId: number) => Promise<void>;
@@ -154,6 +199,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
         materis: [],
         vocabSets: [],
         soalSets: [],
+        koleksiSoals: [],
         isDirty: false,
         optimisticUpdates: new Set(),
 
@@ -499,6 +545,167 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           }
         },
 
+        // Koleksi Soal actions
+        addKoleksiSoal: (koleksiSoal: Omit<KoleksiSoalData, 'id' | 'soals'> & { soals?: Omit<SoalData, 'opsis'>[] }) => {
+          set((state) => {
+            const tempId = `temp-koleksi-${Date.now()}`;
+            const newKoleksiSoal: KoleksiSoalData = {
+              ...koleksiSoal,
+              soals: koleksiSoal.soals?.map((soal, index) => ({
+                ...soal,
+                opsis: [],
+                tempId: `temp-soal-${Date.now()}-${index}`,
+              })) || [],
+              tempId,
+            };
+            state.koleksiSoals.push(newKoleksiSoal);
+            state.isDirty = true;
+            state.optimisticUpdates.add(tempId);
+          });
+        },
+
+        updateKoleksiSoal: (index: number, koleksiSoal: Partial<KoleksiSoalData>) => {
+          set((state) => {
+            if (state.koleksiSoals[index]) {
+              Object.assign(state.koleksiSoals[index], koleksiSoal);
+              state.isDirty = true;
+            }
+          });
+        },
+
+        removeKoleksiSoal: (index: number) => {
+          set((state) => {
+            if (state.koleksiSoals[index]) {
+              const koleksiSoal = state.koleksiSoals[index];
+              if (koleksiSoal.tempId) {
+                state.optimisticUpdates.delete(koleksiSoal.tempId);
+              }
+              state.koleksiSoals.splice(index, 1);
+              state.isDirty = true;
+            }
+          });
+        },
+
+        saveKoleksiSoal: async (index: number) => {
+          const { koleksiSoals } = get();
+          if (!koleksiSoals[index]) return;
+
+          const koleksiSoal = koleksiSoals[index];
+          if (!koleksiSoal.tempId) return; // Already saved
+
+          set((state) => {
+            state.isLoading = true;
+            state.error = null;
+          });
+
+          try {
+            // Note: Koleksi Soal functionality not implemented yet
+            // This would need server actions for creating/updating question collections
+            toast.info('Question collection functionality not implemented yet');
+            
+            set((state) => {
+              state.isLoading = false;
+            });
+          } catch (error) {
+            set((state) => {
+              state.isLoading = false;
+              state.error = error instanceof Error ? error.message : 'Failed to save question collection';
+            });
+            toast.error('Failed to save question collection');
+          }
+        },
+
+        // Individual Soal actions within KoleksiSoal
+        addSoal: (koleksiIndex: number, soal: Omit<SoalData, 'id' | 'opsis'> & { opsis?: Omit<SoalOpsiData, 'id'>[] }) => {
+          set((state) => {
+            if (state.koleksiSoals[koleksiIndex]) {
+              const tempId = `temp-soal-${Date.now()}`;
+              const newSoal: SoalData = {
+                ...soal,
+                opsis: soal.opsis?.map((opsi, index) => ({
+                  ...opsi,
+                  order: index,
+                  tempId: `temp-opsi-${Date.now()}-${index}`,
+                })) || [],
+                tempId,
+              };
+              state.koleksiSoals[koleksiIndex].soals.push(newSoal);
+              state.isDirty = true;
+              state.optimisticUpdates.add(tempId);
+            }
+          });
+        },
+
+        updateSoal: (koleksiIndex: number, soalIndex: number, soal: Partial<SoalData>) => {
+          set((state) => {
+            if (state.koleksiSoals[koleksiIndex] && state.koleksiSoals[koleksiIndex].soals[soalIndex]) {
+              Object.assign(state.koleksiSoals[koleksiIndex].soals[soalIndex], soal);
+              state.isDirty = true;
+            }
+          });
+        },
+
+        removeSoal: (koleksiIndex: number, soalIndex: number) => {
+          set((state) => {
+            if (state.koleksiSoals[koleksiIndex] && state.koleksiSoals[koleksiIndex].soals[soalIndex]) {
+              const soal = state.koleksiSoals[koleksiIndex].soals[soalIndex];
+              if (soal.tempId) {
+                state.optimisticUpdates.delete(soal.tempId);
+              }
+              state.koleksiSoals[koleksiIndex].soals.splice(soalIndex, 1);
+              state.isDirty = true;
+            }
+          });
+        },
+
+        // Opsi actions within Soal
+        addOpsi: (koleksiIndex: number, soalIndex: number, opsi: Omit<SoalOpsiData, 'id'>) => {
+          set((state) => {
+            if (state.koleksiSoals[koleksiIndex] && state.koleksiSoals[koleksiIndex].soals[soalIndex]) {
+              const tempId = `temp-opsi-${Date.now()}`;
+              const currentOpsis = state.koleksiSoals[koleksiIndex].soals[soalIndex].opsis;
+              const newOpsi: SoalOpsiData = {
+                ...opsi,
+                order: currentOpsis.length,
+                tempId,
+              };
+              currentOpsis.push(newOpsi);
+              state.isDirty = true;
+              state.optimisticUpdates.add(tempId);
+            }
+          });
+        },
+
+        updateOpsi: (koleksiIndex: number, soalIndex: number, opsiIndex: number, opsi: Partial<SoalOpsiData>) => {
+          set((state) => {
+            if (state.koleksiSoals[koleksiIndex] && 
+                state.koleksiSoals[koleksiIndex].soals[soalIndex] && 
+                state.koleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex]) {
+              Object.assign(state.koleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex], opsi);
+              state.isDirty = true;
+            }
+          });
+        },
+
+        removeOpsi: (koleksiIndex: number, soalIndex: number, opsiIndex: number) => {
+          set((state) => {
+            if (state.koleksiSoals[koleksiIndex] && 
+                state.koleksiSoals[koleksiIndex].soals[soalIndex] && 
+                state.koleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex]) {
+              const opsi = state.koleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex];
+              if (opsi.tempId) {
+                state.optimisticUpdates.delete(opsi.tempId);
+              }
+              state.koleksiSoals[koleksiIndex].soals[soalIndex].opsis.splice(opsiIndex, 1);
+              // Reorder remaining opsis
+              state.koleksiSoals[koleksiIndex].soals[soalIndex].opsis.forEach((o: SoalOpsiData, i: number) => {
+                o.order = i;
+              });
+              state.isDirty = true;
+            }
+          });
+        },
+
         // Global actions
         createDraft: async (initialMeta: KelasMetaData) => {
           set((state) => {
@@ -652,6 +859,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                 state.materis = [];
                 state.vocabSets = [];
                 state.soalSets = [];
+                state.koleksiSoals = [];
                 state.isDirty = false;
                 state.optimisticUpdates.clear();
                 state.isLoading = false;
@@ -679,6 +887,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             state.materis = [];
             state.vocabSets = [];
             state.soalSets = [];
+            state.koleksiSoals = [];
             state.isDirty = false;
             state.optimisticUpdates.clear();
           });

@@ -11,7 +11,7 @@ export const metadata = {
 export default async function AdminContentPage({
   searchParams,
 }: {
-  searchParams: { page?: string; search?: string; status?: string; type?: string; level?: string };
+  searchParams: Promise<{ page?: string; search?: string; status?: string; type?: string; level?: string }>;
 }) {
   try {
     const session = await assertAuthenticated();
@@ -21,11 +21,13 @@ export default async function AdminContentPage({
       redirect("/dashboard");
     }
 
-    const page = parseInt(searchParams.page || "1");
-    const search = searchParams.search || "";
-    const status = (searchParams.status as "ALL" | "PUBLISHED" | "DRAFT") || "ALL";
-    const type = (searchParams.type as "ALL" | "REGULAR" | "EVENT" | "GROUP" | "PRIVATE" | "FUN") || "ALL";
-    const level = (searchParams.level as "ALL" | "BEGINNER" | "INTERMEDIATE" | "ADVANCED") || "ALL";
+    // Await searchParams before accessing its properties
+    const params = await searchParams;
+    const page = parseInt(params.page || "1");
+    const search = params.search || "";
+    const status = (params.status as "ALL" | "PUBLISHED" | "DRAFT") || "ALL";
+    const type = (params.type as "ALL" | "REGULAR" | "EVENT" | "GROUP" | "PRIVATE" | "FUN") || "ALL";
+    const level = (params.level as "ALL" | "BEGINNER" | "INTERMEDIATE" | "ADVANCED") || "ALL";
 
     // Fetch classes and stats in parallel
     const [classesResult, stats] = await Promise.all([

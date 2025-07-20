@@ -51,6 +51,35 @@ export const VocabularyQuickSchema = z.object({
   items: z.array(VocabularyItemSchema).min(1, "At least one vocabulary item is required"),
 });
 
+// Soal Collection Schemas
+export const SoalOpsiSchema = z.object({
+  opsiText: z.string().min(1, "Option text is required").max(500, "Option text must be less than 500 characters"),
+  isCorrect: z.boolean().default(false),
+  order: z.number().int().min(0).default(0),
+});
+
+export const SoalSchema = z.object({
+  pertanyaan: z.string().min(1, "Question is required").max(1000, "Question must be less than 1000 characters"),
+  difficulty: z.nativeEnum(Difficulty).optional(),
+  explanation: z.string().max(1000, "Explanation must be less than 1000 characters").optional(),
+  isActive: z.boolean().default(true),
+  opsis: z.array(SoalOpsiSchema)
+    .min(2, "At least 2 options are required")
+    .max(5, "Maximum 5 options allowed")
+    .refine(
+      (opsis) => opsis.filter(opsi => opsi.isCorrect).length === 1,
+      { message: "Exactly one option must be marked as correct" }
+    ),
+});
+
+export const KoleksiSoalSchema = z.object({
+  nama: z.string().min(1, "Collection name is required").max(255, "Collection name must be less than 255 characters"),
+  deskripsi: z.string().max(1000, "Description must be less than 1000 characters").optional(),
+  isPrivate: z.boolean().default(false),
+  isDraft: z.boolean().default(true),
+  soals: z.array(SoalSchema).min(1, "At least one question is required"),
+});
+
 // Soal Set Link Schema
 export const SoalSetLinkSchema = z.object({
   koleksiSoalId: z.number().int().positive("Please select a valid question collection"),
@@ -110,6 +139,9 @@ export type KelasMetaFormData = z.infer<typeof KelasMetaSchema>;
 export type MateriQuickFormData = z.infer<typeof MateriQuickSchema>;
 export type VocabularyItemFormData = z.infer<typeof VocabularyItemSchema>;
 export type VocabularyQuickFormData = z.infer<typeof VocabularyQuickSchema>;
+export type SoalOpsiFormData = z.infer<typeof SoalOpsiSchema>;
+export type SoalFormData = z.infer<typeof SoalSchema>;
+export type KoleksiSoalFormData = z.infer<typeof KoleksiSoalSchema>;
 export type SoalSetLinkFormData = z.infer<typeof SoalSetLinkSchema>;
 export type ReorderFormData = z.infer<typeof ReorderSchema>;
 export type StepMetaFormData = z.infer<typeof StepMetaSchema>;
