@@ -8,15 +8,18 @@ import {
   toggleUserEmailVerification,
   bulkUpdateUsers,
   bulkDeleteUsers,
+  getUserStats,
 } from "@/app/actions/admin-dashboard";
-import { UserWithStats, UserFormData, UserManagementData } from "./types";
+import { UserWithStats, UserFormData, UserManagementData, DatabaseUserStats } from "./types";
 
 export function useUserManagement(initialData: UserManagementData) {
   const [users, setUsers] = useState<UserWithStats[]>(initialData.users);
   const [currentPage, setCurrentPage] = useState(initialData.currentPage);
   const [hasNextPage, setHasNextPage] = useState(initialData.hasNextPage);
+  const [databaseStats, setDatabaseStats] = useState<DatabaseUserStats>(initialData.databaseStats);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
@@ -51,6 +54,20 @@ export function useUserManagement(initialData: UserManagementData) {
   // Ref for scroll detection
   const tableRef = useRef<HTMLDivElement>(null);
 
+  // Load database stats
+  const loadDatabaseStats = useCallback(async () => {
+    try {
+      setIsLoadingStats(true);
+      const stats = await getUserStats();
+      setDatabaseStats(stats);
+    } catch (err) {
+      toast.error("Failed to load user statistics");
+      console.error("Error loading database stats:", err);
+    } finally {
+      setIsLoadingStats(false);
+    }
+  }, []);
+
   // Load users (replace current list)
   const loadUsers = useCallback(async () => {
     try {
@@ -72,6 +89,11 @@ export function useUserManagement(initialData: UserManagementData) {
       setIsLoading(false);
     }
   }, [searchTerm, roleFilter, statusFilter]);
+
+  // Refresh all data (users + stats)
+  const refreshData = useCallback(async () => {
+    await Promise.all([loadUsers(), loadDatabaseStats()]);
+  }, [loadUsers, loadDatabaseStats]);
 
   // Load more users (append to current list)
   const loadMoreUsers = useCallback(async () => {
@@ -144,7 +166,7 @@ export function useUserManagement(initialData: UserManagementData) {
         toast.success("User deleted successfully");
         setDeleteDialogOpen(false);
         setSelectedUser(null);
-        loadUsers();
+        refreshData(); // Refresh both users and stats
       } catch {
         toast.error("Failed to delete user");
       }
@@ -158,7 +180,7 @@ export function useUserManagement(initialData: UserManagementData) {
         toast.success("User updated successfully");
         setEditDialogOpen(false);
         setSelectedUser(null);
-        loadUsers();
+        refreshData(); // Refresh both users and stats
       } catch {
         toast.error("Failed to update user");
       }
@@ -205,7 +227,7 @@ export function useUserManagement(initialData: UserManagementData) {
       toast.success(`Successfully deleted ${selectedUserIds.size} users`);
       setBulkDeleteDialogOpen(false);
       clearSelection();
-      loadUsers();
+      refreshData(); // Refresh both users and stats
     } catch {
       toast.error("Failed to delete users");
     }
@@ -226,7 +248,7 @@ export function useUserManagement(initialData: UserManagementData) {
       setBulkUpdateDialogOpen(false);
       clearSelection();
       setBulkUpdateData({});
-      loadUsers();
+      refreshData(); // Refresh both users and stats
     } catch {
       toast.error("Failed to update users");
     }
@@ -247,10 +269,10 @@ export function useUserManagement(initialData: UserManagementData) {
   // Effects
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      loadUsers();
+      refreshData();
     }, 300);
     return () => clearTimeout(timeoutId);
-  }, [loadUsers]);
+  }, [refreshData]);
 
   useEffect(() => {
     const tableElement = tableRef.current;
@@ -263,8 +285,10 @@ export function useUserManagement(initialData: UserManagementData) {
   return {
     // Data
     users,
+    databaseStats,
     isLoading,
     isLoadingMore,
+    isLoadingStats,
     
     // Filters
     searchTerm,
@@ -298,7 +322,7 @@ export function useUserManagement(initialData: UserManagementData) {
     setBulkUpdateData,
     
     // Actions
-    loadUsers,
+    refreshData,
     handleEdit,
     handleDelete,
     handleToggleEmail,

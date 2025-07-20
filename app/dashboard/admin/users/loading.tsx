@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -24,6 +25,11 @@ import {
   UserCheck,
   CheckCircle,
   Shield,
+  User,
+  UserCog,
+  TrendingUp,
+  Calendar,
+  Settings,
 } from "lucide-react";
 
 // Skeleton Stats Card Component
@@ -47,6 +53,9 @@ function SkeletonUserRow() {
   return (
     <TableRow>
       <TableCell>
+        <Skeleton className="h-4 w-4 rounded" />
+      </TableCell>
+      <TableCell>
         <div className="flex items-center gap-3">
           <Skeleton className="h-8 w-8 rounded-full" />
           <div>
@@ -55,17 +64,21 @@ function SkeletonUserRow() {
           </div>
         </div>
       </TableCell>
-      <TableCell>
-        <Skeleton className="h-5 w-16 rounded-full" />
+      <TableCell className="text-center">
+        <div className="flex justify-center">
+          <Skeleton className="h-5 w-16 rounded-full" />
+        </div>
       </TableCell>
-      <TableCell>
-        <div className="space-y-1">
+      <TableCell className="text-center">
+        <div className="flex flex-col items-center space-y-1">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-3 w-20" />
         </div>
       </TableCell>
-      <TableCell>
-        <Skeleton className="h-4 w-20" />
+      <TableCell className="text-center">
+        <div className="flex justify-center">
+          <Skeleton className="h-4 w-20" />
+        </div>
       </TableCell>
       <TableCell>
         <Skeleton className="h-8 w-8 rounded" />
@@ -105,59 +118,56 @@ export default function Loading() {
         <SkeletonStatsCard title="Students" icon={UserCheck} />
       </div>
 
-      {/* Filters */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Search & Filter</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search users by name or email..."
-                  className="pl-10"
-                  disabled
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Select disabled>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="All Roles" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Roles</SelectItem>
-                  <SelectItem value="ADMIN">Admin</SelectItem>
-                  <SelectItem value="GURU">Teacher</SelectItem>
-                  <SelectItem value="MURID">Student</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select disabled>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="All Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Status</SelectItem>
-                  <SelectItem value="ACTIVE">Active</SelectItem>
-                  <SelectItem value="INACTIVE">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Users Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>
-            <div className="flex items-center gap-2">
-              <span>Users</span>
-              <Skeleton className="h-4 w-8" />
+        <CardHeader className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle>
+              <div className="flex items-center gap-2">
+                <span>Users</span>
+                <Skeleton className="h-4 w-8" />
+              </div>
+            </CardTitle>
+            
+            {/* Compact Filters */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search users by name or email..."
+                      className="pl-10"
+                      disabled
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Select disabled>
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="All Roles" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">All Roles</SelectItem>
+                      <SelectItem value="ADMIN">Admin</SelectItem>
+                      <SelectItem value="GURU">Teacher</SelectItem>
+                      <SelectItem value="MURID">Student</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select disabled>
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="All Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">All Status</SelectItem>
+                      <SelectItem value="ACTIVE">Active</SelectItem>
+                      <SelectItem value="INACTIVE">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
-          </CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
@@ -165,11 +175,39 @@ export default function Loading() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Progress</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="w-12">
+                      <Checkbox disabled />
+                    </TableHead>
+                    <TableHead>
+                      <div className="flex items-center">
+                        <User className="h-4 w-4 mr-2" />
+                        User
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <div className="flex items-center justify-center">
+                        <UserCog className="h-4 w-4 mr-2" />
+                        Role
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <div className="flex items-center justify-center">
+                        <TrendingUp className="h-4 w-4 mr-2" />
+                        Progress
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <div className="flex items-center justify-center">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Joined
+                      </div>
+                    </TableHead>
+                    <TableHead>
+                      <div className="flex items-center">
+                        <Settings className="h-4 w-4 mr-2" />
+                        Actions
+                      </div>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

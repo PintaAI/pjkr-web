@@ -26,6 +26,7 @@ export interface UserManagementData {
   currentPage: number;
   hasNextPage: boolean;
   hasPrevPage: boolean;
+  databaseStats: DatabaseUserStats;
 }
 
 export interface UserFormData {
@@ -46,4 +47,14 @@ export interface UserStats {
   teachers: number;
   students: number;
   newUsersThisWeek: number;
+}
+
+export interface DatabaseUserStats {
+  totalUsers: number;
+  activeUsers: number;
+  teacherCount: number;
+  studentCount: number;
+  adminCount: number;
+  newUsersThisWeek: number;
+  verifiedUsers: number;
 }

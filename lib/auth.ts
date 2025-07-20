@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
+import { createAuthMiddleware } from "better-auth/api";
 import { prisma } from "./db";
 import { logUserRegistration, logUserLogin } from "./activity-logger";
 
@@ -47,38 +48,39 @@ export const auth = betterAuth({
     level: process.env.NODE_ENV === "development" ? "debug" : "error",
     disabled: false,
   },
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      // Handle sign-up
+      if (ctx.path.startsWith("/sign-up")) {
+        const newSession = ctx.context.newSession;
+        if (newSession?.user) {
+          try {
+            await logUserRegistration(
+              newSession.user.id, 
+              newSession.user.role || "MURID"
+            );
+          } catch (error) {
+            console.error("Error logging registration activity:", error);
+          }
+        }
+      }
+      
+      // Handle sign-in
+      if (ctx.path.startsWith("/sign-in")) {
+        const newSession = ctx.context.newSession;
+        if (newSession?.user) {
+          try {
+            await logUserLogin(newSession.user.id);
+          } catch (error) {
+            console.error("Error logging login activity:", error);
+          }
+        }
+      }
+    }),
+  },
   advanced: {
     database: {
       generateId: () => crypto.randomUUID(),
-    },
-    hooks: {
-      after: [
-        {
-          matcher(context: any) {
-            return context.path === "/sign-up";
-          },
-          async handler(context: any) {
-            if (context.returned?.user) {
-              // Log user registration activity
-              await logUserRegistration(
-                context.returned.user.id, 
-                context.returned.user.role || "MURID"
-              );
-            }
-          },
-        },
-        {
-          matcher(context: any) {
-            return context.path === "/sign-in";
-          },
-          async handler(context: any) {
-            if (context.returned?.user) {
-              // Log user login activity
-              await logUserLogin(context.returned.user.id);
-            }
-          },
-        },
-      ],
     },
   },
   plugins: [

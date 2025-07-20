@@ -38,17 +38,21 @@ export function SkeletonUserRow() {
           </div>
         </div>
       </TableCell>
-      <TableCell>
-        <Skeleton className="h-5 w-16 rounded-full" />
+      <TableCell className="text-center">
+        <div className="flex justify-center">
+          <Skeleton className="h-5 w-16 rounded-full" />
+        </div>
       </TableCell>
-      <TableCell>
-        <div className="space-y-1">
+      <TableCell className="text-center">
+        <div className="flex flex-col items-center space-y-1">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-3 w-20" />
         </div>
       </TableCell>
-      <TableCell>
-        <Skeleton className="h-4 w-20" />
+      <TableCell className="text-center">
+        <div className="flex justify-center">
+          <Skeleton className="h-4 w-20" />
+        </div>
       </TableCell>
       <TableCell>
         <Skeleton className="h-8 w-8 rounded" />

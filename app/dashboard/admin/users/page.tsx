@@ -1,11 +1,23 @@
-import { UserManagementPage } from "@/components/admin/user-management-page";
-import { getAllUsers } from "@/app/actions/admin-dashboard";
+import { UserManagementPage } from "@/components/admin/user-management/user-management-page";
+import { getAllUsers, getUserStats } from "@/app/actions/admin-dashboard";
+import { Suspense } from "react";
+import Loading from "./loading";
 
-export default async function AdminUsersPage() {
-  const initialData = await getAllUsers({
-    page: 1,
-    limit: 50,
-  });
+export default async function Page() {
+  // Fetch initial data in parallel
+  const [initialData, databaseStats] = await Promise.all([
+    getAllUsers({ page: 1, limit: 20 }),
+    getUserStats(),
+  ]);
 
-  return <UserManagementPage initialData={initialData} />;
+  const combinedInitialData = {
+    ...initialData,
+    databaseStats,
+  };
+
+  return (
+    <Suspense fallback={<Loading />}>
+      <UserManagementPage initialData={combinedInitialData} />
+    </Suspense>
+  );
 }

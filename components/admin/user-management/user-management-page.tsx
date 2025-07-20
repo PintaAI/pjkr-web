@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { RefreshCw, UserPlus, UserCheck, CheckCircle, Shield, Trash2, Users, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { RefreshCw, UserPlus, UserCheck, CheckCircle, Shield, Trash2, Users, ArrowUpDown, ArrowUp, ArrowDown, User, UserCog, TrendingUp, Calendar, Settings } from "lucide-react";
 
 import { UserManagementData } from "./types";
 import { calculateUserStats, filterUsers, sortUsers } from "./utils";
@@ -22,7 +22,9 @@ interface UserManagementPageProps {
 export function UserManagementPage({ initialData }: UserManagementPageProps) {
   const {
     users,
+    databaseStats,
     isLoading,
+    isLoadingStats,
     isLoadingMore,
     searchTerm,
     setSearchTerm,
@@ -47,7 +49,7 @@ export function UserManagementPage({ initialData }: UserManagementPageProps) {
     selectedUserIds,
     bulkUpdateData,
     setBulkUpdateData,
-    loadUsers,
+    refreshData,
     handleEdit,
     handleDelete,
     handleToggleEmail,
@@ -62,9 +64,6 @@ export function UserManagementPage({ initialData }: UserManagementPageProps) {
     confirmBulkUpdate,
     tableRef,
   } = useUserManagement(initialData);
-
-  // Calculate stats for display
-  const stats = calculateUserStats(users);
 
   // Filter and sort users
   const filteredUsers = filterUsers(users, searchTerm, roleFilter, statusFilter);
@@ -91,7 +90,7 @@ export function UserManagementPage({ initialData }: UserManagementPageProps) {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={loadUsers}>
+          <Button variant="outline" size="sm" onClick={refreshData}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
@@ -104,7 +103,7 @@ export function UserManagementPage({ initialData }: UserManagementPageProps) {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4 mb-8">
-        {isLoading ? (
+        {isLoadingStats ? (
           <>
             <SkeletonStatsCard title="Total Users" icon={UserCheck} />
             <SkeletonStatsCard title="Active Users" icon={CheckCircle} />
@@ -115,48 +114,55 @@ export function UserManagementPage({ initialData }: UserManagementPageProps) {
           <>
             <StatsCard
               title="Total Users"
-              value={stats.totalUsers}
-              subtitle={`+${stats.newUsersThisWeek} this week`}
+              value={databaseStats.totalUsers}
+              subtitle={`+${databaseStats.newUsersThisWeek} this week`}
               icon={UserCheck}
             />
             <StatsCard
               title="Active Users"
-              value={stats.activeUsers}
-              subtitle={`${Math.round((stats.activeUsers / stats.totalUsers) * 100)}% of total`}
+              value={databaseStats.activeUsers}
+              subtitle={`${Math.round((databaseStats.activeUsers / databaseStats.totalUsers) * 100)}% of total`}
               icon={CheckCircle}
             />
             <StatsCard
               title="Teachers"
-              value={stats.teachers}
-              subtitle={`${Math.round((stats.teachers / stats.totalUsers) * 100)}% of total`}
+              value={databaseStats.teacherCount}
+              subtitle={`${Math.round((databaseStats.teacherCount / databaseStats.totalUsers) * 100)}% of total`}
               icon={Shield}
             />
             <StatsCard
               title="Students"
-              value={stats.students}
-              subtitle={`${Math.round((stats.students / stats.totalUsers) * 100)}% of total`}
+              value={databaseStats.studentCount}
+              subtitle={`${Math.round((databaseStats.studentCount / databaseStats.totalUsers) * 100)}% of total`}
               icon={UserCheck}
             />
           </>
         )}
       </div>
 
-      {/* Filters */}
-      <UserFilters
-        searchTerm={searchTerm}
-        roleFilter={roleFilter}
-        statusFilter={statusFilter}
-        onSearchChange={setSearchTerm}
-        onRoleFilterChange={setRoleFilter}
-        onStatusFilterChange={setStatusFilter}
-        isLoading={isLoading}
-      />
+      {/* Users Table */}
+      <Card>
+        <CardHeader className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle>Users ({filteredUsers.length})</CardTitle>
+            
+            {/* Compact Filters */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <UserFilters
+                searchTerm={searchTerm}
+                roleFilter={roleFilter}
+                statusFilter={statusFilter}
+                onSearchChange={setSearchTerm}
+                onRoleFilterChange={setRoleFilter}
+                onStatusFilterChange={setStatusFilter}
+                isLoading={isLoading}
+              />
+            </div>
+          </div>
 
-      {/* Bulk Actions */}
-      {selectedUserIds.size > 0 && (
-        <Card className="mb-4">
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between">
+          {/* Bulk Actions */}
+          {selectedUserIds.size > 0 && (
+            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 <span className="text-sm font-medium">
@@ -189,14 +195,7 @@ export function UserManagementPage({ initialData }: UserManagementPageProps) {
                 </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Users Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Users ({filteredUsers.length})</CardTitle>
+          )}
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
@@ -223,44 +222,53 @@ export function UserManagementPage({ initialData }: UserManagementPageProps) {
                         className="h-8 px-2 lg:px-3"
                         onClick={() => handleSort("name")}
                       >
+                        <User className="h-4 w-4 mr-2" />
                         User
                         {getSortIcon("name")}
                       </Button>
                     </TableHead>
-                    <TableHead>
+                    <TableHead className="text-center">
                       <Button
                         variant="ghost"
                         size="sm"
                         className="h-8 px-2 lg:px-3"
                         onClick={() => handleSort("role")}
                       >
+                        <UserCog className="h-4 w-4 mr-2" />
                         Role
                         {getSortIcon("role")}
                       </Button>
                     </TableHead>
-                    <TableHead>
+                    <TableHead className="text-center">
                       <Button
                         variant="ghost"
                         size="sm"
                         className="h-8 px-2 lg:px-3"
                         onClick={() => handleSort("level")}
                       >
+                        <TrendingUp className="h-4 w-4 mr-2" />
                         Progress
                         {getSortIcon("level")}
                       </Button>
                     </TableHead>
-                    <TableHead>
+                    <TableHead className="text-center">
                       <Button
                         variant="ghost"
                         size="sm"
                         className="h-8 px-2 lg:px-3"
                         onClick={() => handleSort("createdAt")}
                       >
+                        <Calendar className="h-4 w-4 mr-2" />
                         Joined
                         {getSortIcon("createdAt")}
                       </Button>
                     </TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>
+                      <div className="flex items-center">
+                        <Settings className="h-4 w-4 mr-2" />
+                        Actions
+                      </div>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

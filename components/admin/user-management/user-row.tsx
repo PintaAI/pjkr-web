@@ -45,12 +45,12 @@ export function UserRow({ user, isSelected, onSelect, onEdit, onDelete, onToggle
           </div>
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className="text-center">
         <Badge variant={getRoleBadgeVariant(user.role) as any}>
           {user.role}
         </Badge>
       </TableCell>
-      <TableCell>
+      <TableCell className="text-center">
         <div className="text-sm">
           <div>Level {user.level} • {user.xp} XP</div>
           <div className="text-muted-foreground">
@@ -58,7 +58,7 @@ export function UserRow({ user, isSelected, onSelect, onEdit, onDelete, onToggle
           </div>
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className="text-center">
         <div className="text-sm text-muted-foreground">
           {formatDate(user.createdAt)}
         </div>
