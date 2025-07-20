@@ -140,9 +140,16 @@ export async function getKelasDetail(id: string) {
       };
     }
 
+    // Convert Decimal fields to numbers for client components
+    const serializedKelas = {
+      ...kelas,
+      price: kelas.price ? Number(kelas.price) : null,
+      discount: kelas.discount ? Number(kelas.discount) : null,
+    };
+
     return {
       success: true,
-      data: kelas,
+      data: serializedKelas,
     };
   } catch (error) {
     console.error("Get kelas detail error:", error);
@@ -203,7 +210,7 @@ export async function checkKelasAccess(kelasId: string, userId?: string) {
         success: true,
         hasAccess: false,
         isPaid: true,
-        price: kelas.price,
+        price: kelas.price ? Number(kelas.price) : null,
       };
     }
 
@@ -215,7 +222,7 @@ export async function checkKelasAccess(kelasId: string, userId?: string) {
       success: true,
       hasAccess: isMember || isAuthor,
       isPaid: true,
-      price: kelas.price,
+      price: kelas.price ? Number(kelas.price) : null,
       isMember,
       isAuthor,
     };

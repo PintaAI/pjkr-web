@@ -27,6 +27,9 @@ export function SkeletonUserRow() {
   return (
     <TableRow>
       <TableCell>
+        <Skeleton className="h-4 w-4 rounded" />
+      </TableCell>
+      <TableCell>
         <div className="flex items-center gap-3">
           <Skeleton className="h-8 w-8 rounded-full" />
           <div>
@@ -57,7 +60,7 @@ export function SkeletonUserRow() {
 export function SkeletonLoadingMore() {
   return (
     <TableRow>
-      <TableCell colSpan={5} className="h-16 text-center">
+      <TableCell colSpan={6} className="h-16 text-center">
         <div className="flex items-center justify-center gap-2">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           <span className="text-sm text-muted-foreground">Loading more users...</span>

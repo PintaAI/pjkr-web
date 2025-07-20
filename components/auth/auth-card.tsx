@@ -137,7 +137,6 @@ export function AuthCard() {
             <p><strong>Email:</strong> {user.email}</p>
             <p><strong>Name:</strong> {user.name || "Not provided"}</p>
             <p><strong>Role:</strong> {user.role}</p>
-            <p><strong>Plan:</strong> {user.plan}</p>
             <p><strong>XP:</strong> {user.xp}</p>
             <p><strong>Level:</strong> {user.level}</p>
             <p><strong>Current Streak:</strong> {user.currentStreak} days</p>

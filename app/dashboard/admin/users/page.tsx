@@ -1,5 +1,5 @@
 import { UserManagementPage } from "@/components/admin/user-management-page";
-import { getAllUsers } from "@/app/actions/admin-actions";
+import { getAllUsers } from "@/app/actions/admin-dashboard";
 
 export default async function AdminUsersPage() {
   const initialData = await getAllUsers({

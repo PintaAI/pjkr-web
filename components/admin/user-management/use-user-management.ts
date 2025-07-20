@@ -6,7 +6,9 @@ import {
   updateUser, 
   deleteUser, 
   toggleUserEmailVerification,
-} from "@/app/actions/admin-actions";
+  bulkUpdateUsers,
+  bulkDeleteUsers,
+} from "@/app/actions/admin-dashboard";
 import { UserWithStats, UserFormData, UserManagementData } from "./types";
 
 export function useUserManagement(initialData: UserManagementData) {
@@ -21,15 +23,30 @@ export function useUserManagement(initialData: UserManagementData) {
   const [roleFilter, setRoleFilter] = useState<UserRoles | "ALL">("ALL");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
 
+  // Sorting
+  type SortField = "name" | "email" | "role" | "level" | "xp" | "createdAt";
+  type SortDirection = "asc" | "desc";
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+
   // Dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [bulkUpdateDialogOpen, setBulkUpdateDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithStats | null>(null);
   const [editFormData, setEditFormData] = useState<UserFormData>({
     name: "",
     email: "",
     role: "MURID" as UserRoles,
   });
+
+  // Bulk selection state
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
+  const [bulkUpdateData, setBulkUpdateData] = useState<{
+    role?: UserRoles;
+    emailVerified?: boolean;
+  }>({});
 
   // Ref for scroll detection
   const tableRef = useRef<HTMLDivElement>(null);
@@ -148,6 +165,85 @@ export function useUserManagement(initialData: UserManagementData) {
     }
   };
 
+  // Bulk selection handlers
+  const handleSelectUser = (userId: string, checked: boolean) => {
+    setSelectedUserIds(prev => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(userId);
+      } else {
+        newSet.delete(userId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedUserIds(new Set(users.map(user => user.id)));
+    } else {
+      setSelectedUserIds(new Set());
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedUserIds(new Set());
+  };
+
+  // Bulk operation handlers
+  const handleBulkDelete = () => {
+    if (selectedUserIds.size === 0) {
+      toast.error("No users selected");
+      return;
+    }
+    setBulkDeleteDialogOpen(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    try {
+      await bulkDeleteUsers(Array.from(selectedUserIds));
+      toast.success(`Successfully deleted ${selectedUserIds.size} users`);
+      setBulkDeleteDialogOpen(false);
+      clearSelection();
+      loadUsers();
+    } catch {
+      toast.error("Failed to delete users");
+    }
+  };
+
+  const handleBulkUpdate = () => {
+    if (selectedUserIds.size === 0) {
+      toast.error("No users selected");
+      return;
+    }
+    setBulkUpdateDialogOpen(true);
+  };
+
+  const confirmBulkUpdate = async () => {
+    try {
+      await bulkUpdateUsers(Array.from(selectedUserIds), bulkUpdateData);
+      toast.success(`Successfully updated ${selectedUserIds.size} users`);
+      setBulkUpdateDialogOpen(false);
+      clearSelection();
+      setBulkUpdateData({});
+      loadUsers();
+    } catch {
+      toast.error("Failed to update users");
+    }
+  };
+
+  // Sorting handler
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      // Toggle direction if same field
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      // Set new field with asc direction
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
   // Effects
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -178,14 +274,28 @@ export function useUserManagement(initialData: UserManagementData) {
     statusFilter,
     setStatusFilter,
     
+    // Sorting
+    sortField,
+    sortDirection,
+    handleSort,
+    
     // Dialog states
     deleteDialogOpen,
     setDeleteDialogOpen,
     editDialogOpen,
     setEditDialogOpen,
+    bulkDeleteDialogOpen,
+    setBulkDeleteDialogOpen,
+    bulkUpdateDialogOpen,
+    setBulkUpdateDialogOpen,
     selectedUser,
     editFormData,
     setEditFormData,
+    
+    // Bulk selection state
+    selectedUserIds,
+    bulkUpdateData,
+    setBulkUpdateData,
     
     // Actions
     loadUsers,
@@ -194,6 +304,17 @@ export function useUserManagement(initialData: UserManagementData) {
     handleToggleEmail,
     confirmDelete,
     handleUpdate,
+    
+    // Bulk selection actions
+    handleSelectUser,
+    handleSelectAll,
+    clearSelection,
+    
+    // Bulk operation actions
+    handleBulkDelete,
+    confirmBulkDelete,
+    handleBulkUpdate,
+    confirmBulkUpdate,
     
     // Refs
     tableRef,

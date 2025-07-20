@@ -63,9 +63,16 @@ export async function getPublishedKelasList({
       prisma.kelas.count({ where }),
     ]);
 
+    // Convert Decimal fields to numbers for client components
+    const serializedKelas = kelas.map(kelasItem => ({
+      ...kelasItem,
+      price: kelasItem.price ? Number(kelasItem.price) : null,
+      discount: kelasItem.discount ? Number(kelasItem.discount) : null,
+    }));
+
     return {
       success: true,
-      data: kelas,
+      data: serializedKelas,
       meta: {
         total,
         offset,

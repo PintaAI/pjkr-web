@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Edit, MoreHorizontal, Trash2, UserCheck, UserX, BadgeCheck } from "lucide-react";
@@ -9,14 +10,22 @@ import { formatDate, getRoleBadgeVariant } from "./utils";
 
 interface UserRowProps {
   user: UserWithStats;
+  isSelected: boolean;
+  onSelect: (userId: string, checked: boolean) => void;
   onEdit: (user: UserWithStats) => void;
   onDelete: (user: UserWithStats) => void;
   onToggleEmail: (user: UserWithStats) => void;
 }
 
-export function UserRow({ user, onEdit, onDelete, onToggleEmail }: UserRowProps) {
+export function UserRow({ user, isSelected, onSelect, onEdit, onDelete, onToggleEmail }: UserRowProps) {
   return (
     <TableRow>
+      <TableCell>
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={(checked) => onSelect(user.id, !!checked)}
+        />
+      </TableCell>
       <TableCell>
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8">

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { AuthButton } from "../auth/auth-button";
+import { AdminDashboardData } from "@/app/actions/admin-dashboard";
 
 type UserRoles = "GURU" | "MURID" | "ADMIN";
 
@@ -27,45 +28,31 @@ interface DashboardUser {
 
 interface AdminDashboardProps {
   user: DashboardUser;
+  dashboardData?: AdminDashboardData;
 }
 
-const adminStats = {
-  totalUsers: 1247,
-  activeUsers: 892,
-  totalClasses: 45,
-  systemHealth: 98.5,
-  newUsersToday: 23,
-  pendingApprovals: 5
-};
+export function AdminDashboard({ user, dashboardData }: AdminDashboardProps) {
+  // Use real data if available, otherwise fallback to default values
+  const stats = dashboardData ? {
+    totalUsers: dashboardData.userStats.totalUsers,
+    activeUsers: dashboardData.userStats.activeUsers,
+    totalClasses: dashboardData.contentStats.totalClasses,
+    systemHealth: 98.5, // Keep this as static for now
+    newUsersToday: dashboardData.userStats.newUsersThisWeek, // Using weekly as daily proxy
+    pendingApprovals: 0 // This would need to be calculated separately
+  } : {
+    totalUsers: 0,
+    activeUsers: 0,
+    totalClasses: 0,
+    systemHealth: 98.5,
+    newUsersToday: 0,
+    pendingApprovals: 0
+  };
 
-const recentActivities = [
-  {
-    action: "New teacher registered",
-    user: "Kim Seong-ho",
-    time: "2 minutes ago",
-    type: "user"
-  },
-  {
-    action: "Class created",
-    user: "Teacher Lee",
-    time: "15 minutes ago",
-    type: "content"
-  },
-  {
-    action: "System backup completed",
-    user: "System",
-    time: "1 hour ago",
-    type: "system"
-  },
-  {
-    action: "User reported issue",
-    user: "Student Park",
-    time: "2 hours ago",
-    type: "issue"
-  }
-];
-
-export function AdminDashboard({ user }: AdminDashboardProps) {
+  // Use already formatted activities or empty array
+  const recentActivities = dashboardData 
+    ? dashboardData.recentActivities
+    : [];
   return (
     <div className="container mx-auto px-6 py-8 max-w-6xl flex flex-col gap-6">
       {/* Header */}
@@ -93,9 +80,9 @@ export function AdminDashboard({ user }: AdminDashboardProps) {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{adminStats.totalUsers}</div>
+            <div className="text-2xl font-bold">{stats.totalUsers}</div>
             <p className="text-xs text-muted-foreground">
-              +{adminStats.newUsersToday} today
+              +{stats.newUsersToday} this week
             </p>
           </CardContent>
         </Card>
@@ -106,9 +93,9 @@ export function AdminDashboard({ user }: AdminDashboardProps) {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{adminStats.activeUsers}</div>
+            <div className="text-2xl font-bold">{stats.activeUsers}</div>
             <p className="text-xs text-muted-foreground">
-              {Math.round((adminStats.activeUsers / adminStats.totalUsers) * 100)}% of total
+              {stats.totalUsers > 0 ? Math.round((stats.activeUsers / stats.totalUsers) * 100) : 0}% of total
             </p>
           </CardContent>
         </Card>
@@ -119,7 +106,7 @@ export function AdminDashboard({ user }: AdminDashboardProps) {
             <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{adminStats.totalClasses}</div>
+            <div className="text-2xl font-bold">{stats.totalClasses}</div>
             <p className="text-xs text-muted-foreground">
               Across all levels
             </p>
@@ -132,7 +119,7 @@ export function AdminDashboard({ user }: AdminDashboardProps) {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{adminStats.systemHealth}%</div>
+            <div className="text-2xl font-bold">{stats.systemHealth}%</div>
             <p className="text-xs text-muted-foreground">
               All systems operational
             </p>
@@ -157,9 +144,9 @@ export function AdminDashboard({ user }: AdminDashboardProps) {
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <Users className="h-6 w-6 text-primary" />
-                        {adminStats.pendingApprovals > 0 && (
+                        {stats.pendingApprovals > 0 && (
                           <Badge variant="destructive" className="text-xs">
-                            {adminStats.pendingApprovals} pending
+                            {stats.pendingApprovals} pending
                           </Badge>
                         )}
                       </div>
@@ -171,19 +158,19 @@ export function AdminDashboard({ user }: AdminDashboardProps) {
                     <CardContent>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Total Users</span>
-                        <span className="font-medium">{adminStats.totalUsers}</span>
+                        <span className="font-medium">{stats.totalUsers}</span>
                       </div>
                     </CardContent>
                   </Card>
                 </Link>
 
-                <Link href="/admin/content">
+                <Link href="/dashboard/admin/content">
                   <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <BookOpen className="h-6 w-6 text-secondary" />
                         <Badge variant="secondary" className="text-xs">
-                          {adminStats.totalClasses} classes
+                          {stats.totalClasses} classes
                         </Badge>
                       </div>
                       <CardTitle className="text-lg">Content Management</CardTitle>
@@ -194,7 +181,7 @@ export function AdminDashboard({ user }: AdminDashboardProps) {
                     <CardContent>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Active Classes</span>
-                        <span className="font-medium">{adminStats.totalClasses}</span>
+                        <span className="font-medium">{stats.totalClasses}</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -217,7 +204,7 @@ export function AdminDashboard({ user }: AdminDashboardProps) {
                     <CardContent>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Uptime</span>
-                        <span className="font-medium">{adminStats.systemHealth}%</span>
+                        <span className="font-medium">{stats.systemHealth}%</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -240,7 +227,7 @@ export function AdminDashboard({ user }: AdminDashboardProps) {
                     <CardContent>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Active Users</span>
-                        <span className="font-medium">{adminStats.activeUsers}</span>
+                        <span className="font-medium">{stats.activeUsers}</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -261,21 +248,29 @@ export function AdminDashboard({ user }: AdminDashboardProps) {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {recentActivities.map((activity, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      {activity.type === "user" && <UserCheck className="h-4 w-4 text-primary" />}
-                      {activity.type === "content" && <BookOpen className="h-4 w-4 text-primary" />}
-                      {activity.type === "system" && <Settings className="h-4 w-4 text-primary" />}
-                      {activity.type === "issue" && <AlertCircle className="h-4 w-4 text-primary" />}
+                {recentActivities.length > 0 ? (
+                  recentActivities.map((activity, index) => (
+                    <div key={index} className="flex items-start gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        {activity.type === "user" && <UserCheck className="h-4 w-4 text-primary" />}
+                        {activity.type === "content" && <BookOpen className="h-4 w-4 text-primary" />}
+                        {activity.type === "system" && <Settings className="h-4 w-4 text-primary" />}
+                        {activity.type === "issue" && <AlertCircle className="h-4 w-4 text-primary" />}
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <p className="font-medium text-sm">{activity.action}</p>
+                        <p className="text-xs text-muted-foreground">{activity.user}</p>
+                        <p className="text-xs text-muted-foreground">{activity.time}</p>
+                      </div>
                     </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="font-medium text-sm">{activity.action}</p>
-                      <p className="text-xs text-muted-foreground">{activity.user}</p>
-                      <p className="text-xs text-muted-foreground">{activity.time}</p>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-sm text-muted-foreground">No recent activity found</p>
+                    <p className="text-xs text-muted-foreground mt-1">Activities will appear here as users interact with the platform</p>
                   </div>
-                ))}
+                )}
               </div>
               <Button variant="outline" className="w-full mt-4">
                 View All Activities

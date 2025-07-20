@@ -59,3 +59,56 @@ export const filterUsers = (
     return matchesSearch && matchesRole && matchesStatus;
   });
 };
+
+type SortField = "name" | "email" | "role" | "level" | "xp" | "createdAt";
+type SortDirection = "asc" | "desc";
+
+export const sortUsers = (
+  users: UserWithStats[],
+  sortField: SortField | null,
+  sortDirection: SortDirection
+) => {
+  if (!sortField) return users;
+
+  return [...users].sort((a, b) => {
+    let aValue: any;
+    let bValue: any;
+
+    switch (sortField) {
+      case "name":
+        aValue = a.name?.toLowerCase() || "";
+        bValue = b.name?.toLowerCase() || "";
+        break;
+      case "email":
+        aValue = a.email.toLowerCase();
+        bValue = b.email.toLowerCase();
+        break;
+      case "role":
+        aValue = a.role;
+        bValue = b.role;
+        break;
+      case "level":
+        aValue = a.level;
+        bValue = b.level;
+        break;
+      case "xp":
+        aValue = a.xp;
+        bValue = b.xp;
+        break;
+      case "createdAt":
+        aValue = new Date(a.createdAt).getTime();
+        bValue = new Date(b.createdAt).getTime();
+        break;
+      default:
+        return 0;
+    }
+
+    if (aValue < bValue) {
+      return sortDirection === "asc" ? -1 : 1;
+    }
+    if (aValue > bValue) {
+      return sortDirection === "asc" ? 1 : -1;
+    }
+    return 0;
+  });
+};

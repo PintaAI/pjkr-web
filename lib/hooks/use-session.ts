@@ -4,13 +4,10 @@ import { useSession as useBetterAuthSession } from "../auth-client";
 import { useMemo, } from "react";
 
 type UserRole = "MURID" | "GURU" | "ADMIN";
-type UserPlan = "FREE" | "PREMIUM" | "CUSTOM";
 
 interface ExtendedUser {
   role: UserRole;
-  plan: UserPlan;
   currentStreak: number;
-  maxStreak: number;
   xp: number;
   level: number;
   email: string;
@@ -31,9 +28,7 @@ export function useSession() {
     return {
       ...session.user,
       role: (rawUser.role as UserRole) || "MURID",
-      plan: (rawUser.plan as UserPlan) || "FREE",
       currentStreak: (rawUser.currentStreak as number) || 0,
-      maxStreak: (rawUser.maxStreak as number) || 0,
       xp: (rawUser.xp as number) || 0,
       level: (rawUser.level as number) || 1,
     } as ExtendedUser;
@@ -64,18 +59,6 @@ export function useRole(requiredRole: string) {
   }), [user?.role, requiredRole, isLoading]);
 }
 
-/**
- * Hook to check if user has specific plan
- */
-export function usePlan(requiredPlan: string) {
-  const { user, isLoading } = useSession();
-  
-  return useMemo(() => ({
-    hasPlan: user?.plan === requiredPlan,
-    isLoading,
-    userPlan: user?.plan,
-  }), [user?.plan, requiredPlan, isLoading]);
-}
 
 /**
  * Hook to require authentication (throws error if not authenticated)
@@ -107,12 +90,11 @@ export function usePermissions() {
     };
 
     const role = user.role;
-    const plan = user.plan;
 
     return {
       canCreateCourse: role === "GURU" || role === "ADMIN",
       canManageUsers: role === "ADMIN",
-      canAccessPremium: plan === "PREMIUM" || plan === "CUSTOM" || role === "ADMIN",
+      canAccessPremium: role === "ADMIN", // Premium access now determined by Subscription model separately
       isGuru: role === "GURU",
       isAdmin: role === "ADMIN", 
       isMurid: role === "MURID",
@@ -140,12 +122,11 @@ export function getPermissions(user: ExtendedUser | null) {
   };
 
   const role = user.role;
-  const plan = user.plan;
 
   return {
     canCreateCourse: role === "GURU" || role === "ADMIN",
     canManageUsers: role === "ADMIN",
-    canAccessPremium: plan === "PREMIUM" || plan === "CUSTOM" || role === "ADMIN",
+    canAccessPremium: role === "ADMIN", // Premium access now determined by Subscription model separately
     isGuru: role === "GURU",
     isAdmin: role === "ADMIN", 
     isMurid: role === "MURID",

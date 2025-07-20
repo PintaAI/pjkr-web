@@ -62,7 +62,14 @@ export async function createDraftKelas(data: z.infer<typeof createKelasSchema>) 
       },
     });
 
-    return { success: true, data: kelas };
+    // Convert Decimal fields to numbers for client components
+    const serializedKelas = {
+      ...kelas,
+      price: kelas.price ? Number(kelas.price) : null,
+      discount: kelas.discount ? Number(kelas.discount) : null,
+    };
+
+    return { success: true, data: serializedKelas };
   } catch (error) {
     console.error("Create kelas error:", error);
     return { success: false, error: "Failed to create kelas" };
@@ -94,7 +101,14 @@ export async function updateKelas(id: number, data: z.infer<typeof updateKelasSc
       },
     });
 
-    return { success: true, data: kelas };
+    // Convert Decimal fields to numbers for client components
+    const serializedKelas = {
+      ...kelas,
+      price: kelas.price ? Number(kelas.price) : null,
+      discount: kelas.discount ? Number(kelas.discount) : null,
+    };
+
+    return { success: true, data: serializedKelas };
   } catch (error) {
     console.error("Update kelas error:", error);
     return { success: false, error: "Failed to update kelas" };
@@ -281,7 +295,14 @@ export async function getKelasById(id: number) {
       return { success: false, error: "Not authorized" };
     }
 
-    return { success: true, data: kelas };
+    // Convert Decimal fields to numbers for client components
+    const serializedKelas = {
+      ...kelas,
+      price: kelas.price ? Number(kelas.price) : null,
+      discount: kelas.discount ? Number(kelas.discount) : null,
+    };
+
+    return { success: true, data: serializedKelas };
   } catch (error) {
     console.error("Get kelas error:", error);
     return { success: false, error: "Failed to get kelas" };
@@ -301,7 +322,14 @@ export async function getUserKelasList() {
       orderBy: { createdAt: "desc" },
     });
 
-    return { success: true, data: kelasList };
+    // Convert Decimal fields to numbers for client components
+    const serializedKelasList = kelasList.map(kelas => ({
+      ...kelas,
+      price: kelas.price ? Number(kelas.price) : null,
+      discount: kelas.discount ? Number(kelas.discount) : null,
+    }));
+
+    return { success: true, data: serializedKelasList };
   } catch (error) {
     console.error("Get kelas list error:", error);
     return { success: false, error: "Failed to get kelas list" };

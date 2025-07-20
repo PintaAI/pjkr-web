@@ -21,7 +21,7 @@ interface KelasItem {
   level: Difficulty;
   thumbnail: string | null;
   isPaidClass: boolean;
-  price: any; // Handle Prisma Decimal type
+  price: number | null; // Converted from Prisma Decimal to number
   author: {
     id: string;
     name: string | null;

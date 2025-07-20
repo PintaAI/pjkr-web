@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { prisma } from "./db";
+import { logUserRegistration, logUserLogin } from "./activity-logger";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -24,21 +25,9 @@ export const auth = betterAuth({
         type: "string",
         defaultValue: "MURID",
       },
-      accessTier: {
-        type: "string",
-        defaultValue: "FREE",
-      },
       currentStreak: {
         type: "number",
         defaultValue: 0,
-      },
-      maxStreak: {
-        type: "number",
-        defaultValue: 0,
-      },
-      lastActivityDate: {
-        type: "date",
-        required: false,
       },
       xp: {
         type: "number",
@@ -47,10 +36,6 @@ export const auth = betterAuth({
       level: {
         type: "number",
         defaultValue: 1,
-      },
-      isCertificateEligible: {
-        type: "boolean",
-        defaultValue: false,
       },
     }
   },
@@ -65,6 +50,35 @@ export const auth = betterAuth({
   advanced: {
     database: {
       generateId: () => crypto.randomUUID(),
+    },
+    hooks: {
+      after: [
+        {
+          matcher(context: any) {
+            return context.path === "/sign-up";
+          },
+          async handler(context: any) {
+            if (context.returned?.user) {
+              // Log user registration activity
+              await logUserRegistration(
+                context.returned.user.id, 
+                context.returned.user.role || "MURID"
+              );
+            }
+          },
+        },
+        {
+          matcher(context: any) {
+            return context.path === "/sign-in";
+          },
+          async handler(context: any) {
+            if (context.returned?.user) {
+              // Log user login activity
+              await logUserLogin(context.returned.user.id);
+            }
+          },
+        },
+      ],
     },
   },
   plugins: [
