@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ClipboardList, Plus, Edit, Trash2, FileText, Users, Lock, Unlock } from "lucide-react";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { KoleksiSoalForm } from "./koleksi-soal-form";
@@ -213,19 +214,21 @@ export function StepAssessment() {
         </DialogContent>
       </Dialog>
 
-      {/* Manage Questions Dialog */}
-      <Dialog open={managingQuestionsIndex !== undefined} onOpenChange={handleCloseManageQuestions}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
+      {/* Manage Questions Sheet */}
+      <Sheet open={managingQuestionsIndex !== undefined} onOpenChange={handleCloseManageQuestions}>
+        <SheetContent side="right" className="w-[800px] sm:max-w-[800px] overflow-y-auto">
+          <SheetHeader className="px-6 py-4">
+            <SheetTitle>
               Manage Questions
-            </DialogTitle>
-          </DialogHeader>
-          {managingQuestionsIndex !== undefined && (
-            <ManageQuestions koleksiIndex={managingQuestionsIndex} />
-          )}
-        </DialogContent>
-      </Dialog>
+            </SheetTitle>
+          </SheetHeader>
+          <div className="px-6 pb-6">
+            {managingQuestionsIndex !== undefined && (
+              <ManageQuestions koleksiIndex={managingQuestionsIndex} />
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
