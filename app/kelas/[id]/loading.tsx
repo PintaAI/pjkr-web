@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export default function KelasDetailLoading() {
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-8">
+    <div className="w-full max-w-7xl mx-auto -mt-6">
       {/* Header skeleton */}
       <div className="relative h-80 rounded-b-2xl overflow-hidden mb-6 bg-muted">
         <Skeleton className="w-full h-full" />

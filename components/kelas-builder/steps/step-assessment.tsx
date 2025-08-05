@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { ClipboardList, Plus, Edit, Trash2, FileText, Users, Lock, Unlock } from "lucide-react";
+import { ClipboardList, Plus, Edit, Trash2, FileText, Users } from "lucide-react";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { KoleksiSoalForm } from "./koleksi-soal-form";
 import { ManageQuestions } from "./manage-questions";
@@ -16,7 +16,7 @@ export function StepAssessment() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | undefined>();
   const [managingQuestionsIndex, setManagingQuestionsIndex] = useState<number | undefined>();
-  const { koleksiSoals, removeKoleksiSoal } = useKelasBuilderStore();
+  const { koleksiSoals, removeKoleksiSoal, draftId } = useKelasBuilderStore();
 
   const handleCreateNew = () => {
     setEditingIndex(undefined);
@@ -90,22 +90,6 @@ export function StepAssessment() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <CardTitle className="text-lg">{koleksi.nama}</CardTitle>
-                      <Badge variant={koleksi.isPrivate ? "secondary" : "default"}>
-                        {koleksi.isPrivate ? (
-                          <>
-                            <Lock className="h-3 w-3 mr-1" />
-                            Private
-                          </>
-                        ) : (
-                          <>
-                            <Unlock className="h-3 w-3 mr-1" />
-                            Public
-                          </>
-                        )}
-                      </Badge>
-                      <Badge variant={koleksi.isDraft ? "outline" : "default"}>
-                        {koleksi.isDraft ? "Draft" : "Published"}
-                      </Badge>
                     </div>
                     {koleksi.deskripsi && (
                       <p className="text-sm text-muted-foreground">{koleksi.deskripsi}</p>
@@ -147,7 +131,7 @@ export function StepAssessment() {
                             return acc;
                           }, {} as Record<Difficulty, number>)
                         ).map(([difficulty, count]) => (
-                          <Badge 
+                          <Badge
                             key={difficulty}
                             variant={
                               difficulty === Difficulty.BEGINNER ? "default" :
@@ -189,10 +173,6 @@ export function StepAssessment() {
                   <ClipboardList className="h-4 w-4" />
                   <span>{koleksiSoals.reduce((total, koleksi) => total + koleksi.soals.length, 0)} total questions</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4" />
-                  <span>{koleksiSoals.filter(k => !k.isPrivate).length} public collections</span>
-                </div>
               </div>
             </div>
           </CardContent>
@@ -207,7 +187,7 @@ export function StepAssessment() {
               {editingIndex !== undefined ? "Edit Question Collection" : "Create New Question Collection"}
             </DialogTitle>
           </DialogHeader>
-          <KoleksiSoalForm 
+          <KoleksiSoalForm
             koleksiIndex={editingIndex}
             onCancel={handleCancel}
           />

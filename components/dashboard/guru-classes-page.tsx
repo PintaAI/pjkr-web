@@ -4,13 +4,14 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { StatsCard } from "@/components/ui/stats-card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  BookOpen, 
-  Users, 
-  Search, 
+import {
+  BookOpen,
+  Users,
+  Search,
   Plus,
   Edit3,
   Eye,
@@ -25,14 +26,14 @@ import {
 import { KelasType, Difficulty } from "@prisma/client";
 import Link from "next/link";
 import { deleteDraftKelas, publishKelas, unpublishKelas } from "@/app/actions/kelas";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -374,7 +375,7 @@ export function GuruClassesPage({ classes: initialClasses }: Omit<GuruClassesPag
   );
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-7xl">
+    <div className="container mx-auto px-6 py-8 max-w-6xl">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
@@ -391,53 +392,36 @@ export function GuruClassesPage({ classes: initialClasses }: Omit<GuruClassesPag
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Classes</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{classes.length}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Published</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{publishedClasses.length}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Drafts</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{draftClasses.length}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-primary">
-              {classes.reduce((total, cls) => total + cls._count.members, 0)}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatsCard
+          title="Total Classes"
+          value={classes.length}
+          description={`${publishedClasses.length} published, ${draftClasses.length} drafts`}
+          icon={<BookOpen className="h-4 w-4" />}
+        />
+        <StatsCard
+          title="Total Students"
+          value={classes.reduce((total, cls) => total + cls._count.members, 0)}
+          description="Across all classes"
+          icon={<Users className="h-4 w-4" />}
+        />
+        <StatsCard
+          title="Published Classes"
+          value={publishedClasses.length}
+          description="Live for students"
+          icon={<Eye className="h-4 w-4" />}
+        />
+        <StatsCard
+          title="Total Materials"
+          value={classes.reduce((total, cls) => total + cls._count.materis, 0)}
+          description="Learning materials"
+          icon={<BookOpen className="h-4 w-4" />}
+        />
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row gap-4 mt-4 mb-8">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -474,19 +458,19 @@ export function GuruClassesPage({ classes: initialClasses }: Omit<GuruClassesPag
       </div>
 
       {/* Classes Tabs */}
-      <Tabs defaultValue="drafts" className="w-full">
+      <Tabs defaultValue="published" className="w-full">
         <TabsList>
-          <TabsTrigger value="drafts">
-            Drafts ({draftClasses.length})
-          </TabsTrigger>
           <TabsTrigger value="published">
             Published ({publishedClasses.length})
           </TabsTrigger>
+          <TabsTrigger value="drafts">
+            Drafts ({draftClasses.length})
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="drafts" className="space-y-6">
+        <TabsContent value="drafts">
           {filteredClasses(draftClasses).length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredClasses(draftClasses).map((cls) => (
                 <ClassCard key={cls.id} cls={cls} />
               ))}
@@ -496,9 +480,9 @@ export function GuruClassesPage({ classes: initialClasses }: Omit<GuruClassesPag
           )}
         </TabsContent>
 
-        <TabsContent value="published" className="space-y-6">
+        <TabsContent value="published">
           {filteredClasses(publishedClasses).length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredClasses(publishedClasses).map((cls) => (
                 <ClassCard key={cls.id} cls={cls} />
               ))}

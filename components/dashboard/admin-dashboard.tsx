@@ -3,15 +3,16 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Users, 
-  Settings, 
-  Shield, 
-  Activity, 
-  BookOpen, 
-  UserCheck, 
+import { StatsCard } from "@/components/ui/stats-card";
+import {
+  Users,
+  Settings,
+  Shield,
+  Activity,
+  BookOpen,
+  UserCheck,
   TrendingUp,
-  AlertCircle 
+  AlertCircle
 } from "lucide-react";
 import Link from "next/link";
 import { AuthButton } from "../auth/auth-button";
@@ -74,57 +75,30 @@ export function AdminDashboard({ user, dashboardData }: AdminDashboardProps) {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalUsers}</div>
-            <p className="text-xs text-muted-foreground">
-              +{stats.newUsersToday} this week
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.activeUsers}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.totalUsers > 0 ? Math.round((stats.activeUsers / stats.totalUsers) * 100) : 0}% of total
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Classes</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalClasses}</div>
-            <p className="text-xs text-muted-foreground">
-              Across all levels
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">System Health</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.systemHealth}%</div>
-            <p className="text-xs text-muted-foreground">
-              All systems operational
-            </p>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Total Users"
+          value={stats.totalUsers}
+          description={`+${stats.newUsersToday} this week`}
+          icon={<Users className="h-4 w-4" />}
+        />
+        <StatsCard
+          title="Active Users"
+          value={stats.activeUsers}
+          description={`${stats.totalUsers > 0 ? Math.round((stats.activeUsers / stats.totalUsers) * 100) : 0}% of total`}
+          icon={<Activity className="h-4 w-4" />}
+        />
+        <StatsCard
+          title="Total Classes"
+          value={stats.totalClasses}
+          description="Across all levels"
+          icon={<BookOpen className="h-4 w-4" />}
+        />
+        <StatsCard
+          title="System Health"
+          value={`${stats.systemHealth}%`}
+          description="All systems operational"
+          icon={<TrendingUp className="h-4 w-4" />}
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

@@ -3,9 +3,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  BookOpen, 
-  Users, 
+import { StatsCard } from "@/components/ui/stats-card";
+import {
+  BookOpen,
+  Users,
   FileText,
   PlusCircle,
   Calendar
@@ -61,9 +62,9 @@ const levelColors: Record<Difficulty, string> = {
 
 export function GuruDashboard({ stats, recentClasses, user }: GuruDashboardProps) {
   return (
-    <div className="container mx-auto px-6 py-8 max-w-6xl flex flex-col gap-6">
+    <div className="container mx-auto px-6 py-8 max-w-6xl">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Teacher Dashboard</h1>
           <p className="text-muted-foreground">
@@ -80,58 +81,34 @@ export function GuruDashboard({ stats, recentClasses, user }: GuruDashboardProps
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Classes</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalClasses}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.publishedClasses} published, {stats.draftClasses} drafts
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+        <StatsCard
+          title="Total Classes"
+          value={stats.totalClasses}
+          description={`${stats.publishedClasses} published, ${stats.draftClasses} drafts`}
+          icon={<BookOpen className="h-4 w-4" />}
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalStudents}</div>
-            <p className="text-xs text-muted-foreground">
-              Across all classes
-            </p>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Total Students"
+          value={stats.totalStudents}
+          description="Across all classes"
+          icon={<Users className="h-4 w-4" />}
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Published Classes</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.publishedClasses}</div>
-            <p className="text-xs text-muted-foreground">
-              Live for students
-            </p>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Published Classes"
+          value={stats.publishedClasses}
+          description="Live for students"
+          icon={<FileText className="h-4 w-4" />}
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Materials</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalMateris}</div>
-            <p className="text-xs text-muted-foreground">
-              Learning materials
-            </p>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Total Materials"
+          value={stats.totalMateris}
+          description="Learning materials"
+          icon={<BookOpen className="h-4 w-4" />}
+        />
       </div>
 
       {/* Teaching Tools */}
@@ -143,7 +120,7 @@ export function GuruDashboard({ stats, recentClasses, user }: GuruDashboardProps
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <Link href="/dashboard/guru/kelas-builder">
               <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
                 <CardHeader className="pb-3">
@@ -189,75 +166,106 @@ export function GuruDashboard({ stats, recentClasses, user }: GuruDashboardProps
                 </CardContent>
               </Card>
             </Link>
+
+            {/* New: Whiteboard */}
+            <Link href="/dashboard/guru/teach/white-board">
+              <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <BookOpen className="h-6 w-6 text-blue-600" />
+                    <Badge variant="outline" className="text-xs">
+                      New
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-lg">Whiteboard</CardTitle>
+                  <CardDescription>
+                    Open a collaborative whiteboard (Excalidraw)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Interactive Tool</span>
+                    <span className="font-medium">Excalidraw</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* New: Live Session */}
+            <Link href="/dashboard/guru/teach/live-session">
+              <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <Calendar className="h-6 w-6 text-purple-600" />
+                    <Badge variant="outline" className="text-xs">
+                      Coming Soon
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-lg">Live Session</CardTitle>
+                  <CardDescription>
+                    Start or join a real-time class session
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Realtime</span>
+                    <span className="font-medium">Soon</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* New: Create Vocabulary Set */}
+            <Link href="/dashboard/guru/vocabulary/create">
+              <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <PlusCircle className="h-6 w-6 text-teal-600" />
+                    <Badge variant="default" className="text-xs bg-teal-100 text-teal-800">
+                      Available
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-lg">Create Vocabulary Set</CardTitle>
+                  <CardDescription>
+                    Build and manage custom vocabulary sets for your classes
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Vocabulary</span>
+                    <span className="font-medium">Set Builder</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* New: Create Soal Set */}
+            <Link href="/dashboard/guru/soal/create">
+              <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <PlusCircle className="h-6 w-6 text-rose-600" />
+                    <Badge variant="outline" className="text-xs">
+                      New
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-lg">Create Soal Set</CardTitle>
+                  <CardDescription>
+                    Create question sets for latihan or tryout assessments
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Assessment</span>
+                    <span className="font-medium">Soal Builder</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           </div>
         </CardContent>
       </Card>
 
-      {/* Recent Classes */}
-      {recentClasses.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Classes</CardTitle>
-            <CardDescription>
-              Your recently created classes
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentClasses.map((classItem) => (
-                <Link key={classItem.id} href={`/kelas/${classItem.id}`}>
-                  <Card className="cursor-pointer hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Badge className={`text-xs ${levelColors[classItem.level]}`}>
-                            {levelLabels[classItem.level]}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Users className="h-3 w-3 mr-1" />
-                          {classItem.students}
-                        </div>
-                      </div>
-                      <h3 className="font-medium mb-2">{classItem.title}</h3>
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span>{classItem.materis} materials</span>
-                        <span>{new Date(classItem.createdAt).toLocaleDateString()}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-            <div className="mt-4">
-              <Button asChild variant="outline" className="w-full">
-                <Link href="/dashboard/guru/classes">
-                  View All Classes
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Empty State for no classes */}
-      {recentClasses.length === 0 && (
-        <Card className="text-center py-12">
-          <CardContent>
-            <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No classes yet</h3>
-            <p className="text-muted-foreground mb-4">
-              Start creating your first class to share your knowledge with students.
-            </p>
-            <Button asChild>
-              <Link href="/dashboard/guru/kelas-builder">
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Create Your First Class
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

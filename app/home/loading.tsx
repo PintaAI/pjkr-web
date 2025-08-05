@@ -3,9 +3,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (
-    <div className="container mx-auto px-6 py-8 max-w-6xl flex flex-col gap-6">
+    <div className="container mx-auto px-6 py-8 max-w-6xl">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
         <div className="flex flex-col gap-2">
           <Skeleton className="h-9 w-80" />
           <Skeleton className="h-5 w-64" />
@@ -17,7 +17,7 @@ export default function Loading() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -34,7 +34,7 @@ export default function Loading() {
       </div>
 
       {/* Daily Vocabulary */}
-      <Card>
+      <Card className="mb-8">
         <CardHeader>
           <Skeleton className="h-6 w-48" />
           <Skeleton className="h-4 w-56" />
@@ -54,10 +54,10 @@ export default function Loading() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
         {/* Learning Activities */}
         <div className="lg:col-span-2">
-          <Card className="mb-6">
+          <Card>
             <CardHeader>
               <Skeleton className="h-6 w-36" />
               <Skeleton className="h-4 w-44" />
@@ -103,7 +103,7 @@ export default function Loading() {
               <Skeleton className="h-4 w-52" />
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <Card key={i} className="h-full">
                     <CardHeader className="pb-3">

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
+import { StatsCard } from "./ui/stats-card";
 import {
   BookOpen,
   Users,
@@ -120,9 +121,9 @@ const mockData = {
 
 export default function Homescreen({ user }: HomescreenProps) {
   return (
-    <div className="container mx-auto px-6 py-8 max-w-6xl flex flex-col gap-6">
+    <div className="container mx-auto px-6 py-8 max-w-6xl">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
             Welcome back, {user.name || user.email}! 👋
@@ -145,70 +146,38 @@ export default function Homescreen({ user }: HomescreenProps) {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current Level</CardTitle>
-            <Trophy className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{mockData.level}</div>
-            <div className="mt-2">
-              <Progress value={mockData.progressToNextLevel} className="h-2" />
-              <p className="text-xs text-muted-foreground mt-1">
-                {mockData.progressToNextLevel}% to level {mockData.level + 1}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+        <StatsCard
+          title="Current Level"
+          value={mockData.level}
+          description={`${mockData.progressToNextLevel}% to next level`}
+          icon={<Trophy className="h-4 w-4" />}
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Experience Points</CardTitle>
-            <Zap className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{mockData.totalXP.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              Total earned
-            </p>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Experience Points"
+          value={mockData.totalXP.toLocaleString()}
+          description="Total earned"
+          icon={<Zap className="h-4 w-4" />}
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Study Streak</CardTitle>
-            <Flame className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{mockData.weeklyStreak} days</div>
-            <p className="text-xs text-muted-foreground">
-              Keep it going!
-            </p>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Study Streak"
+          value={`${mockData.weeklyStreak} days`}
+          description="Keep it going!"
+          icon={<Flame className="h-4 w-4" />}
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Progress</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {mockData.completedLessons}/{mockData.totalLessons}
-            </div>
-            <div className="mt-2">
-              <Progress 
-                value={(mockData.completedLessons / mockData.totalLessons) * 100} 
-                className="h-2"
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Progress"
+          value={`${mockData.completedLessons}/${mockData.totalLessons}`}
+          description="Lessons completed"
+          icon={<Target className="h-4 w-4" />}
+        />
       </div>
 
       {/* Daily Vocabulary */}
-      <Card>
+      <Card className="mb-8">
         <CardHeader>
           <CardTitle>Daily Vocabulary (일일 어휘)</CardTitle>
           <CardDescription>
@@ -230,10 +199,10 @@ export default function Homescreen({ user }: HomescreenProps) {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
         {/* Learning Activities */}
         <div className="lg:col-span-2">
-          <Card className="mb-6">
+          <Card>
             <CardHeader>
               <CardTitle>Continue Learning</CardTitle>
               <CardDescription>
@@ -285,7 +254,7 @@ export default function Homescreen({ user }: HomescreenProps) {
           </Card>
 
           {/* Learning Apps */}
-          <Card>
+          <Card className="mt-6">
             <CardHeader>
               <CardTitle>Learning Tools</CardTitle>
               <CardDescription>
@@ -293,7 +262,7 @@ export default function Homescreen({ user }: HomescreenProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {mockData.apps.map((app) => {
                   const IconComponent = app.icon;
                   return (

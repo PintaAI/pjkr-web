@@ -587,8 +587,8 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
         },
 
         saveKoleksiSoal: async (index: number) => {
-          const { koleksiSoals } = get();
-          if (!koleksiSoals[index]) return;
+          const { koleksiSoals, draftId } = get();
+          if (!koleksiSoals[index] || !draftId) return;
 
           const koleksiSoal = koleksiSoals[index];
           if (!koleksiSoal.tempId) return; // Already saved
@@ -599,13 +599,38 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           });
 
           try {
-            // Note: Koleksi Soal functionality not implemented yet
-            // This would need server actions for creating/updating question collections
-            toast.info('Question collection functionality not implemented yet');
+            const { saveKoleksiSoal: saveKoleksiSoalAction } = await import('@/app/actions/kelas');
             
-            set((state) => {
-              state.isLoading = false;
-            });
+            const result = await saveKoleksiSoalAction(
+              draftId.toString(),
+              draftId, // kelasId
+              {
+                nama: koleksiSoal.nama,
+                deskripsi: koleksiSoal.deskripsi,
+                isPrivate: false,
+                isDraft: true,
+              },
+              koleksiSoal.id
+            );
+            
+            if (result.success && result.data) {
+              // Update the koleksi with the real ID
+              set((state) => {
+                state.koleksiSoals[index] = {
+                  ...koleksiSoal,
+                  id: result.data.id,
+                  tempId: undefined, // Clear temp ID as it's now saved
+                };
+                state.isDirty = false;
+                state.isLoading = false;
+                if (koleksiSoal.tempId) {
+                  state.optimisticUpdates.delete(koleksiSoal.tempId);
+                }
+              });
+              toast.success('Question collection saved successfully');
+            } else {
+              throw new Error(result.error || 'Failed to save question collection');
+            }
           } catch (error) {
             set((state) => {
               state.isLoading = false;

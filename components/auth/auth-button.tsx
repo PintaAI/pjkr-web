@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "../../lib/auth-client";
 import { useSession } from "../../lib/hooks/use-session";
@@ -13,14 +13,20 @@ interface AuthButtonProps {
   className?: string;
 }
 
-export function AuthButton({ 
-  variant = "default", 
+export function AuthButton({
+  variant = "default",
   size = "default",
-  className 
+  className
 }: AuthButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const { isAuthenticated, isLoading: sessionLoading } = useSession();
   const router = useRouter();
+
+  // Ensure component only renders on client side after mount
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleSignOut = async () => {
     setIsLoading(true);
@@ -40,8 +46,8 @@ export function AuthButton({
     router.push(DEFAULT_AUTH_REDIRECT);
   };
 
-  // Show loading state while session is being checked
-  if (sessionLoading) {
+  // During SSR and initial hydration, show a neutral state
+  if (!isClient || sessionLoading) {
     return (
       <Button
         variant={variant}
@@ -49,7 +55,7 @@ export function AuthButton({
         className={className}
         disabled
       >
-        Loading...
+        ...
       </Button>
     );
   }

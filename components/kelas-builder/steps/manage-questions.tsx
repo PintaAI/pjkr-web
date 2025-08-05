@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent,} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -104,12 +104,12 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
           {koleksiSoal.soals.map((soal, soalIndex) => {
             const isExpanded = expandedQuestions.has(soalIndex);
             return (
-              <Card key={soal.tempId || soal.id || soalIndex} className="relative hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
+              <Card key={soal.tempId || soal.id || soalIndex} className="relative hover:shadow-md transition-shadow ">
+                <CardContent>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 flex-1">
-                        <Badge variant="outline" className="text-xs shrink-0">Q{soalIndex + 1}</Badge>
+                        <Badge variant="outline" className="text-xs shrink-0">No. {soalIndex + 1}</Badge>
                         <p className="font-medium text-sm flex-1 line-clamp-1">
                           {soal.pertanyaan || "Untitled Question"}
                         </p>
