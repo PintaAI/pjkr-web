@@ -4,9 +4,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ================================
@@ -194,13 +193,15 @@ model Account {
 }
 
 model Verification {
-  id         String    @id
+  id         String    @id @default(cuid())
   identifier String
   value      String
   expiresAt  DateTime
-  createdAt  DateTime?
-  updatedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
+  @@index([identifier])
+  @@index([expiresAt])
   @@map("verification")
 }
 
@@ -233,7 +234,7 @@ model Kelas {
   vocabularySets  VocabularySet[]       // Added inverse relation
   completions     UserKelasCompletion[] // Track individual user completions
   posts           Post[]                @relation("KelasPosts") // Class discussion posts
-  koleksiSoals    KoleksiSoal[]         // Optional relation to question collections
+  kelasKoleksiSoals KelasKoleksiSoal[]  // Many-to-many relation with question collections
 }
 
 model Materi {
@@ -253,6 +254,8 @@ model Materi {
 
   @@index([kelasId])
   @@index([order])
+  @@index([isDemo])
+  @@index([isDraft])
 }
 
 model UserMateriCompletion {
@@ -290,7 +293,7 @@ model LiveSession {
   id             String            @id @default(cuid())
   name           String
   description    String?
-  streamCallId   String? // Stream Video Call ID
+  streamCallId   String?           // Stream Video Call ID
   status         LiveSessionStatus @default(SCHEDULED)
   scheduledStart DateTime
   scheduledEnd   DateTime?
@@ -307,6 +310,9 @@ model LiveSession {
 
   @@index([streamCallId])
   @@index([kelasId])
+  @@index([status])
+  @@index([scheduledStart])
+  @@index([creatorId])
 }
 
 model Post {
@@ -340,6 +346,8 @@ model Post {
   @@index([isPinned])
   @@index([likeCount])
   @@index([tags])
+  @@index([viewCount])
+  @@index([kelasId])
 }
 
 model Comment {
@@ -420,16 +428,29 @@ model KoleksiSoal {
   isPrivate Boolean  @default(false)
   isDraft   Boolean  @default(true) // Draft vs Published
   userId    String
-  kelasId   Int?     // Optional relation to Kelas
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation("KoleksiSoalAuthor", fields: [userId], references: [id], onDelete: Cascade)
-  kelas     Kelas?   @relation(fields: [kelasId], references: [id], onDelete: SetNull)
   soals     Soal[]
   tryouts   Tryout[]
+  kelasKoleksiSoals KelasKoleksiSoal[]
 
   @@index([userId])
-  @@index([kelasId])
+  @@index([isPrivate])
+  @@index([isDraft])
+}
+
+// Junction table for many-to-many relationship between Kelas and KoleksiSoal
+model KelasKoleksiSoal {
+  id         Int      @id @default(autoincrement())
+  kelasId    Int
+  koleksiSoalId Int
+  createdAt  DateTime @default(now())
+  
+  kelas      Kelas    @relation(fields: [kelasId], references: [id], onDelete: Cascade)
+  koleksiSoal KoleksiSoal @relation(fields: [koleksiSoalId], references: [id], onDelete: Cascade)
+  
+  @@unique([kelasId, koleksiSoalId])
 }
 
 model Soal {
@@ -446,6 +467,11 @@ model Soal {
   author         User              @relation("SoalAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   opsis          Opsi[]
   attachments    SoalAttachment[]  @relation("SoalAttachments")
+
+  @@index([koleksiSoalId])
+  @@index([authorId])
+  @@index([difficulty])
+  @@index([isActive])
 }
 
 model SoalAttachment {
@@ -478,6 +504,7 @@ model Opsi {
 
   @@index([soalId])
   @@index([order])
+  @@index([isCorrect])
 }
 
 model OpsiAttachment {
@@ -511,6 +538,11 @@ model Tryout {
   koleksiSoal   KoleksiSoal         @relation(fields: [koleksiSoalId], references: [id], onDelete: Cascade)
   guru          User                @relation("TryoutGuru", fields: [guruId], references: [id], onDelete: Cascade)
   participants  TryoutParticipant[]
+
+  @@index([koleksiSoalId])
+  @@index([isActive])
+  @@index([startTime])
+  @@index([guruId])
 }
 
 model TryoutParticipant {
@@ -544,7 +576,11 @@ model VocabularySet {
   updatedAt   DateTime         @updatedAt
   user        User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
   kelas       Kelas?           @relation(fields: [kelasId], references: [id], onDelete: Cascade) // Cascade when Kelas is deleted
-  items       VocabularyItem[]
+  items       VocabularyItem[] @relation("VocabularySetItems")
+  
+  @@index([userId])
+  @@index([kelasId])
+  @@index([isPublic])
 }
 
 model VocabularyItem {
@@ -562,11 +598,13 @@ model VocabularyItem {
   creatorId        String // User who created this vocabulary item
   collectionId     Int? // Optional relation to VocabularySet
   creator          User           @relation("VocabularyItemCreator", fields: [creatorId], references: [id], onDelete: Cascade)
-  collection       VocabularySet? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  collection       VocabularySet? @relation("VocabularySetItems", fields: [collectionId], references: [id], onDelete: SetNull)
 
   @@index([creatorId])
   @@index([collectionId])
   @@index([order])
+  @@index([isLearned])
+  @@index([type])
 }
 
 model ExcalidrawDrawing {
@@ -608,15 +646,18 @@ model Subscription {
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   midtransOrderId String         @unique // Store the Midtrans order_id from createTransaction API
   status          MidtransStatus // Midtrans payment status
-  accessTier      String // The access tier subscribed to (e.g., "FREE", "PREMIUM")
-  startDate       DateTime? // Set when payment is confirmed (settlement/capture+accept)
-  endDate         DateTime? // Optional: For recurring/timed subscriptions
+  accessTier      String         // The access tier subscribed to (e.g., "FREE", "PREMIUM")
+  startDate       DateTime?      // Set when payment is confirmed (settlement/capture+accept)
+  endDate         DateTime?      // Optional: For recurring/timed subscriptions
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
   // Index for faster lookup via webhook
   @@index([userId])
   @@index([midtransOrderId])
+  @@index([status])
+  @@index([accessTier])
+  @@index([startDate])
 }
 
 // Activity log for tracking user activities, streaks, and XP changes
@@ -626,7 +667,7 @@ model ActivityLog {
   userId         String
   type           ActivityType
   description    String?
-  xpEarned       Int? // XP earned from this activity
+  xpEarned       Int?         // XP earned from this activity
   streakUpdated  Boolean      @default(false)
   previousStreak Int?
   newStreak      Int?
@@ -642,4 +683,5 @@ model ActivityLog {
   @@index([userId, type])
   @@index([userId, createdAt])
   @@index([type, createdAt])
+  @@index([xpEarned])
 }

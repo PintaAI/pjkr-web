@@ -104,7 +104,7 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
           {koleksiSoal.soals.map((soal, soalIndex) => {
             const isExpanded = expandedQuestions.has(soalIndex);
             return (
-              <Card key={soal.tempId || soal.id || soalIndex} className="relative hover:shadow-md transition-shadow ">
+              <Card key={soal.tempId || soal.id || soalIndex} className="relative hover:shadow-md transition-shadow py-2 ">
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">

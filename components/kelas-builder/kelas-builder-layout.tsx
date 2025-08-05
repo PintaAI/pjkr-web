@@ -71,19 +71,22 @@ const steps = [
 ];
 
 export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
-  const { 
-    currentStep, 
-    isDirty, 
-    isLoading, 
+  const {
+    currentStep,
+    isDirty,
+    isLoading,
     error,
     draftId,
     meta,
     materis,
+    koleksiSoals,
     setCurrentStep,
     nextStep,
     prevStep,
     saveMeta,
     saveMateris,
+    saveKoleksiSoal,
+    saveAllAssessments,
     clearError,
     reset
   } = useKelasBuilderStore();
@@ -192,19 +195,66 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
     }
   };
 
+  const saveAllUnsavedContent = async () => {
+    console.log('🔄 [AUTO-SAVE TRIGGER] saveAllUnsavedContent called for critical step transition');
+    
+    let hasSaved = false;
+    
+    // Save unsaved materis
+    if (materis.some(m => m.tempId)) {
+      console.log('📝 [AUTO-SAVE] Saving unsaved materis before critical step...');
+      await saveMateris();
+      hasSaved = true;
+    }
+    // Save unsaved assessments
+    if (koleksiSoals.some(k => k.tempId)) {
+      console.log('📝 [AUTO-SAVE] Saving unsaved assessments before critical step...');
+      await saveAllAssessments();
+      hasSaved = true;
+    }
+    
+    if (hasSaved) {
+      console.log('✅ [AUTO-SAVE] All unsaved content saved before critical step');
+    } else {
+      console.log('ℹ️ [AUTO-SAVE] No unsaved content to save before critical step');
+    }
+  };
+
   const handleSave = async () => {
+    console.log('💾 [MANUAL SAVE TRIGGER] handleSave called:', {
+      step: currentStep,
+      isDirty: isDirty,
+      draftId: draftId,
+      hasUnsavedMateris: materis.some(m => m.tempId),
+      hasUnsavedAssessments: koleksiSoals.some(k => k.tempId)
+    });
+    
     try {
       switch (currentStep) {
         case 'meta':
+          console.log('📝 [MANUAL SAVE] Saving meta data...');
           await saveMeta();
+          console.log('✅ [MANUAL SAVE] Meta data saved successfully');
           break;
         case 'content':
+          console.log('📝 [MANUAL SAVE] Saving content/materis...');
           await saveMateris();
+          console.log('✅ [MANUAL SAVE] Content saved successfully');
           break;
-        // Add more save handlers as needed
+        case 'assessment':
+          console.log('📝 [MANUAL SAVE] Saving assessments...');
+          await saveAllAssessments();
+          console.log('✅ [MANUAL SAVE] Assessments saved successfully');
+          break;
+        case 'review':
+        case 'publish':
+          console.log('📝 [MANUAL SAVE] Saving all unsaved content for review/publish...');
+          await saveAllUnsavedContent();
+          console.log('✅ [MANUAL SAVE] All content saved successfully');
+          break;
       }
     } catch (error) {
-      console.error('Save error:', error);
+      console.error('❌ [MANUAL SAVE] Save error:', error);
     }
   };
 

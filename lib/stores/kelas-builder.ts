@@ -6,13 +6,17 @@ import { KelasType, Difficulty, VocabularyType, PartOfSpeech } from '@prisma/cli
 
 // Enable MapSet plugin for Immer before using it
 enableMapSet();
-import { 
-  createDraftKelas, 
-  updateKelas, 
-  addMateris, 
-  reorderMateris, 
-  publishKelas, 
-  deleteDraftKelas 
+import {
+  createDraftKelas,
+  updateKelas,
+  addMateris,
+  reorderMateris,
+  publishKelas,
+  deleteDraftKelas,
+  deleteMateri,
+  deleteKoleksiSoal,
+  deleteSoal,
+  deleteOpsi
 } from '@/app/actions/kelas';
 import { toast } from 'sonner';
 
@@ -120,6 +124,12 @@ interface KelasBuilderState {
   // UI state
   isDirty: boolean;
   optimisticUpdates: Set<string>;
+  
+  // Deletion tracking
+  deletedMateris: number[]; // IDs of deleted materis
+  deletedKoleksiSoals: number[]; // IDs of deleted koleksi soals
+  deletedSoals: number[]; // IDs of deleted soals
+  deletedOpsi: number[]; // IDs of deleted opsi
 }
 
 interface KelasBuilderActions {
@@ -160,11 +170,13 @@ interface KelasBuilderActions {
   addSoal: (koleksiIndex: number, soal: Omit<SoalData, 'id' | 'opsis'> & { opsis?: Omit<SoalOpsiData, 'id'>[] }) => void;
   updateSoal: (koleksiIndex: number, soalIndex: number, soal: Partial<SoalData>) => void;
   removeSoal: (koleksiIndex: number, soalIndex: number) => void;
+  saveSoal: (koleksiIndex: number, soalIndex: number) => Promise<void>;
   
   // Opsi actions within Soal
   addOpsi: (koleksiIndex: number, soalIndex: number, opsi: Omit<SoalOpsiData, 'id'>) => void;
   updateOpsi: (koleksiIndex: number, soalIndex: number, opsiIndex: number, opsi: Partial<SoalOpsiData>) => void;
   removeOpsi: (koleksiIndex: number, soalIndex: number, opsiIndex: number) => void;
+  saveOpsi: (koleksiIndex: number, soalIndex: number, opsiIndex: number) => Promise<void>;
   
   // Global actions
   createDraft: (initialMeta: KelasMetaData) => Promise<void>;
@@ -174,6 +186,10 @@ interface KelasBuilderActions {
   reset: () => void;
   setError: (error: string | null) => void;
   clearError: () => void;
+  setIsDirty: (dirty: boolean) => void;
+  
+  // Batch saving for all unsaved assessment data
+  saveAllAssessments: () => Promise<void>;
 }
 
 const initialMeta: KelasMetaData = {
@@ -202,6 +218,10 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
         koleksiSoals: [],
         isDirty: false,
         optimisticUpdates: new Set(),
+        deletedMateris: [],
+        deletedKoleksiSoals: [],
+        deletedSoals: [],
+        deletedOpsi: [],
 
         // Step navigation
         setCurrentStep: async (step: BuilderStep) => {
@@ -228,12 +248,20 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
         nextStep: async () => {
           const { currentStep, draftId, meta, createDraft } = get();
           
+          console.log('⏭️ [AUTO-SAVE TRIGGER] nextStep called:', {
+            currentStep,
+            hasDraft: !!draftId,
+            hasTitle: meta.title.trim() !== ''
+          });
+          
           // Auto-create draft if leaving meta step and no draft exists
           if (currentStep === 'meta' && !draftId && meta.title.trim() !== '') {
+            console.log('📝 [AUTO-SAVE] Auto-creating draft in nextStep...');
             try {
               await createDraft(meta);
+              console.log('✅ [AUTO-SAVE] Draft auto-created in nextStep successfully');
             } catch (error) {
-              console.error('Failed to auto-create draft in nextStep:', error);
+              console.error('❌ [AUTO-SAVE] Failed to auto-create draft in nextStep:', error);
               // Set error state
               set((state) => {
                 state.error = 'Failed to create draft: ' + (error instanceof Error ? error.message : 'Unknown error');
@@ -244,7 +272,9 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           set((state) => {
             const currentIndex = stepOrder.indexOf(state.currentStep);
             if (currentIndex < stepOrder.length - 1) {
-              state.currentStep = stepOrder[currentIndex + 1];
+              const nextStep = stepOrder[currentIndex + 1];
+              state.currentStep = nextStep;
+              console.log('🎯 [AUTO-SAVE] Navigated to next step:', nextStep);
             }
           });
         },
@@ -328,9 +358,14 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
         },
 
         removeMateri: (index: number) => {
-          set((state) => {
-            if (state.materis[index]) {
-              const materi = state.materis[index];
+          const { materis } = get();
+          if (!materis[index]) return;
+
+          const materi = materis[index];
+          
+          if (materi.tempId) {
+            // Remove unsaved materi (only from local state)
+            set((state) => {
               if (materi.tempId) {
                 state.optimisticUpdates.delete(materi.tempId);
               }
@@ -340,8 +375,19 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                 m.order = i;
               });
               state.isDirty = true;
-            }
-          });
+            });
+          } else {
+            // Mark saved materi for deletion (will be deleted on save)
+            set((state) => {
+              state.deletedMateris.push(materi.id!);
+              state.materis.splice(index, 1);
+              // Reorder remaining materis
+              state.materis.forEach((m: MateriData, i: number) => {
+                m.order = i;
+              });
+              state.isDirty = true;
+            });
+          }
         },
 
         reorderMateris: (fromIndex: number, toIndex: number) => {
@@ -360,8 +406,8 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
         },
 
         saveMateris: async () => {
-          const { draftId, materis } = get();
-          if (!draftId || materis.length === 0) return;
+          const { draftId, materis, deletedMateris } = get();
+          if (!draftId || materis.length === 0 && deletedMateris.length === 0) return;
 
           set((state) => {
             state.isLoading = true;
@@ -369,10 +415,22 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           });
 
           try {
+            // Handle deletions first
+            if (deletedMateris.length > 0) {
+              console.log('🗑️ [SAVE] Deleting materis:', deletedMateris);
+              for (const materiId of deletedMateris) {
+                const deleteResult = await deleteMateri(materiId);
+                if (!deleteResult.success) {
+                  throw new Error(`Failed to delete materi ${materiId}: ${deleteResult.error}`);
+                }
+              }
+            }
+
             // Only save new materis (those with tempId)
             const newMateris = materis.filter(m => m.tempId);
             
             if (newMateris.length > 0) {
+              console.log('➕ [SAVE] Adding new materis:', newMateris.length);
               // Serialize JSON data to ensure it's safe for server actions
               const serializedMateris = newMateris.map(materi => ({
                 ...materi,
@@ -398,6 +456,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             // Handle reordering if needed
             const existingMateris = materis.filter(m => m.id && !m.tempId);
             if (existingMateris.length > 0) {
+              console.log('🔄 [SAVE] Reordering existing materis:', existingMateris.length);
               const reorderData = existingMateris.map(m => ({ id: m.id!, order: m.order }));
               const reorderResult = await reorderMateris(draftId, reorderData);
               if (!reorderResult.success) {
@@ -405,7 +464,9 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
               }
             }
 
+            // Clear deletion tracking
             set((state) => {
+              state.deletedMateris = [];
               state.isDirty = false;
               state.isLoading = false;
             });
@@ -574,16 +635,28 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
         },
 
         removeKoleksiSoal: (index: number) => {
-          set((state) => {
-            if (state.koleksiSoals[index]) {
-              const koleksiSoal = state.koleksiSoals[index];
+          const { koleksiSoals } = get();
+          if (!koleksiSoals[index]) return;
+
+          const koleksiSoal = koleksiSoals[index];
+          
+          if (koleksiSoal.tempId) {
+            // Remove unsaved koleksi soal (only from local state)
+            set((state) => {
               if (koleksiSoal.tempId) {
                 state.optimisticUpdates.delete(koleksiSoal.tempId);
               }
               state.koleksiSoals.splice(index, 1);
               state.isDirty = true;
-            }
-          });
+            });
+          } else {
+            // Mark saved koleksi soal for deletion (will be deleted on save)
+            set((state) => {
+              state.deletedKoleksiSoals.push(koleksiSoal.id!);
+              state.koleksiSoals.splice(index, 1);
+              state.isDirty = true;
+            });
+          }
         },
 
         saveKoleksiSoal: async (index: number) => {
@@ -602,7 +675,6 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             const { saveKoleksiSoal: saveKoleksiSoalAction } = await import('@/app/actions/kelas');
             
             const result = await saveKoleksiSoalAction(
-              draftId.toString(),
               draftId, // kelasId
               {
                 nama: koleksiSoal.nama,
@@ -671,16 +743,29 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
         },
 
         removeSoal: (koleksiIndex: number, soalIndex: number) => {
-          set((state) => {
-            if (state.koleksiSoals[koleksiIndex] && state.koleksiSoals[koleksiIndex].soals[soalIndex]) {
-              const soal = state.koleksiSoals[koleksiIndex].soals[soalIndex];
+          const { koleksiSoals } = get();
+          if (!koleksiSoals[koleksiIndex] || !koleksiSoals[koleksiIndex].soals[soalIndex]) return;
+
+          const koleksiSoal = koleksiSoals[koleksiIndex];
+          const soal = koleksiSoal.soals[soalIndex];
+          
+          if (soal.tempId) {
+            // Remove unsaved soal (only from local state)
+            set((state) => {
               if (soal.tempId) {
                 state.optimisticUpdates.delete(soal.tempId);
               }
               state.koleksiSoals[koleksiIndex].soals.splice(soalIndex, 1);
               state.isDirty = true;
-            }
-          });
+            });
+          } else {
+            // Mark saved soal for deletion (will be deleted on save)
+            set((state) => {
+              state.deletedSoals.push(soal.id!);
+              state.koleksiSoals[koleksiIndex].soals.splice(soalIndex, 1);
+              state.isDirty = true;
+            });
+          }
         },
 
         // Opsi actions within Soal
@@ -713,11 +798,17 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
         },
 
         removeOpsi: (koleksiIndex: number, soalIndex: number, opsiIndex: number) => {
-          set((state) => {
-            if (state.koleksiSoals[koleksiIndex] && 
-                state.koleksiSoals[koleksiIndex].soals[soalIndex] && 
-                state.koleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex]) {
-              const opsi = state.koleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex];
+          const { koleksiSoals } = get();
+          if (!koleksiSoals[koleksiIndex] ||
+              !koleksiSoals[koleksiIndex].soals[soalIndex] ||
+              !koleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex]) return;
+
+          const soal = koleksiSoals[koleksiIndex].soals[soalIndex];
+          const opsi = soal.opsis[opsiIndex];
+          
+          if (opsi.tempId) {
+            // Remove unsaved opsi (only from local state)
+            set((state) => {
               if (opsi.tempId) {
                 state.optimisticUpdates.delete(opsi.tempId);
               }
@@ -727,8 +818,137 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                 o.order = i;
               });
               state.isDirty = true;
-            }
+            });
+          } else {
+            // Mark saved opsi for deletion (will be deleted on save)
+            set((state) => {
+              state.deletedOpsi.push(opsi.id!);
+              state.koleksiSoals[koleksiIndex].soals[soalIndex].opsis.splice(opsiIndex, 1);
+              // Reorder remaining opsis
+              state.koleksiSoals[koleksiIndex].soals[soalIndex].opsis.forEach((o: SoalOpsiData, i: number) => {
+                o.order = i;
+              });
+              state.isDirty = true;
+            });
+          }
+        },
+
+        // Individual Soal saving
+        saveSoal: async (koleksiIndex: number, soalIndex: number) => {
+          const { koleksiSoals } = get();
+          if (!koleksiSoals[koleksiIndex] || !koleksiSoals[koleksiIndex].soals[soalIndex]) return;
+
+          const koleksiSoal = koleksiSoals[koleksiIndex];
+          const soal = koleksiSoal.soals[soalIndex];
+          
+          // Only save if koleksiSoal has a real ID (is saved) and soal has tempId (is unsaved)
+          if (!koleksiSoal.id || !soal.tempId) return;
+
+          // Validate the soal data before saving
+          if (!soal.pertanyaan || soal.pertanyaan.trim() === '') {
+            toast.error('Question is required');
+            return;
+          }
+
+          set((state) => {
+            state.isLoading = true;
+            state.error = null;
           });
+
+          try {
+            const { saveSoal: saveSoalAction } = await import('@/app/actions/kelas');
+            
+            const result = await saveSoalAction(
+              koleksiSoal.id,
+              {
+                pertanyaan: soal.pertanyaan,
+                difficulty: soal.difficulty,
+                explanation: soal.explanation,
+                isActive: soal.isActive,
+              },
+              soal.id
+            );
+            
+            if (result.success && result.data) {
+              // Update the soal with the real ID and save all opsis
+              set((state) => {
+                const updatedSoal = state.koleksiSoals[koleksiIndex].soals[soalIndex];
+                updatedSoal.id = result.data.id;
+                if (updatedSoal.tempId) {
+                  state.optimisticUpdates.delete(updatedSoal.tempId);
+                  delete updatedSoal.tempId;
+                }
+                state.isLoading = false;
+              });
+
+              // Save all opsis for this soal
+              const opsisToSave = soal.opsis.filter(opsi => opsi.tempId);
+              for (let opsiIndex = 0; opsiIndex < opsisToSave.length; opsiIndex++) {
+                await get().saveOpsi(koleksiIndex, soalIndex, opsiIndex);
+              }
+
+              toast.success('Question saved successfully');
+            } else {
+              throw new Error(result.error || 'Failed to save question');
+            }
+          } catch (error) {
+            set((state) => {
+              state.isLoading = false;
+              state.error = error instanceof Error ? error.message : 'Failed to save question';
+            });
+            toast.error('Failed to save question');
+          }
+        },
+
+        // Individual Opsi saving
+        saveOpsi: async (koleksiIndex: number, soalIndex: number, opsiIndex: number) => {
+          const { koleksiSoals } = get();
+          if (!koleksiSoals[koleksiIndex] ||
+              !koleksiSoals[koleksiIndex].soals[soalIndex] ||
+              !koleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex]) return;
+
+          const soal = koleksiSoals[koleksiIndex].soals[soalIndex];
+          const opsi = soal.opsis[opsiIndex];
+          
+          // Only save if soal has a real ID (is saved) and opsi has tempId (is unsaved)
+          if (!soal.id || !opsi.tempId) return;
+
+          try {
+            // Validate the opsi data before saving
+            if (!opsi.opsiText || opsi.opsiText.trim() === '') {
+              console.warn('Skipping save for empty option text');
+              return;
+            }
+
+            const { saveOpsi: saveOpsiAction } = await import('@/app/actions/kelas');
+            
+            const result = await saveOpsiAction(
+              soal.id,
+              {
+                opsiText: opsi.opsiText,
+                isCorrect: opsi.isCorrect,
+                order: opsi.order,
+              },
+              opsi.id
+            );
+            
+            if (result.success && result.data) {
+              // Update the opsi with the real ID
+              set((state) => {
+                const updatedOpsi = state.koleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex];
+                updatedOpsi.id = result.data.id;
+                if (updatedOpsi.tempId) {
+                  state.optimisticUpdates.delete(updatedOpsi.tempId);
+                  delete updatedOpsi.tempId;
+                }
+              });
+            } else {
+              throw new Error(result.error || 'Failed to save option');
+            }
+          } catch (error) {
+            console.error('Save opsi error:', error);
+            // Don't show toast for individual opsi errors as they happen in batch
+          }
         },
 
         // Global actions
@@ -810,6 +1030,28 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                   isDemo: materi.isDemo,
                 }));
 
+                // Load existing koleksiSoals
+                state.koleksiSoals = (kelas.koleksiSoals || []).map((koleksiSoal: any) => ({
+                  id: koleksiSoal.id,
+                  nama: koleksiSoal.nama,
+                  deskripsi: koleksiSoal.deskripsi,
+                  isPrivate: koleksiSoal.isPrivate,
+                  isDraft: koleksiSoal.isDraft,
+                  soals: (koleksiSoal.soals || []).map((soal: any) => ({
+                    id: soal.id,
+                    pertanyaan: soal.pertanyaan,
+                    difficulty: soal.difficulty,
+                    explanation: soal.explanation,
+                    isActive: soal.isActive,
+                    opsis: (soal.opsis || []).map((opsi: any) => ({
+                      id: opsi.id,
+                      opsiText: opsi.opsiText,
+                      isCorrect: opsi.isCorrect,
+                      order: opsi.order,
+                    })),
+                  })),
+                }));
+
                 state.isDirty = false;
                 state.isLoading = false;
                 state.currentStep = 'meta';
@@ -887,6 +1129,10 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                 state.koleksiSoals = [];
                 state.isDirty = false;
                 state.optimisticUpdates.clear();
+                state.deletedMateris = [];
+                state.deletedKoleksiSoals = [];
+                state.deletedSoals = [];
+                state.deletedOpsi = [];
                 state.isLoading = false;
               });
               toast.success('Draft deleted successfully');
@@ -915,6 +1161,10 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             state.koleksiSoals = [];
             state.isDirty = false;
             state.optimisticUpdates.clear();
+            state.deletedMateris = [];
+            state.deletedKoleksiSoals = [];
+            state.deletedSoals = [];
+            state.deletedOpsi = [];
           });
         },
 
@@ -928,6 +1178,122 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           set((state) => {
             state.error = null;
           });
+        },
+
+        setIsDirty: (dirty: boolean) => {
+          set((state) => {
+            state.isDirty = dirty;
+          });
+        },
+
+        // Batch saving for all unsaved assessment data
+        saveAllAssessments: async () => {
+          const { koleksiSoals, draftId, deletedKoleksiSoals, deletedSoals, deletedOpsi } = get();
+          if (!draftId) return;
+
+          console.log('💾 [AUTO-SAVE TRIGGER] saveAllAssessments called:', {
+            draftId,
+            totalCollections: koleksiSoals.length,
+            unsavedCollections: koleksiSoals.filter(k => k.tempId).length,
+            totalQuestions: koleksiSoals.reduce((total, k) => total + k.soals.length, 0),
+            unsavedQuestions: koleksiSoals.reduce((total, k) => total + k.soals.filter(s => s.tempId).length, 0),
+            deletedCollections: deletedKoleksiSoals.length,
+            deletedQuestions: deletedSoals.length,
+            deletedOptions: deletedOpsi.length
+          });
+
+          set((state) => {
+            state.isLoading = true;
+            state.error = null;
+          });
+
+          try {
+            console.log('📝 [AUTO-SAVE] Starting batch save of assessments...');
+            
+            // Handle deletions first
+            if (deletedKoleksiSoals.length > 0) {
+              console.log('🗑️ [AUTO-SAVE] Deleting koleksi soals:', deletedKoleksiSoals);
+              for (const koleksiId of deletedKoleksiSoals) {
+                const deleteResult = await deleteKoleksiSoal(koleksiId);
+                if (!deleteResult.success) {
+                  throw new Error(`Failed to delete koleksi soal ${koleksiId}: ${deleteResult.error}`);
+                }
+              }
+            }
+
+            if (deletedSoals.length > 0) {
+              console.log('🗑️ [AUTO-SAVE] Deleting soals:', deletedSoals);
+              for (const soalId of deletedSoals) {
+                const deleteResult = await deleteSoal(soalId);
+                if (!deleteResult.success) {
+                  throw new Error(`Failed to delete soal ${soalId}: ${deleteResult.error}`);
+                }
+              }
+            }
+
+            if (deletedOpsi.length > 0) {
+              console.log('🗑️ [AUTO-SAVE] Deleting opsi:', deletedOpsi);
+              for (const opsiId of deletedOpsi) {
+                const deleteResult = await deleteOpsi(opsiId);
+                if (!deleteResult.success) {
+                  throw new Error(`Failed to delete opsi ${opsiId}: ${deleteResult.error}`);
+                }
+              }
+            }
+
+            // First, save all unsaved koleksi soals
+            for (let koleksiIndex = 0; koleksiIndex < koleksiSoals.length; koleksiIndex++) {
+              const koleksiSoal = koleksiSoals[koleksiIndex];
+              
+              // Save koleksi soal if it has tempId (unsaved)
+              if (koleksiSoal.tempId) {
+                console.log(`📝 [AUTO-SAVE] Saving koleksi soal ${koleksiIndex}: ${koleksiSoal.nama}`);
+                await get().saveKoleksiSoal(koleksiIndex);
+              }
+            }
+
+            // Then, save all unsaved soals and their opsis
+            for (let koleksiIndex = 0; koleksiIndex < koleksiSoals.length; koleksiIndex++) {
+              const koleksiSoal = koleksiSoals[koleksiIndex];
+              
+              // Only proceed if koleksiSoal is saved (has real ID)
+              if (koleksiSoal.id) {
+                for (let soalIndex = 0; soalIndex < koleksiSoal.soals.length; soalIndex++) {
+                  const soal = koleksiSoal.soals[soalIndex];
+                  
+                  // Save soal if it has tempId (unsaved) and has valid data
+                  if (soal.tempId) {
+                    // Only save if the question has content
+                    if (soal.pertanyaan && soal.pertanyaan.trim() !== '') {
+                      console.log(`📝 [AUTO-SAVE] Saving soal ${soalIndex} in koleksi ${koleksiIndex}: ${soal.pertanyaan.substring(0, 50)}...`);
+                      await get().saveSoal(koleksiIndex, soalIndex);
+                    } else {
+                      console.warn(`⚠️ [AUTO-SAVE] Skipping save for empty question in koleksi ${koleksiIndex}, soal ${soalIndex}`);
+                    }
+                  }
+                }
+              }
+            }
+
+            // Clear deletion tracking
+            set((state) => {
+              state.deletedKoleksiSoals = [];
+              state.deletedSoals = [];
+              state.deletedOpsi = [];
+              state.isDirty = false;
+              state.isLoading = false;
+            });
+
+            console.log('✅ [AUTO-SAVE] Batch save of assessments completed successfully');
+            toast.success('All assessments saved successfully');
+          } catch (error) {
+            console.error('❌ [AUTO-SAVE] Batch save of assessments failed:', error);
+            set((state) => {
+              state.isLoading = false;
+              state.error = error instanceof Error ? error.message : 'Failed to save assessments';
+            });
+            toast.error('Failed to save assessments');
+          }
         },
       }))
     ),

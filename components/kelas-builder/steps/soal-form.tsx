@@ -20,8 +20,8 @@ interface SoalFormProps {
 }
 
 export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
-  const { 
-    koleksiSoals, 
+  const {
+    koleksiSoals,
     updateSoal,
     addOpsi,
     updateOpsi,
@@ -102,9 +102,9 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
           <Label htmlFor="difficulty">Difficulty</Label>
           <Select
             value={soal?.difficulty || ""}
-            onValueChange={(value) => 
-              updateSoal(koleksiIndex, soalIndex, { 
-                difficulty: value as Difficulty | undefined 
+            onValueChange={(value) =>
+              updateSoal(koleksiIndex, soalIndex, {
+                difficulty: value as Difficulty | undefined
               })
             }
           >
@@ -123,7 +123,7 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
           <Switch
             id="isActive"
             checked={soal?.isActive ?? true}
-            onCheckedChange={(checked) => 
+            onCheckedChange={(checked) =>
               updateSoal(koleksiIndex, soalIndex, { isActive: checked })
             }
           />

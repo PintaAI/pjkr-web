@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import Image from "next/image";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { KelasMetaSchema } from "@/lib/validation/kelas-schemas";
 import { KelasType, Difficulty } from "@prisma/client";
@@ -15,7 +14,6 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Badge } from "@/components/ui/badge";
 import { NovelEditor } from "@/components/novel/novel-editor";
 import { MediaUpload } from "@/components/ui/media-upload";
-import { CloudinaryImage } from "@/components/ui/cloudinary-image";
 import { 
   BookOpen, 
   DollarSign, 
@@ -237,69 +235,18 @@ export function StepMeta() {
                   <FormItem>
                     <FormLabel>Course Thumbnail</FormLabel>
                     <FormControl>
-                      <div className="space-y-4">
-                        <MediaUpload
-                          onUpload={(files) => {
-                            if (files.length > 0) {
-                              field.onChange(files[0].url);
-                            }
-                          }}
-                          maxFiles={1}
-                          maxSize={5}
-                          allowedTypes={['image']}
-                          accept="image/*"
-                          className="max-w-md"
-                        />
-                        
-                        {field.value && (
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium">Current Thumbnail:</p>
-                            <div className="relative w-48 h-32 border rounded-lg overflow-hidden">
-                              {field.value.includes('cloudinary.com') ? (
-                                <CloudinaryImage
-                                  publicId={(() => {
-                                    // Extract public ID from Cloudinary URL
-                                    // Handle different Cloudinary URL formats
-                                    const url = field.value;
-                                    if (url.includes('/upload/')) {
-                                      const uploadIndex = url.indexOf('/upload/');
-                                      const afterUpload = url.substring(uploadIndex + 8);
-                                      // Remove version if present (v1234567890/)
-                                      const withoutVersion = afterUpload.replace(/^v\d+\//, '');
-                                      // Remove file extension
-                                      const parts = withoutVersion.split('.');
-                                      return parts[0];
-                                    } else {
-                                      // Fallback for simple URLs
-                                      const parts = url.split('/');
-                                      const lastPart = parts[parts.length - 1];
-                                      return lastPart.split('.')[0];
-                                    }
-                                  })()}
-                                  alt="Course thumbnail"
-                                  width={192}
-                                  height={128}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <Image
-                                  src={field.value}
-                                  alt="Course thumbnail"
-                                  width={192}
-                                  height={128}
-                                  className="w-full h-full object-cover"
-                                />
-                              )}
-                            </div>
-                            <Input
-                              placeholder="Or paste thumbnail URL"
-                              value={field.value || ""}
-                              onChange={(e) => field.onChange(e.target.value)}
-                              className="text-sm"
-                            />
-                          </div>
-                        )}
-                      </div>
+                      <MediaUpload
+                        onUpload={(files) => {
+                          if (files.length > 0) {
+                            field.onChange(files[0].url);
+                          }
+                        }}
+                        maxFiles={1}
+                        maxSize={5}
+                        allowedTypes={['image']}
+                        accept="image/*"
+                        className="max-w-md"
+                      />
                     </FormControl>
                     <FormDescription>
                       Upload an image or provide a URL for your course thumbnail. This will be displayed in course listings and previews.

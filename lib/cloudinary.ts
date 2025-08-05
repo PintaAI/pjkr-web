@@ -1,11 +1,27 @@
 import { v2 as cloudinary } from 'cloudinary';
 
 // Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+const cloudUrl = process.env.CLOUDINARY_URL;
+
+if (cloudUrl) {
+  // Parse CLOUDINARY_URL to extract credentials
+  const url = new URL(cloudUrl.replace('cloudinary://', 'https://'));
+  cloudinary.config({
+    cloud_name: cloudName,
+    api_key: url.username,
+    api_secret: url.password,
+  });
+} else if (cloudName && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+  // Fallback to individual environment variables
+  cloudinary.config({
+    cloud_name: cloudName,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+} else {
+  console.error('Cloudinary configuration missing. Please set CLOUDINARY_URL or individual Cloudinary credentials.');
+}
 
 export default cloudinary;
 

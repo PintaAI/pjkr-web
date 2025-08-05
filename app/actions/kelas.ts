@@ -303,6 +303,19 @@ export async function getKelasById(id: number) {
       include: {
         author: { select: { id: true, name: true, email: true } },
         materis: { orderBy: { order: "asc" } },
+        kelasKoleksiSoals: {
+          include: {
+            koleksiSoal: {
+              include: {
+                soals: {
+                  include: {
+                    opsis: { orderBy: { order: "asc" } }
+                  }
+                }
+              }
+            }
+          }
+        },
         _count: { select: { materis: true, members: true } },
       },
     });
@@ -321,6 +334,8 @@ export async function getKelasById(id: number) {
       ...kelas,
       price: kelas.price ? Number(kelas.price) : null,
       discount: kelas.discount ? Number(kelas.discount) : null,
+      // Flatten the koleksiSoals from the junction table
+      koleksiSoals: kelas.kelasKoleksiSoals.map(junction => junction.koleksiSoal),
     };
 
     return { success: true, data: serializedKelas };
@@ -389,15 +404,38 @@ export async function reorderMateris(kelasId: number, materiOrders: { id: number
   }
 }
 
-// Assessment collection actions
-export async function saveKoleksiSoal(userId: string, kelasId: number | null, koleksiData: z.infer<typeof koleksiSoalSchema>, koleksiId?: number) {
+// Delete materi
+export async function deleteMateri(materiId: number) {
   try {
     const session = await assertAuthenticated();
 
-    // Check ownership
-    if (session.user.id !== userId) {
+    // Check ownership via materi -> kelas
+    const materi = await prisma.materi.findUnique({
+      where: { id: materiId },
+      include: {
+        kelas: {
+          select: { authorId: true },
+        },
+      },
+    });
+
+    if (!materi || !materi.kelas || materi.kelas.authorId !== session.user.id) {
       return { success: false, error: "Not authorized" };
     }
+
+    await prisma.materi.delete({ where: { id: materiId } });
+
+    return { success: true, message: "Lesson deleted successfully" };
+  } catch (error) {
+    console.error("Delete materi error:", error);
+    return { success: false, error: "Failed to delete lesson" };
+  }
+}
+
+// Assessment collection actions
+export async function saveKoleksiSoal(kelasId: number | null, koleksiData: z.infer<typeof koleksiSoalSchema>, koleksiId?: number) {
+  try {
+    const session = await assertAuthenticated();
 
     const validData = koleksiSoalSchema.parse(koleksiData);
 
@@ -411,7 +449,6 @@ export async function saveKoleksiSoal(userId: string, kelasId: number | null, ko
           deskripsi: validData.deskripsi,
           isPrivate: validData.isPrivate,
           isDraft: validData.isDraft,
-          kelasId: kelasId,
         },
         include: { soals: true },
       });
@@ -423,10 +460,19 @@ export async function saveKoleksiSoal(userId: string, kelasId: number | null, ko
           deskripsi: validData.deskripsi,
           isPrivate: validData.isPrivate,
           isDraft: validData.isDraft,
-          userId,
-          kelasId: kelasId,
+          userId: session.user.id,
         },
         include: { soals: true },
+      });
+    }
+
+    // If kelasId is provided, create the many-to-many relationship
+    if (kelasId && !koleksiId) {
+      await prisma.kelasKoleksiSoal.create({
+        data: {
+          kelasId: kelasId,
+          koleksiSoalId: koleksiSoal.id,
+        },
       });
     }
 

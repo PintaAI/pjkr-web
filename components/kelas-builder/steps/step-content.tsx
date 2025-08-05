@@ -5,9 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LessonForm } from "./add-lesson-form";
-import { 
-  FileText, 
-  Trash2, 
+import {
+  FileText,
+  Trash2,
   GripVertical
 } from "lucide-react";
 import {
@@ -114,10 +114,10 @@ function SortableMateriItem({
 }
 
 export function StepContent() {
-  const { 
-    materis, 
-    addMateri, 
-    removeMateri, 
+  const {
+    materis,
+    addMateri,
+    removeMateri,
     updateMateri,
     reorderMateris
   } = useKelasBuilderStore();
@@ -161,7 +161,7 @@ export function StepContent() {
     <div className="space-y-6">
 
       {/* Summary */}
-      <Card>
+      <Card className="bg-muted/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />

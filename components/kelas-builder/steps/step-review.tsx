@@ -146,35 +146,6 @@ export function StepReview() {
 
 
 
-      {/* Lessons List */}
-      {materis.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Lessons</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {materis.map((materi, index) => (
-                <div key={materi.tempId || materi.id} className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-3">
-                    <div className="text-sm font-medium text-muted-foreground">
-                      {index + 1}.
-                    </div>
-                    <div>
-                      <div className="font-medium">{materi.title}</div>
-                      <div className="text-sm text-muted-foreground">{materi.description}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {materi.isDemo && <Badge variant="secondary">Demo</Badge>}
-                    {materi.tempId && <Badge variant="outline">Unsaved</Badge>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
     </div>
   );

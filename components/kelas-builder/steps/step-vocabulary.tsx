@@ -8,12 +8,7 @@ import { MessageSquare, Plus } from "lucide-react";
 export function StepVocabulary() {
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold tracking-tight">Vocabulary Sets</h2>
-        <p className="text-muted-foreground">
-          Add vocabulary sets to enhance your course. This step is optional but recommended for language courses.
-        </p>
-      </div>
+     
 
       <Card>
         <CardHeader>

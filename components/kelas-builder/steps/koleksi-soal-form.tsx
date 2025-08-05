@@ -12,9 +12,10 @@ import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 interface KoleksiSoalFormProps {
   koleksiIndex?: number;
   onCancel?: () => void;
+  onSave?: () => void;
 }
 
-export function KoleksiSoalForm({ koleksiIndex, onCancel }: KoleksiSoalFormProps) {
+export function KoleksiSoalForm({ koleksiIndex, onCancel, onSave }: KoleksiSoalFormProps) {
   const {
     koleksiSoals,
     addKoleksiSoal,
@@ -58,6 +59,7 @@ export function KoleksiSoalForm({ koleksiIndex, onCancel }: KoleksiSoalFormProps
       addKoleksiSoal(submissionData);
     }
     onCancel?.();
+    onSave?.();
   };
 
 
