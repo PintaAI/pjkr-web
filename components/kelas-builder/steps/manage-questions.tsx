@@ -5,7 +5,7 @@ import { Card, CardContent,} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Trash2, FileText, Edit, CheckCircle, Circle, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Trash2, FileText, CheckCircle, Circle, ChevronDown, ChevronRight } from "lucide-react";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { Difficulty } from "@prisma/client";
 import { SoalForm } from "./soal-form";
@@ -104,7 +104,11 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
           {koleksiSoal.soals.map((soal, soalIndex) => {
             const isExpanded = expandedQuestions.has(soalIndex);
             return (
-              <Card key={soal.tempId || soal.id || soalIndex} className="relative hover:shadow-md transition-shadow py-2 ">
+              <Card
+                key={soal.tempId || soal.id || soalIndex}
+                className="relative hover:shadow-md transition-shadow py-2 cursor-pointer"
+                onClick={() => handleEditSoal(soalIndex)}
+              >
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -138,7 +142,10 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => toggleExpand(soalIndex)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleExpand(soalIndex);
+                          }}
                           className="h-8 w-8 p-0"
                         >
                           {isExpanded ? (
@@ -150,15 +157,10 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleEditSoal(soalIndex)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveSoal(soalIndex)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveSoal(soalIndex);
+                          }}
                           className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />

@@ -59,12 +59,17 @@ export default function KelasBuilderPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading kelas builder...</p>
+      <KelasBuilderLayout>
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="bg-background border rounded-lg p-6 shadow-lg">
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+              <p className="text-muted-foreground">Loading kelas builder...</p>
+            </div>
+          </div>
         </div>
-      </div>
+        {renderCurrentStep()}
+      </KelasBuilderLayout>
     );
   }
 

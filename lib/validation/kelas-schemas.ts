@@ -59,9 +59,13 @@ export const SoalOpsiSchema = z.object({
 });
 
 export const SoalSchema = z.object({
-  pertanyaan: z.string().min(1, "Question is required").max(1000, "Question must be less than 1000 characters"),
+  pertanyaan: z.any().optional(), // Rich content (JSON)
+  pertanyaanText: z.string().min(1, "Question text is required").max(1000, "Question must be less than 1000 characters").optional(),
+  pertanyaanHtml: z.string().optional(),
   difficulty: z.nativeEnum(Difficulty).optional(),
-  explanation: z.string().max(1000, "Explanation must be less than 1000 characters").optional(),
+  explanation: z.any().optional(), // Rich content (JSON)
+  explanationText: z.string().max(2000, "Explanation must be less than 2000 characters").optional(),
+  explanationHtml: z.string().optional(),
   isActive: z.boolean().default(true),
   opsis: z.array(SoalOpsiSchema)
     .min(2, "At least 2 options are required")

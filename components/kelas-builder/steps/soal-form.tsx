@@ -1,8 +1,7 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card,} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,8 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, CheckCircle, Circle } from "lucide-react";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
-import { SoalSchema, type SoalFormData } from "@/lib/validation/kelas-schemas";
 import { Difficulty } from "@prisma/client";
+import { NovelEditor } from "@/components/novel/novel-editor";
 
 interface SoalFormProps {
   koleksiIndex: number;
@@ -38,9 +37,13 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
     formState: { errors },
   } = useForm({
     defaultValues: soal || {
-      pertanyaan: "",
+      pertanyaan: null,
+      pertanyaanText: "",
+      pertanyaanHtml: "",
       difficulty: undefined,
-      explanation: "",
+      explanation: null,
+      explanationText: "",
+      explanationHtml: "",
       isActive: true,
       opsis: [],
     },
@@ -48,6 +51,22 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
   });
 
   const watchedValues = watch();
+
+  const handleQuestionUpdate = (content: { json: any; html: string }) => {
+    setValue("pertanyaan" as any, content.json);
+    setValue("pertanyaanHtml" as any, content.html);
+    // Extract plain text for fallback
+    const plainText = content.html.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+    setValue("pertanyaanText" as any, plainText);
+  };
+
+  const handleExplanationUpdate = (content: { json: any; html: string }) => {
+    setValue("explanation" as any, content.json);
+    setValue("explanationHtml" as any, content.html);
+    // Extract plain text for fallback
+    const plainText = content.html.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+    setValue("explanationText" as any, plainText);
+  };
 
   const onSubmit = (data: any) => {
     updateSoal(koleksiIndex, soalIndex, data);
@@ -84,14 +103,18 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="pertanyaan">Question *</Label>
-        <Input
-          id="pertanyaan"
-          {...register("pertanyaan")}
-          placeholder="Enter your question"
-          className={errors.pertanyaan ? "border-destructive" : ""}
-          onChange={(e) => updateSoal(koleksiIndex, soalIndex, { pertanyaan: e.target.value })}
-        />
+        <Label>Question *</Label>
+        <div className="border rounded-lg">
+          <NovelEditor
+            initialContent={soal?.pertanyaan || null}
+            onUpdate={handleQuestionUpdate}
+            placeholder="Enter your question here..."
+            height="min-h-[150px] "
+            width="w-full"
+            compact={true}
+            hideSaveStatus={true}
+          />
+        </div>
         {errors.pertanyaan && (
           <p className="text-sm text-destructive">{errors.pertanyaan.message}</p>
         )}
@@ -132,13 +155,18 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="explanation">Explanation (Optional)</Label>
-        <Input
-          id="explanation"
-          {...register("explanation")}
-          placeholder="Explain the correct answer"
-          onChange={(e) => updateSoal(koleksiIndex, soalIndex, { explanation: e.target.value })}
-        />
+        <Label>Explanation (Optional)</Label>
+        <div className="border rounded-lg">
+          <NovelEditor
+            initialContent={soal?.explanation || null}
+            onUpdate={handleExplanationUpdate}
+            placeholder="Explain the correct answer here..."
+            height="min-h-[150px] max-h-[300px]"
+            width="w-full"
+            compact={true}
+            hideSaveStatus={true}
+          />
+        </div>
         {errors.explanation && (
           <p className="text-sm text-destructive">{errors.explanation.message}</p>
         )}

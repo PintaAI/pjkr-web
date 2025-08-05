@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect,} from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
@@ -38,8 +38,6 @@ export function StepMeta() {
 
   const { watch } = form;
   const watchedValues = watch();
-
-  // Update store when form values change, but only if values actually changed
   useEffect(() => {
     const hasActualChanges = JSON.stringify(watchedValues) !== JSON.stringify(meta);
     if (hasActualChanges) {
@@ -130,8 +128,9 @@ export function StepMeta() {
                       <NovelEditor
                         initialContent={watch("jsonDescription")}
                         onUpdate={(data) => {
-                          form.setValue("jsonDescription", data.json);
-                          form.setValue("htmlDescription", data.html);
+                          // Use debounce to prevent excessive state updates
+                          form.setValue("jsonDescription", data.json, { shouldTouch: true, shouldDirty: true });
+                          form.setValue("htmlDescription", data.html, { shouldTouch: true, shouldDirty: true });
                         }}
                         className="min-h-[300px]"
                         compact={true}
@@ -393,8 +392,6 @@ export function StepMeta() {
             </CardContent>
           </Card>
 
-          {/* Note: Save functionality is handled automatically when form values change */}
-          {/* Use the "Save" button in the header to manually save changes */}
         </form>
       </Form>
     </div>
