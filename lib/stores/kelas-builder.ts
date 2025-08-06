@@ -14,6 +14,7 @@ import {
   publishKelas,
   deleteDraftKelas,
   deleteMateri,
+  updateMateri,
   deleteKoleksiSoal,
   deleteSoal,
   deleteOpsi,
@@ -45,6 +46,7 @@ export interface MateriData {
   htmlDescription: string;
   order: number;
   isDemo: boolean;
+  isDraft: boolean;
   tempId?: string; // For optimistic updates
 }
 
@@ -107,7 +109,7 @@ export interface SoalSetData {
   tempId?: string; // For optimistic updates
 }
 
-export type BuilderStep = 'meta' | 'content' | 'vocabulary' | 'assessment' | 'review' | 'publish';
+export type BuilderStep = 'meta' | 'content' | 'vocabulary' | 'assessment' | 'review';
 
 interface KelasBuilderState {
   // Core state
@@ -125,6 +127,7 @@ interface KelasBuilderState {
   
   // UI state
   isDirty: boolean;
+  stepDirtyFlags: Record<BuilderStep, boolean>;
   optimisticUpdates: Set<string>;
   
   // Deletion tracking
@@ -135,6 +138,10 @@ interface KelasBuilderState {
 }
 
 interface KelasBuilderActions {
+  // Progress calculation
+  calculateStepProgress: (step: BuilderStep) => number;
+  calculateOverallProgress: () => number;
+  
   // Step navigation
   setCurrentStep: (step: BuilderStep) => void;
   nextStep: () => void;
@@ -149,6 +156,7 @@ interface KelasBuilderActions {
   updateMateri: (index: number, materi: Partial<MateriData>) => void;
   removeMateri: (index: number) => void;
   reorderMateris: (fromIndex: number, toIndex: number) => void;
+  toggleMateriDraft: (index: number) => Promise<void>;
   saveMateris: () => Promise<void>;
   
   // Vocabulary actions
@@ -181,6 +189,11 @@ interface KelasBuilderActions {
   removeOpsi: (koleksiIndex: number, soalIndex: number, opsiIndex: number) => void;
   saveOpsi: (koleksiIndex: number, soalIndex: number, opsiIndex: number) => Promise<void>;
   
+  // Vocabulary actions
+  updateVocabularyItem: (vocabSetId: number, itemData: Partial<VocabularyItemData>) => Promise<void>;
+  removeVocabularyItem: (vocabSetId: number) => Promise<void>;
+  reorderVocabularyItems: (vocabSetId: number, itemOrders: { id: number; order: number }[]) => Promise<void>;
+  
   // Global actions
   createDraft: (initialMeta: KelasMetaData) => Promise<void>;
   loadDraft: (kelasId: number) => Promise<void>;
@@ -203,7 +216,7 @@ const initialMeta: KelasMetaData = {
   isPaidClass: false,
 };
 
-const stepOrder: BuilderStep[] = ['meta', 'content', 'vocabulary', 'assessment', 'review', 'publish'];
+const stepOrder: BuilderStep[] = ['meta', 'content', 'vocabulary', 'assessment', 'review'];
 
 export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActions>()(
   devtools(
@@ -220,11 +233,76 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
         soalSets: [],
         koleksiSoals: [],
         isDirty: false,
+        stepDirtyFlags: {
+          meta: false,
+          content: false,
+          vocabulary: false,
+          assessment: false,
+          review: false,
+        },
         optimisticUpdates: new Set(),
         deletedMateris: [],
         deletedKoleksiSoals: [],
         deletedSoals: [],
         deletedOpsi: [],
+
+        // Progress calculation
+        calculateStepProgress: (step: BuilderStep): number => {
+          const state = get();
+          
+          switch (step) {
+            case 'meta':
+              const hasTitle = state.meta.title.trim() !== '';
+              const hasDescription = state.meta.description && state.meta.description.trim() !== '';
+              const hasLevel = state.meta.level;
+              const hasType = state.meta.type;
+              const hasValidPricing = !state.meta.isPaidClass || (state.meta.price && state.meta.price > 0);
+              
+              let metaProgress = 0;
+              if (hasTitle) metaProgress += 25;
+              if (hasDescription) metaProgress += 25;
+              if (hasLevel) metaProgress += 25;
+              if (hasType) metaProgress += 25;
+              if (hasValidPricing) metaProgress += 10; // Bonus for valid pricing
+              
+              return Math.min(100, metaProgress);
+              
+            case 'content':
+              if (state.materis.length === 0) return 0;
+              return Math.min(100, (state.materis.length / 5) * 100); // Assuming 5 lessons is target
+              
+            case 'vocabulary':
+              // Optional step - any vocabulary sets added is progress
+              return Math.min(100, (state.vocabSets.length / 3) * 100); // Assuming 3 sets is target
+              
+            case 'assessment':
+              // Optional step - any question collections added is progress
+              return Math.min(100, (state.koleksiSoals.length / 2) * 100); // Assuming 2 collections is target
+              
+            case 'review':
+              // Review step progress based on completion of previous steps
+              const metaComplete = state.meta.title.trim() !== '' && state.meta.description;
+              const contentComplete = state.materis.length > 0;
+              
+              if (metaComplete && contentComplete) return 100;
+              if (metaComplete || contentComplete) return 50;
+              return 0;
+              
+            default:
+              return 0;
+          }
+        },
+
+        calculateOverallProgress: (): number => {
+          const state = get();
+          const steps: BuilderStep[] = ['meta', 'content', 'vocabulary', 'assessment', 'review'];
+          
+          const totalProgress = steps.reduce((sum, step) => {
+            return sum + state.calculateStepProgress(step);
+          }, 0);
+          
+          return Math.round(totalProgress / steps.length);
+        },
 
         // Step navigation
         setCurrentStep: async (step: BuilderStep) => {
@@ -296,12 +374,18 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           set((state) => {
             Object.assign(state.meta, meta);
             state.isDirty = true;
+            state.stepDirtyFlags.meta = true;
           });
         },
 
         saveMeta: async () => {
           const { draftId, meta } = get();
           if (!draftId) return;
+
+          set((state) => {
+            state.isLoading = true;
+            state.error = null;
+          });
 
           try {
             // Serialize JSON data to ensure it's safe for server actions
@@ -316,6 +400,8 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             if (result.success) {
               set((state) => {
                 state.isDirty = false;
+                state.stepDirtyFlags.meta = false;
+                state.isLoading = false;
               });
               toast.success('Meta information updated successfully');
             } else {
@@ -323,6 +409,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             }
           } catch (error) {
             set((state) => {
+              state.isLoading = false;
               state.error = error instanceof Error ? error.message : 'Failed to update meta';
             });
             toast.error('Failed to update meta information');
@@ -340,6 +427,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             };
             state.materis.push(newMateri);
             state.isDirty = true;
+            state.stepDirtyFlags.content = true;
             state.optimisticUpdates.add(tempId);
           });
         },
@@ -349,6 +437,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             if (state.materis[index]) {
               Object.assign(state.materis[index], materi);
               state.isDirty = true;
+              state.stepDirtyFlags.content = true;
             }
           });
         },
@@ -371,6 +460,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                 m.order = i;
               });
               state.isDirty = true;
+              state.stepDirtyFlags.content = true;
             });
           } else {
             // Mark saved materi for deletion (will be deleted on save)
@@ -382,6 +472,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                 m.order = i;
               });
               state.isDirty = true;
+              state.stepDirtyFlags.content = true;
             });
           }
         },
@@ -398,7 +489,59 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             });
             
             state.isDirty = true;
+            state.stepDirtyFlags.content = true;
           });
+        },
+
+        toggleMateriDraft: async (index: number) => {
+          const { draftId, materis } = get();
+          if (!draftId || !materis[index] || !materis[index].id) return;
+
+          const materi = materis[index];
+          const newDraftStatus = !materi.isDraft;
+
+          set((state) => {
+            if (state.materis[index]) {
+              state.materis[index].isDraft = newDraftStatus;
+              state.isDirty = true;
+              state.stepDirtyFlags.content = true;
+            }
+          });
+
+          try {
+            // Update the materi in the database
+            if (!materi.id) throw new Error('Materi ID is required');
+            const result = await updateMateri(materi.id, { isDraft: newDraftStatus });
+            
+            if (result.success) {
+              set((state) => {
+                if (state.materis[index]) {
+                  state.materis[index].isDraft = newDraftStatus;
+                  state.isDirty = false;
+                  state.stepDirtyFlags.content = false;
+                }
+              });
+              
+              const action = newDraftStatus ? 'marked as draft' : 'published';
+              toast.success(`Lesson ${action} successfully`);
+            } else {
+              throw new Error(result.error || 'Failed to update lesson status');
+            }
+          } catch (error) {
+            // Revert the local state if save fails
+            set((state) => {
+              if (state.materis[index]) {
+                state.materis[index].isDraft = !newDraftStatus;
+              }
+            });
+            
+            set((state) => {
+              state.error = error instanceof Error ? error.message : 'Failed to update lesson status';
+            });
+            
+            const action = newDraftStatus ? 'mark as draft' : 'publish';
+            toast.error(`Failed to ${action} lesson`);
+          }
         },
 
         saveMateris: async () => {
@@ -464,6 +607,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             set((state) => {
               state.deletedMateris = [];
               state.isDirty = false;
+              state.stepDirtyFlags.content = false;
               state.isLoading = false;
             });
             toast.success('Materis saved successfully');
@@ -491,6 +635,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             };
             state.vocabSets.push(newVocabSet);
             state.isDirty = true;
+            state.stepDirtyFlags.vocabulary = true;
             state.optimisticUpdates.add(tempId);
           });
         },
@@ -500,6 +645,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             if (state.vocabSets[index]) {
               Object.assign(state.vocabSets[index], vocabSet);
               state.isDirty = true;
+              state.stepDirtyFlags.vocabulary = true;
             }
           });
         },
@@ -513,13 +659,14 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
               }
               state.vocabSets.splice(index, 1);
               state.isDirty = true;
+              state.stepDirtyFlags.vocabulary = true;
             }
           });
         },
 
         saveVocabularySet: async (index: number) => {
-          const { vocabSets } = get();
-          if (!vocabSets[index]) return;
+          const { vocabSets, draftId } = get();
+          if (!vocabSets[index] || !draftId) return;
 
           const vocabSet = vocabSets[index];
           if (!vocabSet.tempId) return; // Already saved
@@ -530,13 +677,45 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           });
 
           try {
-            // Note: Vocabulary functionality not implemented in simplified actions
-            // This would need to be implemented if vocabulary features are needed
-            toast.info('Vocabulary functionality not implemented yet');
+            // Import the vocabulary actions
+            const { saveVocabularySet: saveVocabularySetAction } = await import('@/app/actions/kelas');
             
-            set((state) => {
-              state.isLoading = false;
-            });
+            const result = await saveVocabularySetAction(
+              draftId,
+              {
+                title: vocabSet.title,
+                description: vocabSet.description,
+                icon: vocabSet.icon,
+                isPublic: vocabSet.isPublic,
+                items: vocabSet.items.map(item => ({
+                  korean: item.korean,
+                  indonesian: item.indonesian,
+                  type: item.type,
+                  pos: item.pos,
+                  audioUrl: item.audioUrl,
+                  exampleSentences: item.exampleSentences,
+                })),
+              },
+              vocabSet.id
+            );
+            
+            if (result.success && result.data) {
+              // Update the vocabulary set with the real ID
+              set((state) => {
+                const updatedVocabSet = state.vocabSets[index];
+                updatedVocabSet.id = result.data.id;
+                if (updatedVocabSet.tempId) {
+                  state.optimisticUpdates.delete(updatedVocabSet.tempId);
+                  delete updatedVocabSet.tempId;
+                }
+                state.isLoading = false;
+                state.stepDirtyFlags.vocabulary = false;
+              });
+              
+              toast.success('Vocabulary set saved successfully');
+            } else {
+              throw new Error(result.error || 'Failed to save vocabulary set');
+            }
           } catch (error) {
             set((state) => {
               state.isLoading = false;
@@ -544,6 +723,62 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             });
             toast.error('Failed to save vocabulary set');
           }
+        },
+
+        // Vocabulary item actions
+        updateVocabularyItem: async (vocabSetId: number, itemData: Partial<VocabularyItemData>) => {
+          const { vocabSets } = get();
+          
+          // Find the vocabulary set and update the item
+          set((state) => {
+            const vocabSetIndex = state.vocabSets.findIndex(vs => vs.id === vocabSetId);
+            if (vocabSetIndex !== -1) {
+              const itemIndex = state.vocabSets[vocabSetIndex].items.findIndex(item => item.id === itemData.id);
+              if (itemIndex !== -1) {
+                state.vocabSets[vocabSetIndex].items[itemIndex] = {
+                  ...state.vocabSets[vocabSetIndex].items[itemIndex],
+                  ...itemData,
+                };
+                state.isDirty = true;
+                state.stepDirtyFlags.vocabulary = true;
+              }
+            }
+          });
+        },
+
+        removeVocabularyItem: async (vocabSetId: number) => {
+          const { vocabSets } = get();
+          
+          set((state) => {
+            const vocabSetIndex = state.vocabSets.findIndex(vs => vs.id === vocabSetId);
+            if (vocabSetIndex !== -1) {
+              // Remove the item from the array
+              state.vocabSets[vocabSetIndex].items = state.vocabSets[vocabSetIndex].items.filter(item => item.id !== vocabSetId);
+              state.isDirty = true;
+              state.stepDirtyFlags.vocabulary = true;
+            }
+          });
+        },
+
+        reorderVocabularyItems: async (vocabSetId: number, itemOrders: { id: number; order: number }[]) => {
+          const { vocabSets } = get();
+          
+          set((state) => {
+            const vocabSetIndex = state.vocabSets.findIndex(vs => vs.id === vocabSetId);
+            if (vocabSetIndex !== -1) {
+              // Reorder items based on the provided orders
+              const items = state.vocabSets[vocabSetIndex].items;
+              const reorderedItems = items.sort((a, b) => {
+                const orderA = itemOrders.find(order => order.id === a.id)?.order || 0;
+                const orderB = itemOrders.find(order => order.id === b.id)?.order || 0;
+                return orderA - orderB;
+              });
+              
+              state.vocabSets[vocabSetIndex].items = reorderedItems;
+              state.isDirty = true;
+              state.stepDirtyFlags.vocabulary = true;
+            }
+          });
         },
 
         // Soal actions
@@ -556,6 +791,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             };
             state.soalSets.push(newSoalSet);
             state.isDirty = true;
+            state.stepDirtyFlags.assessment = true;
             state.optimisticUpdates.add(tempId);
           });
         },
@@ -569,6 +805,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
               }
               state.soalSets.splice(index, 1);
               state.isDirty = true;
+              state.stepDirtyFlags.assessment = true;
             }
           });
         },
@@ -592,6 +829,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             
             set((state) => {
               state.isLoading = false;
+              state.stepDirtyFlags.assessment = false;
             });
           } catch (error) {
             set((state) => {
@@ -617,6 +855,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             };
             state.koleksiSoals.push(newKoleksiSoal);
             state.isDirty = true;
+            state.stepDirtyFlags.assessment = true;
             state.optimisticUpdates.add(tempId);
           });
         },
@@ -626,6 +865,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             if (state.koleksiSoals[index]) {
               Object.assign(state.koleksiSoals[index], koleksiSoal);
               state.isDirty = true;
+              state.stepDirtyFlags.assessment = true;
             }
           });
         },
@@ -644,6 +884,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
               }
               state.koleksiSoals.splice(index, 1);
               state.isDirty = true;
+              state.stepDirtyFlags.assessment = true;
             });
           } else {
             // Mark saved koleksi soal for deletion (will be deleted on save)
@@ -651,6 +892,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
               state.deletedKoleksiSoals.push(koleksiSoal.id!);
               state.koleksiSoals.splice(index, 1);
               state.isDirty = true;
+              state.stepDirtyFlags.assessment = true;
             });
           }
         },
@@ -690,6 +932,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                   tempId: undefined, // Clear temp ID as it's now saved
                 };
                 state.isDirty = false;
+                state.stepDirtyFlags.assessment = false;
                 state.isLoading = false;
                 if (koleksiSoal.tempId) {
                   state.optimisticUpdates.delete(koleksiSoal.tempId);
@@ -725,6 +968,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
               };
               state.koleksiSoals[koleksiIndex].soals.push(newSoal);
               state.isDirty = true;
+              state.stepDirtyFlags.assessment = true;
               state.optimisticUpdates.add(tempId);
             }
           });
@@ -735,6 +979,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             if (state.koleksiSoals[koleksiIndex] && state.koleksiSoals[koleksiIndex].soals[soalIndex]) {
               Object.assign(state.koleksiSoals[koleksiIndex].soals[soalIndex], soal);
               state.isDirty = true;
+              state.stepDirtyFlags.assessment = true;
             }
           });
         },
@@ -758,6 +1003,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                 s.order = i;
               });
               state.isDirty = true;
+              state.stepDirtyFlags.assessment = true;
             });
           } else {
             // Mark saved soal for deletion (will be deleted on save)
@@ -769,6 +1015,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                 s.order = i;
               });
               state.isDirty = true;
+              state.stepDirtyFlags.assessment = true;
             });
           }
         },
@@ -788,6 +1035,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             });
             
             state.isDirty = true;
+            state.stepDirtyFlags.assessment = true;
           });
         },
 
@@ -804,6 +1052,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
               };
               currentOpsis.push(newOpsi);
               state.isDirty = true;
+              state.stepDirtyFlags.assessment = true;
               state.optimisticUpdates.add(tempId);
             }
           });
@@ -811,11 +1060,12 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
 
         updateOpsi: (koleksiIndex: number, soalIndex: number, opsiIndex: number, opsi: Partial<SoalOpsiData>) => {
           set((state) => {
-            if (state.koleksiSoals[koleksiIndex] && 
-                state.koleksiSoals[koleksiIndex].soals[soalIndex] && 
+            if (state.koleksiSoals[koleksiIndex] &&
+                state.koleksiSoals[koleksiIndex].soals[soalIndex] &&
                 state.koleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex]) {
               Object.assign(state.koleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex], opsi);
               state.isDirty = true;
+              state.stepDirtyFlags.assessment = true;
             }
           });
         },
@@ -841,6 +1091,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                 o.order = i;
               });
               state.isDirty = true;
+              state.stepDirtyFlags.assessment = true;
             });
           } else {
             // Mark saved opsi for deletion (will be deleted on save)
@@ -852,6 +1103,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                 o.order = i;
               });
               state.isDirty = true;
+              state.stepDirtyFlags.assessment = true;
             });
           }
         },
@@ -902,6 +1154,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                   delete updatedSoal.tempId;
                 }
                 state.isLoading = false;
+                state.stepDirtyFlags.assessment = false;
               });
 
               // Save all opsis for this soal
@@ -1051,6 +1304,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                   htmlDescription: materi.htmlDescription,
                   order: materi.order,
                   isDemo: materi.isDemo,
+                  isDraft: materi.isDraft,
                 }));
 
                 // Load existing koleksiSoals
@@ -1183,6 +1437,13 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             state.soalSets = [];
             state.koleksiSoals = [];
             state.isDirty = false;
+            state.stepDirtyFlags = {
+              meta: false,
+              content: false,
+              vocabulary: false,
+              assessment: false,
+              review: false,
+            };
             state.optimisticUpdates.clear();
             state.deletedMateris = [];
             state.deletedKoleksiSoals = [];
@@ -1334,6 +1595,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
               state.deletedSoals = [];
               state.deletedOpsi = [];
               state.isDirty = false;
+              state.stepDirtyFlags.assessment = false;
               state.isLoading = false;
             });
 

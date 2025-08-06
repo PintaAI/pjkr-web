@@ -8,7 +8,9 @@ import { LessonForm } from "./add-lesson-form";
 import {
   FileText,
   Trash2,
-  GripVertical
+  GripVertical,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import {
   DndContext,
@@ -34,6 +36,7 @@ interface SortableMateriItemProps {
   index: number;
   onUpdateMateri: (index: number, data: Partial<any>) => void;
   onRemoveMateri: (index: number) => void;
+  onToggleMateriDraft: (index: number) => Promise<void>;
 }
 
 function SortableMateriItem({
@@ -41,6 +44,7 @@ function SortableMateriItem({
   index,
   onUpdateMateri,
   onRemoveMateri,
+  onToggleMateriDraft,
 }: SortableMateriItemProps) {
   const {
     attributes,
@@ -91,6 +95,20 @@ function SortableMateriItem({
               {materi.tempId && (
                 <Badge key={`unsaved-${index}`} variant="outline" className="text-xs">Unsaved</Badge>
               )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onToggleMateriDraft(index)}
+                className="h-8 w-8 p-0"
+                title={materi.isDraft ? "Publish lesson" : "Mark as draft"}
+                disabled={materi.tempId}
+              >
+                {materi.isDraft ? (
+                  <Eye className="h-4 w-4 text-green-600" />
+                ) : (
+                  <EyeOff className="h-4 w-4 text-orange-600" />
+                )}
+              </Button>
               <LessonForm
                 mode="edit"
                 initialData={materi}
@@ -119,7 +137,8 @@ export function StepContent() {
     addMateri,
     removeMateri,
     updateMateri,
-    reorderMateris
+    reorderMateris,
+    toggleMateriDraft
   } = useKelasBuilderStore();
 
   const sensors = useSensors(
@@ -154,7 +173,7 @@ export function StepContent() {
     htmlDescription: string;
     isDemo: boolean;
   }) => {
-    addMateri(lesson);
+    addMateri({ ...lesson, isDraft: false });
   };
 
   return (
@@ -208,6 +227,7 @@ export function StepContent() {
                 index={index}
                 onUpdateMateri={updateMateri}
                 onRemoveMateri={removeMateri}
+                onToggleMateriDraft={toggleMateriDraft}
               />
             ))}
           </div>

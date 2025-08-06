@@ -127,6 +127,7 @@ export async function getKelasDetail(id: string) {
             liveSessions: true,
             vocabularySets: true,
             posts: true,
+            kelasKoleksiSoals: true,
           },
         },
       },

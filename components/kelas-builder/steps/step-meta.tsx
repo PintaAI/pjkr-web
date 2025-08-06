@@ -23,21 +23,25 @@ import {
 } from "lucide-react";
 
 export function StepMeta() {
-  const { 
-    meta, 
-    draftId, 
-    updateMeta, 
-    createDraft, 
-    saveMeta 
+  const {
+    meta,
+    draftId,
+    updateMeta,
+    createDraft,
+    saveMeta,
+    setError,
+    clearError
   } = useKelasBuilderStore();
 
   const form = useForm({
     resolver: zodResolver(KelasMetaSchema),
     defaultValues: meta,
+    mode: "onChange", // Validate on change
   });
 
-  const { watch } = form;
+  const { watch, formState: { errors, isValid, isSubmitting } } = form;
   const watchedValues = watch();
+  
   useEffect(() => {
     const hasActualChanges = JSON.stringify(watchedValues) !== JSON.stringify(meta);
     if (hasActualChanges) {
@@ -45,8 +49,23 @@ export function StepMeta() {
     }
   }, [watchedValues, updateMeta, meta]);
 
+  // Clear any existing errors when form is interacted with
+  useEffect(() => {
+    if (Object.keys(errors).length > 0) {
+      clearError();
+    }
+  }, [errors, clearError]);
+
   const onSubmit = async (data: any) => {
     try {
+      clearError(); // Clear any previous errors
+      
+      // Check if form is valid before submission
+      if (!isValid) {
+        console.error("Form has validation errors:", errors);
+        return;
+      }
+
       if (!draftId) {
         await createDraft(data);
       } else {
@@ -54,6 +73,7 @@ export function StepMeta() {
       }
     } catch (error) {
       console.error("Error saving meta:", error);
+      setError(error instanceof Error ? error.message : "Failed to save meta information");
     }
   };
 
@@ -64,7 +84,7 @@ export function StepMeta() {
 
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8" noValidate>
           {/* Basic Information */}
           <Card>
             <CardHeader>
@@ -105,7 +125,7 @@ export function StepMeta() {
                       <textarea
                         placeholder="Brief overview of what students will learn..."
                         rows={3}
-                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        className={`w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${errors.description ? "border-destructive" : ""}`}
                         {...field}
                         value={field.value || ""}
                       />
@@ -323,7 +343,7 @@ export function StepMeta() {
                             <Input
                               type="number"
                               placeholder="99.99"
-                              className="pl-9"
+                              className={`pl-9 ${errors.price ? "border-destructive" : ""}`}
                               {...field}
                               value={field.value || ""}
                               onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}

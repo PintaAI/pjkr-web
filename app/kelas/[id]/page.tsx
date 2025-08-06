@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 // Force dynamic rendering to ensure fresh data
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 interface KelasDetailProps {
   params: { id: string };

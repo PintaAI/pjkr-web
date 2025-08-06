@@ -4,12 +4,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, BookOpen, Users, FileText, Play, Calendar, Tag, Video, MessageSquare, Book } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ArrowLeft, BookOpen, Users, FileText, Tag, Video, MessageSquare, Book, ChevronDown, ChevronUp,} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { KelasType, Difficulty } from "@prisma/client";
 import { NovelReadonly } from "@/components/novel/novel-readonly";
+import { useSession } from "@/lib/hooks/use-session";
 import Image from "next/image";
-
+import { useState,} from "react";
+import { motion, AnimatePresence, useAnimation } from "framer-motion";
+import React from "react";
 interface Author {
   id: string;
   name: string | null;
@@ -88,6 +92,7 @@ interface Kelas {
     liveSessions: number;
     vocabularySets: number;
     posts: number;
+    kelasKoleksiSoals: number;
   };
 }
 
@@ -111,6 +116,37 @@ const levelLabels: Record<Difficulty, string> = {
 
 export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
   const router = useRouter();
+  const { user, isAuthenticated, isLoading } = useSession();
+
+  // State for materials list visibility
+  const [showMaterials, setShowMaterials] = useState(false);
+  
+  // Use a state to track when we're ready to render the button content
+  const [isClient, setIsClient] = useState(false);
+  
+  // Animation controls for teaser
+  const teaserControls = useAnimation();
+  
+  // Set isClient to true after component mounts on client side
+  React.useEffect(() => {
+    setIsClient(true);
+    
+    // Trigger teaser animation once on mount
+    if (kelas.materis.length > 0) {
+      teaserControls.start({
+        opacity: [0, 1, 1, 0],
+        scale: [0.95, 1, 1, 0.95],
+        transition: {
+          duration: 2,
+          times: [0, 0.2, 0.8, 1],
+          ease: "easeInOut"
+        }
+      });
+    }
+  }, [teaserControls, kelas.materis.length]);
+  
+  // Check if current user is the author of this kelas
+  const isAuthor = isClient && isAuthenticated && user && user.id === kelas.authorId;
 
   const formatPrice = (price: any) => {
     if (!price) return "0";
@@ -146,7 +182,13 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
   };
 
   const handleEnroll = () => {
-    // TODO: Implement enrollment logic
+    // If user is the author, navigate to kelas builder in edit mode
+    if (isAuthor) {
+      router.push(`/dashboard/guru/kelas-builder?edit=${kelas.id}`);
+      return;
+    }
+    
+    // TODO: Implement enrollment logic for students
     console.log("Enrolling in kelas:", kelas.id);
   };
 
@@ -219,27 +261,25 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
               <div className="text-center p-3 bg-card rounded-lg shadow-sm">
                 <Users className="w-4 h-4 text-primary mx-auto mb-1" />
                 <div className="text-lg font-semibold text-primary">{kelas._count.members}</div>
-                <div className="text-xs text-muted-foreground">Students</div>
+                <div className="text-xs text-muted-foreground">Murid</div>
               </div>
               
               <div className="text-center p-3 bg-card rounded-lg shadow-sm">
                 <BookOpen className="w-4 h-4 text-primary mx-auto mb-1" />
                 <div className="text-lg font-semibold text-primary">{kelas._count.materis}</div>
-                <div className="text-xs text-muted-foreground">Lessons</div>
+                <div className="text-xs text-muted-foreground">Materi</div>
               </div>
               
               <div className="text-center p-3 bg-card rounded-lg shadow-sm">
-                <Play className="w-4 h-4 text-primary mx-auto mb-1" />
-                <div className="text-lg font-semibold text-primary">{kelas._count.liveSessions}</div>
-                <div className="text-xs text-muted-foreground">Live</div>
+                <FileText className="w-4 h-4 text-primary mx-auto mb-1" />
+                <div className="text-lg font-semibold text-primary">{kelas._count.kelasKoleksiSoals}</div>
+                <div className="text-xs text-muted-foreground">Paket Soal</div>
               </div>
               
               <div className="text-center p-3 bg-card rounded-lg shadow-sm">
-                <Calendar className="w-4 h-4 text-primary mx-auto mb-1" />
-                <div className="text-sm font-semibold text-primary">
-                  {new Date(kelas.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                </div>
-                <div className="text-xs text-muted-foreground">Created</div>
+                <BookOpen className="w-4 h-4 text-primary mx-auto mb-1" />
+                <div className="text-lg font-semibold text-primary">{kelas._count.vocabularySets}</div>
+                <div className="text-xs text-muted-foreground">koleksi kosa-kata</div>
               </div>
             </div>
 
@@ -265,40 +305,106 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
           </div>
 
           {/* Right column: Pricing */}
-          <Card className="lg:w-64">
-            <CardContent className="p-4">
-              {kelas.isPaidClass && kelas.price ? (
-                <div className="space-y-3">
-                  <div className="text-center">
-                    {kelas.discount ? (
-                      <>
-                        <div className="text-sm line-through text-muted-foreground">{formatPrice(kelas.price)}</div>
-                        <div className="text-xl font-bold text-success">
-                          {formatPrice(calculateDiscountedPrice())}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-xl font-bold text-primary">{formatPrice(kelas.price)}</div>
+          <div className="relative">
+            <Card className="lg:w-64 py-0">
+              <CardContent className="p-4">
+                {kelas.isPaidClass && kelas.price ? (
+                  <div className="space-y-3">
+                    <div className="text-center">
+                      {kelas.discount ? (
+                        <>
+                          <div className="text-sm line-through text-muted-foreground">{formatPrice(kelas.price)}</div>
+                          <div className="text-xl font-bold text-success">
+                            {formatPrice(calculateDiscountedPrice())}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-xl font-bold text-primary">{formatPrice(kelas.price)}</div>
+                      )}
+                    </div>
+  
+                    {kelas.promoCode && (
+                      <div className="flex items-center justify-center gap-1 text-xs bg-success/10 text-success px-2 py-1 rounded">
+                        <Tag className="w-3 h-3" />
+                        {kelas.promoCode}
+                      </div>
                     )}
                   </div>
-
-                  {kelas.promoCode && (
-                    <div className="flex items-center justify-center gap-1 text-xs bg-success/10 text-success px-2 py-1 rounded">
-                      <Tag className="w-3 h-3" />
-                      {kelas.promoCode}
+                ) : (
+                  <div className="text-center space-y-3">
+                    <div className="inline-flex items-center gap-2 bg-success/10 text-success px-4 py-2 rounded-full">
+                      <span className="text-lg font-bold">Free</span>
                     </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center text-lg font-semibold text-success">Free</div>
-              )}
+                    <div className="text-xs text-muted-foreground">
+                      No payment required
+                    </div>
+                  </div>
+                )}
 
-              <Button className="w-full mt-3" onClick={handleEnroll}>
-                <BookOpen className="w-4 h-4 mr-2" />
-                {kelas.isPaidClass ? "Enroll" : "Join"}
-              </Button>
-            </CardContent>
-          </Card>
+                <Button className="w-full mt-3" onClick={handleEnroll}>
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  {!isClient ? "Loading..." :
+                   isLoading ? "Loading..." :
+                   isAuthor ? "Manage" :
+                   kelas.isPaidClass ? "Enroll" : "Join"}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Materials Section - positioned absolutely below pricing card */}
+            {kelas.materis.length > 0 && (
+              <div className="hidden lg:block lg:absolute lg:top-full lg:left-0 lg:w-64 lg:mt-2 lg:pt-4 lg:border-t lg:border-border backdrop-blur-sm bg-background/80">
+                <button
+                  onClick={() => setShowMaterials(!showMaterials)}
+                  className="flex items-center justify-between w-full text-left text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Materi ({kelas.materis.length})
+                  </span>
+                  {showMaterials ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </button>
+                
+                <AnimatePresence>
+                  {showMaterials && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
+                      <ScrollArea className="mt-3">
+                        <div className="space-y-2 ">
+                          {kelas.materis.map((materi, index) => (
+                            <motion.div
+                              key={materi.id}
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.2, delay: index * 0.05 }}
+                              className="p-3 rounded-lg bg-muted/40 border border-border/50 text-sm hover:bg-muted/60 transition-colors"
+                            >
+                              <div className="font-medium text-foreground mb-2">{materi.title}</div>
+                              <div className="text-muted-foreground text-xs line-clamp-2 mb-1">{materi.description}</div>
+                              {materi.isDemo && (
+                                <Badge variant="outline" className="text-xs">
+                                  Demo
+                                </Badge>
+                              )}
+                            </motion.div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Description */}
@@ -326,37 +432,6 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
 
         {/* Content Sections */}
         <div className="grid gap-6 md:grid-cols-2">
-          {/* Materials */}
-          {kelas.materis.length > 0 && (
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <FileText className="w-4 h-4 text-primary" />
-                  <h3 className="font-semibold">Materials ({kelas.materis.length})</h3>
-                </div>
-                <div className="space-y-2">
-                  {kelas.materis.slice(0, 5).map((materi) => (
-                    <div key={materi.id} className="flex items-center justify-between p-2 rounded bg-muted/30">
-                      <div>
-                        <div className="text-sm font-medium">{materi.title}</div>
-                        <div className="text-xs text-muted-foreground line-clamp-1">{materi.description}</div>
-                      </div>
-                      {materi.isDemo && (
-                        <Badge variant="outline" className="text-xs">
-                          Demo
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
-                  {kelas.materis.length > 5 && (
-                    <div className="text-xs text-muted-foreground text-center pt-2">
-                      +{kelas.materis.length - 5} more materials
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Live Sessions */}
           {kelas.liveSessions.length > 0 && (

@@ -9,12 +9,19 @@ import { StepContent } from "@/components/kelas-builder/steps/step-content";
 import { StepVocabulary } from "@/components/kelas-builder/steps/step-vocabulary";
 import { StepAssessment } from "@/components/kelas-builder/steps/step-assessment";
 import { StepReview } from "@/components/kelas-builder/steps/step-review";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { AlertCircle, Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function KelasBuilderPage() {
-  const router = useRouter();
+
   const searchParams = useSearchParams();
   const { 
     currentStep, 
@@ -25,7 +32,6 @@ export default function KelasBuilderPage() {
     draftId
   } = useKelasBuilderStore();
 
-  // Handle edit mode - only load draft on initial mount
   useEffect(() => {
     const editId = searchParams.get('edit');
     if (editId && !draftId) {
@@ -34,7 +40,7 @@ export default function KelasBuilderPage() {
         loadDraft(kelasId);
       }
     }
-    // Removed the reset logic that was causing data to be cleared during step navigation
+  
   }, [searchParams, draftId, loadDraft]);
 
   const renderCurrentStep = () => {
@@ -72,35 +78,28 @@ export default function KelasBuilderPage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
-              <AlertCircle className="h-5 w-5" />
-              Error
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">{error}</p>
-            <div className="flex gap-2">
-              <Button 
-                onClick={() => clearError()} 
-                variant="outline"
-                size="sm"
-              >
-                Try Again
-              </Button>
-              <Button 
-                onClick={() => router.push('/dashboard/guru')} 
-                variant="outline"
-                size="sm"
-              >
-                Go Back
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <KelasBuilderLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <AlertDialog open={true}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                  <AlertCircle className="h-5 w-5" />
+                  Error Loading Class
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-sm">
+                  {error}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogAction onClick={() => clearError()}>
+                  Try Again
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </KelasBuilderLayout>
     );
   }
 

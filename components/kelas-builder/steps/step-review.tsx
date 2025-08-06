@@ -183,63 +183,6 @@ export function StepReview() {
 
   return (
     <div className="space-y-6">
-      {/* Publishing Requirements */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5" />
-            Pre-publish Checklist
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              {hasTitle ? (
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-red-600" />
-              )}
-              <span className={hasTitle ? 'text-green-600' : 'text-red-600'}>
-                Course title is set
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {hasDescription ? (
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-red-600" />
-              )}
-              <span className={hasDescription ? 'text-green-600' : 'text-red-600'}>
-                Course description is set
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {hasContent ? (
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-red-600" />
-              )}
-              <span className={hasContent ? 'text-green-600' : 'text-red-600'}>
-                At least one lesson is added
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {hasValidPricing ? (
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-red-600" />
-              )}
-              <span className={hasValidPricing ? 'text-green-600' : 'text-red-600'}>
-                Pricing is configured correctly
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Content Summary */}
       <Card>
         <CardHeader>
@@ -300,12 +243,32 @@ export function StepReview() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Alert className="mb-6 border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
+            <Alert className="mb-4 border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
               <CheckCircle className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-700 dark:text-green-300">
-                Your course meets all requirements and is ready to be published. Once published, students will be able to enroll and access your content.
+                Your course meets all requirements and is ready to be published.
               </AlertDescription>
             </Alert>
+            
+            {/* Checklist */}
+            <div className="space-y-2 mb-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span className="text-green-600">Course Title</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span className="text-green-600">Course Description</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span className="text-green-600">Course Content</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span className="text-green-600">Pricing Configuration</span>
+              </div>
+            </div>
             
             {/* Prominent Publish Button */}
             <div className="text-center space-y-4">
@@ -368,9 +331,53 @@ export function StepReview() {
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Your course doesn't meet all the requirements for publishing. Please go back and complete the missing requirements.
+                Your course doesn't meet all the requirements for publishing.
               </AlertDescription>
             </Alert>
+            
+            {/* Checklist */}
+            <div className="space-y-2 mt-4">
+              <div className="flex items-center gap-3">
+                {hasTitle ? (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                )}
+                <span className={hasTitle ? 'text-green-600' : 'text-red-600'}>
+                  Course Title
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                {hasDescription ? (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                )}
+                <span className={hasDescription ? 'text-green-600' : 'text-red-600'}>
+                  Course Description
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                {hasContent ? (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                )}
+                <span className={hasContent ? 'text-green-600' : 'text-red-600'}>
+                  Course Content
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                {hasValidPricing ? (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                )}
+                <span className={hasValidPricing ? 'text-green-600' : 'text-red-600'}>
+                  Pricing Configuration
+                </span>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}

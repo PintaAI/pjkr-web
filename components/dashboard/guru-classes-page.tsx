@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { StatsCard } from "@/components/ui/stats-card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,54 +12,21 @@ import {
   Users,
   Search,
   Plus,
-  Edit3,
   Eye,
-  EyeOff,
-  Trash2,
-  Calendar,
-  DollarSign,
-  FileText,
-  Settings,
-  MoreVertical,
 } from "lucide-react";
 import { KelasType, Difficulty } from "@prisma/client";
-import Link from "next/link";
 import { deleteDraftKelas, publishKelas, unpublishKelas } from "@/app/actions/kelas";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { KelasCard, GuruKelas } from "@/components/kelas/kelas-card";
+import { toast } from "sonner";
 
-interface KelasItem {
-  id: number;
-  title: string;
-  description: string | null;
-  type: KelasType;
-  level: Difficulty;
-  thumbnail: string | null;
-  isPaidClass: boolean;
-  price: any;
-  isDraft: boolean;
+// Types
+interface KelasItem extends GuruKelas {
   createdAt: Date;
   updatedAt: Date;
-  _count: {
-    materis: number;
-    members: number;
-  };
+  price: any;
+  icon: string | null;
+  discount: number | null;
+  promoCode: string | null;
 }
 
 interface User {
@@ -71,11 +37,12 @@ interface User {
 }
 
 interface GuruClassesPageProps {
-  classes: KelasItem[];
+  classes: any[];
   user: User;
 }
 
-const typeLabels: Record<KelasType, string> = {
+// Constants
+const TYPE_LABELS: Record<KelasType, string> = {
   REGULAR: "Regular",
   EVENT: "Event",
   GROUP: "Group",
@@ -83,20 +50,41 @@ const typeLabels: Record<KelasType, string> = {
   FUN: "Fun",
 };
 
-const levelLabels: Record<Difficulty, string> = {
+const LEVEL_LABELS: Record<Difficulty, string> = {
   BEGINNER: "Beginner",
   INTERMEDIATE: "Intermediate",
   ADVANCED: "Advanced",
 };
 
-const levelColors: Record<Difficulty, string> = {
+const LEVEL_COLORS: Record<Difficulty, string> = {
   BEGINNER: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
   INTERMEDIATE: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
   ADVANCED: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
 };
 
-export function GuruClassesPage({ classes: initialClasses }: Omit<GuruClassesPageProps, 'user'>) {
-  const [classes, setClasses] = useState(initialClasses);
+// Filter options
+const FILTER_TYPES = [
+  { value: "ALL", label: "All Types" },
+  ...Object.entries(TYPE_LABELS).map(([key, label]) => ({ value: key, label })),
+];
+
+const FILTER_LEVELS = [
+  { value: "ALL", label: "All Levels" },
+  ...Object.entries(LEVEL_LABELS).map(([key, label]) => ({ value: key, label })),
+];
+
+// Custom hook for class management
+const useClassManagement = (initialClasses: any[]) => {
+  const [classes, setClasses] = useState(() =>
+    initialClasses.map(cls => ({
+      ...cls,
+      author: {
+        id: '',
+        name: 'You',
+        image: null
+      }
+    }))
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<KelasType | "ALL">("ALL");
   const [filterLevel, setFilterLevel] = useState<Difficulty | "ALL">("ALL");
@@ -104,9 +92,12 @@ export function GuruClassesPage({ classes: initialClasses }: Omit<GuruClassesPag
   const [isPublishing, setIsPublishing] = useState<number | null>(null);
   const [isUnpublishing, setIsUnpublishing] = useState<number | null>(null);
 
+
+  // Derived state
   const draftClasses = classes.filter(cls => cls.isDraft);
   const publishedClasses = classes.filter(cls => !cls.isDraft);
 
+  // Filter functions
   const filteredClasses = (classList: KelasItem[]) => {
     return classList.filter(cls => {
       const matchesSearch = cls.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -118,17 +109,19 @@ export function GuruClassesPage({ classes: initialClasses }: Omit<GuruClassesPag
     });
   };
 
+  // Action handlers
   const handleDeleteClass = async (id: number) => {
     setIsDeleting(id);
     try {
       const result = await deleteDraftKelas(id);
       if (result.success) {
         setClasses(prev => prev.filter(cls => cls.id !== id));
+        toast.success("Class deleted successfully");
       } else {
-        console.error("Failed to delete class:", result.error);
+        toast.error(result.error || "Failed to delete class");
       }
     } catch (error) {
-      console.error("Delete error:", error);
+      toast.error("An unexpected error occurred");
     } finally {
       setIsDeleting(null);
     }
@@ -139,14 +132,15 @@ export function GuruClassesPage({ classes: initialClasses }: Omit<GuruClassesPag
     try {
       const result = await publishKelas(id);
       if (result.success) {
-        setClasses(prev => prev.map(cls => 
+        setClasses(prev => prev.map(cls =>
           cls.id === id ? { ...cls, isDraft: false } : cls
         ));
+        toast.success("Class published successfully");
       } else {
-        console.error("Failed to publish class:", result.error);
+        toast.error(result.error || "Failed to publish class");
       }
     } catch (error) {
-      console.error("Publish error:", error);
+      toast.error("An unexpected error occurred");
     } finally {
       setIsPublishing(null);
     }
@@ -157,222 +151,252 @@ export function GuruClassesPage({ classes: initialClasses }: Omit<GuruClassesPag
     try {
       const result = await unpublishKelas(id);
       if (result.success) {
-        setClasses(prev => prev.map(cls => 
+        setClasses(prev => prev.map(cls =>
           cls.id === id ? { ...cls, isDraft: true } : cls
         ));
+        toast.success("Class unpublished successfully");
       } else {
-        console.error("Failed to unpublish class:", result.error);
+        toast.error(result.error || "Failed to unpublish class");
       }
     } catch (error) {
-      console.error("Unpublish error:", error);
+      toast.error("An unexpected error occurred");
     } finally {
       setIsUnpublishing(null);
     }
   };
 
-  const ClassCard = ({ cls }: { cls: KelasItem }) => (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="outline" className="text-xs">
-                {typeLabels[cls.type]}
-              </Badge>
-              <Badge className={`text-xs ${levelColors[cls.level]}`}>
-                {levelLabels[cls.level]}
-              </Badge>
-              {cls.isDraft && (
-                <Badge variant="secondary" className="text-xs">
-                  Draft
-                </Badge>
-              )}
-            </div>
-            <h3 className="text-lg font-semibold mb-2">{cls.title}</h3>
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-              {cls.description || "No description available"}
-            </p>
-          </div>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/kelas/${cls.id}`}>
-                  <Eye className="h-4 w-4 mr-2" />
-                  View Class
-                </Link>
-              </DropdownMenuItem>
-              {cls.isDraft ? (
-                <>
-                  <DropdownMenuItem asChild>
-                    <Link href={`/dashboard/guru/kelas-builder?edit=${cls.id}`}>
-                      <Edit3 className="h-4 w-4 mr-2" />
-                      Edit
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={() => handlePublishClass(cls.id)}
-                    disabled={isPublishing === cls.id || cls._count.materis === 0}
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    {isPublishing === cls.id ? "Publishing..." : "Publish"}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="text-destructive"
-                    onClick={() => handleDeleteClass(cls.id)}
-                    disabled={isDeleting === cls.id}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    {isDeleting === cls.id ? "Deleting..." : "Delete"}
-                  </DropdownMenuItem>
-                </>
-              ) : (
-                <>
-                  <DropdownMenuItem asChild>
-                    <Link href={`/dashboard/guru/kelas-builder?edit=${cls.id}`}>
-                      <Edit3 className="h-4 w-4 mr-2" />
-                      Edit
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href={`/guru/classes/${cls.id}/analytics`}>
-                      <Settings className="h-4 w-4 mr-2" />
-                      Analytics
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href={`/guru/classes/${cls.id}/settings`}>
-                      <Settings className="h-4 w-4 mr-2" />
-                      Settings
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <DropdownMenuItem 
-                        className="text-orange-600"
-                        onSelect={(e) => e.preventDefault()}
-                        disabled={isUnpublishing === cls.id}
-                      >
-                        <EyeOff className="h-4 w-4 mr-2" />
-                        {isUnpublishing === cls.id ? "Unpublishing..." : "Unpublish"}
-                      </DropdownMenuItem>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Unpublish Class</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to unpublish {cls.title}? This will move the class back to drafts and students will no longer be able to access it.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={() => handleUnpublishClass(cls.id)}
-                          className="bg-orange-600 hover:bg-orange-700"
-                        >
-                          Unpublish
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+  return {
+    classes,
+    setClasses,
+    searchTerm,
+    setSearchTerm,
+    filterType,
+    setFilterType,
+    filterLevel,
+    setFilterLevel,
+    isDeleting,
+    isPublishing,
+    isUnpublishing,
+    draftClasses,
+    publishedClasses,
+    filteredClasses,
+    handleDeleteClass,
+    handlePublishClass,
+    handleUnpublishClass,
+  };
+};
+
+// Stats calculation helper
+const calculateStats = (classes: any[]) => {
+  const totalStudents = classes.reduce((total, cls) => total + cls._count.members, 0);
+  const totalMaterials = classes.reduce((total, cls) => total + cls._count.materis, 0);
+  const publishedCount = classes.filter(cls => !cls.isDraft).length;
+  const draftCount = classes.filter(cls => cls.isDraft).length;
+
+  return {
+    totalClasses: classes.length,
+    totalStudents,
+    totalMaterials,
+    publishedCount,
+    draftCount,
+  };
+};
+
+// Components
+const ClassCard = ({ cls, actions }: { cls: KelasItem; actions: any }) => (
+  <KelasCard
+    data={cls}
+    isGuruMode={true}
+    onView={actions.onView}
+    onEdit={actions.onEdit}
+    onDelete={actions.onDelete}
+    onPublish={actions.onPublish}
+    onUnpublish={actions.onUnpublish}
+  />
+);
+
+const ClassFilters = ({
+  searchTerm,
+  setSearchTerm,
+  filterType,
+  setFilterType,
+  filterLevel,
+  setFilterLevel
+}: {
+  searchTerm: string;
+  setSearchTerm: (value: string) => void;
+  filterType: KelasType | "ALL";
+  setFilterType: (value: KelasType | "ALL") => void;
+  filterLevel: Difficulty | "ALL";
+  setFilterLevel: (value: Difficulty | "ALL") => void;
+}) => (
+  <div className="flex flex-col sm:flex-row gap-4 mt-4 mb-8">
+    <div className="relative flex-1">
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <Input
+        placeholder="Search classes..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="pl-10"
+      />
+    </div>
+    
+    <Select value={filterType} onValueChange={(value) => setFilterType(value as KelasType | "ALL")}>
+      <SelectTrigger className="w-full sm:w-48">
+        <SelectValue placeholder="Class Type" />
+      </SelectTrigger>
+      <SelectContent>
+        {FILTER_TYPES.map((type) => (
+          <SelectItem key={type.value} value={type.value}>
+            {type.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+
+    <Select value={filterLevel} onValueChange={(value) => setFilterLevel(value as Difficulty | "ALL")}>
+      <SelectTrigger className="w-full sm:w-48">
+        <SelectValue placeholder="Difficulty" />
+      </SelectTrigger>
+      <SelectContent>
+        {FILTER_LEVELS.map((level) => (
+          <SelectItem key={level.value} value={level.value}>
+            {level.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
+);
+
+const StatsCards = ({ stats }: { stats: ReturnType<typeof calculateStats> }) => (
+  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <StatsCard
+      title="Total Classes"
+      value={stats.totalClasses}
+      description={`${stats.publishedCount} published, ${stats.draftCount} drafts`}
+      icon={<BookOpen className="h-4 w-4" />}
+    />
+    <StatsCard
+      title="Total Students"
+      value={stats.totalStudents}
+      description="Across all classes"
+      icon={<Users className="h-4 w-4" />}
+    />
+    <StatsCard
+      title="Published Classes"
+      value={stats.publishedCount}
+      description="Live for students"
+      icon={<Eye className="h-4 w-4" />}
+    />
+    <StatsCard
+      title="Total Materials"
+      value={stats.totalMaterials}
+      description="Learning materials"
+      icon={<BookOpen className="h-4 w-4" />}
+    />
+  </div>
+);
+
+const EmptyState = ({ type, onCreateClass }: { type: "draft" | "published"; onCreateClass: () => void }) => (
+  <Card className="text-center py-12">
+    <CardContent>
+      <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+      <h3 className="text-lg font-semibold mb-2">
+        No {type} classes yet
+      </h3>
+      <p className="text-muted-foreground mb-4">
+        {type === "draft"
+          ? "Start creating your first class to share your knowledge with students."
+          : "Publish your draft classes to make them available to students."
+        }
+      </p>
+      {type === "draft" && (
+        <Button onClick={onCreateClass}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create New Class
+        </Button>
+      )}
+    </CardContent>
+  </Card>
+);
+
+const ClassTabs = ({
+  draftClasses,
+  publishedClasses,
+  filteredDrafts,
+  filteredPublished,
+  onCreateClass
+}: {
+  draftClasses: any[];
+  publishedClasses: any[];
+  filteredDrafts: KelasItem[];
+  filteredPublished: KelasItem[];
+  onCreateClass: () => void;
+}) => (
+  <Tabs defaultValue="published" className="w-full">
+    <TabsList>
+      <TabsTrigger value="published">
+        Published ({publishedClasses.length})
+      </TabsTrigger>
+      <TabsTrigger value="drafts">
+        Drafts ({draftClasses.length})
+      </TabsTrigger>
+    </TabsList>
+
+    <TabsContent value="drafts">
+      {filteredDrafts.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredDrafts.map((cls) => (
+            <ClassCard
+              key={cls.id}
+              cls={cls}
+              actions={{
+                onView: (id: number) => (window.location.href = `/kelas/${id}`),
+                onEdit: (id: number) => (window.location.href = `/dashboard/guru/kelas-builder?edit=${id}`),
+                onDelete: (id: number) => {}, // Will be bound in parent
+                onPublish: (id: number) => {}, // Will be bound in parent
+                onUnpublish: (id: number) => {}, // Will be bound in parent
+              }}
+            />
+          ))}
         </div>
+      ) : (
+        <EmptyState type="draft" onCreateClass={onCreateClass} />
+      )}
+    </TabsContent>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <BookOpen className="h-4 w-4" />
-            <span>{cls._count.materis} materials</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Users className="h-4 w-4" />
-            <span>{cls._count.members} students</span>
-          </div>
-          {cls.isPaidClass && (
-            <div className="flex items-center gap-2 text-sm text-green-600">
-              <DollarSign className="h-4 w-4" />
-              <span>${cls.price}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4" />
-            <span>{new Date(cls.createdAt).toLocaleDateString()}</span>
-          </div>
+    <TabsContent value="published">
+      {filteredPublished.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredPublished.map((cls) => (
+            <ClassCard
+              key={cls.id}
+              cls={cls}
+              actions={{
+                onView: (id: number) => (window.location.href = `/kelas/${id}`),
+                onEdit: (id: number) => (window.location.href = `/dashboard/guru/kelas-builder?edit=${id}`),
+                onDelete: (id: number) => {}, // Will be bound in parent
+                onPublish: (id: number) => {}, // Will be bound in parent
+                onUnpublish: (id: number) => {}, // Will be bound in parent
+              }}
+            />
+          ))}
         </div>
+      ) : (
+        <EmptyState type="published" onCreateClass={() => {}} />
+      )}
+    </TabsContent>
+  </Tabs>
+);
 
-        {cls.isDraft && (
-          <div className="flex gap-2">
-            <Button asChild size="sm" variant="outline">
-              <Link href={`/dashboard/guru/kelas-builder?edit=${cls.id}`}>
-                <Edit3 className="h-4 w-4 mr-2" />
-                Continue Editing
-              </Link>
-            </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button 
-                  size="sm" 
-                  disabled={cls._count.materis === 0}
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Publish
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Publish Class</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to publish {cls.title}? Once published, students will be able to enroll in this class.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => handlePublishClass(cls.id)}>
-                    Publish
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
+export function GuruClassesPage({ classes: initialClasses }: Omit<GuruClassesPageProps, 'user'>) {
+  const management = useClassManagement(initialClasses);
+  const stats = calculateStats(management.classes);
 
-  const EmptyState = ({ type }: { type: "draft" | "published" }) => (
-    <Card className="text-center py-12">
-      <CardContent>
-        <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-semibold mb-2">
-          No {type} classes yet
-        </h3>
-        <p className="text-muted-foreground mb-4">
-          {type === "draft" 
-            ? "Start creating your first class to share your knowledge with students."
-            : "Publish your draft classes to make them available to students."
-          }
-        </p>
-        {type === "draft" && (
-          <Button asChild>
-            <Link href="/dashboard/guru/kelas-builder">
-              <Plus className="h-4 w-4 mr-2" />
-              Create New Class
-            </Link>
-          </Button>
-        )}
-      </CardContent>
-    </Card>
-  );
+  const handleCreateClass = () => {
+    window.location.href = "/dashboard/guru/kelas-builder";
+  };
 
   return (
     <div className="container mx-auto px-6 py-8 max-w-6xl">
@@ -384,114 +408,33 @@ export function GuruClassesPage({ classes: initialClasses }: Omit<GuruClassesPag
             Manage your drafted and published classes
           </p>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/guru/kelas-builder">
-            <Plus className="h-4 w-4 mr-2" />
-            Create New Class
-          </Link>
+        <Button onClick={handleCreateClass}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create New Class
         </Button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          title="Total Classes"
-          value={classes.length}
-          description={`${publishedClasses.length} published, ${draftClasses.length} drafts`}
-          icon={<BookOpen className="h-4 w-4" />}
-        />
-        <StatsCard
-          title="Total Students"
-          value={classes.reduce((total, cls) => total + cls._count.members, 0)}
-          description="Across all classes"
-          icon={<Users className="h-4 w-4" />}
-        />
-        <StatsCard
-          title="Published Classes"
-          value={publishedClasses.length}
-          description="Live for students"
-          icon={<Eye className="h-4 w-4" />}
-        />
-        <StatsCard
-          title="Total Materials"
-          value={classes.reduce((total, cls) => total + cls._count.materis, 0)}
-          description="Learning materials"
-          icon={<BookOpen className="h-4 w-4" />}
-        />
-      </div>
+      <StatsCards stats={stats} />
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 mt-4 mb-8">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search classes..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        
-        <Select value={filterType} onValueChange={(value) => setFilterType(value as KelasType | "ALL")}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Class Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">All Types</SelectItem>
-            {Object.entries(typeLabels).map(([key, label]) => (
-              <SelectItem key={key} value={key}>{label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={filterLevel} onValueChange={(value) => setFilterLevel(value as Difficulty | "ALL")}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Difficulty" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">All Levels</SelectItem>
-            {Object.entries(levelLabels).map(([key, label]) => (
-              <SelectItem key={key} value={key}>{label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <ClassFilters
+        searchTerm={management.searchTerm}
+        setSearchTerm={management.setSearchTerm}
+        filterType={management.filterType}
+        setFilterType={management.setFilterType}
+        filterLevel={management.filterLevel}
+        setFilterLevel={management.setFilterLevel}
+      />
 
       {/* Classes Tabs */}
-      <Tabs defaultValue="published" className="w-full">
-        <TabsList>
-          <TabsTrigger value="published">
-            Published ({publishedClasses.length})
-          </TabsTrigger>
-          <TabsTrigger value="drafts">
-            Drafts ({draftClasses.length})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="drafts">
-          {filteredClasses(draftClasses).length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredClasses(draftClasses).map((cls) => (
-                <ClassCard key={cls.id} cls={cls} />
-              ))}
-            </div>
-          ) : (
-            <EmptyState type="draft" />
-          )}
-        </TabsContent>
-
-        <TabsContent value="published">
-          {filteredClasses(publishedClasses).length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredClasses(publishedClasses).map((cls) => (
-                <ClassCard key={cls.id} cls={cls} />
-              ))}
-            </div>
-          ) : (
-            <EmptyState type="published" />
-          )}
-        </TabsContent>
-      </Tabs>
+      <ClassTabs
+        draftClasses={management.draftClasses}
+        publishedClasses={management.publishedClasses}
+        filteredDrafts={management.filteredClasses(management.draftClasses)}
+        filteredPublished={management.filteredClasses(management.publishedClasses)}
+        onCreateClass={handleCreateClass}
+      />
     </div>
   );
 }
