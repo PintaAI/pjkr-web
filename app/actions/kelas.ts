@@ -620,6 +620,38 @@ export async function deleteSoal(soalId: number) {
   }
 }
 
+// Reorder soals within a koleksiSoal
+export async function reorderSoals(koleksiSoalId: number, soalOrders: { id: number; order: number }[]) {
+  try {
+    const session = await assertAuthenticated();
+
+    // Check ownership via koleksiSoal
+    const koleksiSoal = await prisma.koleksiSoal.findUnique({
+      where: { id: koleksiSoalId },
+      include: { user: { select: { id: true } } },
+    });
+
+    if (!koleksiSoal || !koleksiSoal.user || koleksiSoal.user.id !== session.user.id) {
+      return { success: false, error: "Not authorized" };
+    }
+
+    // Update orders
+    await Promise.all(
+      soalOrders.map(({ id, order }) =>
+        prisma.soal.update({
+          where: { id },
+          data: { order },
+        })
+      )
+    );
+
+    return { success: true, message: "Questions reordered successfully" };
+  } catch (error) {
+    console.error("Reorder soals error:", error);
+    return { success: false, error: "Failed to reorder questions" };
+  }
+}
+
 export async function deleteOpsi(opsiId: number) {
   try {
     const session = await assertAuthenticated();

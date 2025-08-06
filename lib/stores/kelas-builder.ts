@@ -16,7 +16,8 @@ import {
   deleteMateri,
   deleteKoleksiSoal,
   deleteSoal,
-  deleteOpsi
+  deleteOpsi,
+  reorderSoals
 } from '@/app/actions/kelas';
 import { toast } from 'sonner';
 
@@ -83,6 +84,7 @@ export interface SoalData {
   difficulty?: Difficulty;
   explanation?: string;
   isActive: boolean;
+  order?: number;
   opsis: SoalOpsiData[];
   tempId?: string;
 }
@@ -170,6 +172,7 @@ interface KelasBuilderActions {
   addSoal: (koleksiIndex: number, soal: Omit<SoalData, 'id' | 'opsis'> & { opsis?: Omit<SoalOpsiData, 'id'>[] }) => void;
   updateSoal: (koleksiIndex: number, soalIndex: number, soal: Partial<SoalData>) => void;
   removeSoal: (koleksiIndex: number, soalIndex: number) => void;
+  reorderSoals: (koleksiIndex: number, fromIndex: number, toIndex: number) => void;
   saveSoal: (koleksiIndex: number, soalIndex: number) => Promise<void>;
   
   // Opsi actions within Soal
@@ -712,6 +715,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
               const tempId = `temp-soal-${Date.now()}`;
               const newSoal: SoalData = {
                 ...soal,
+                order: state.koleksiSoals[koleksiIndex].soals.length, // Set order to current length (will be reindexed if needed)
                 opsis: soal.opsis?.map((opsi, index) => ({
                   ...opsi,
                   order: index,
@@ -749,6 +753,10 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                 state.optimisticUpdates.delete(soal.tempId);
               }
               state.koleksiSoals[koleksiIndex].soals.splice(soalIndex, 1);
+              // Reorder remaining soals
+              state.koleksiSoals[koleksiIndex].soals.forEach((s: SoalData, i: number) => {
+                s.order = i;
+              });
               state.isDirty = true;
             });
           } else {
@@ -756,9 +764,31 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             set((state) => {
               state.deletedSoals.push(soal.id!);
               state.koleksiSoals[koleksiIndex].soals.splice(soalIndex, 1);
+              // Reorder remaining soals
+              state.koleksiSoals[koleksiIndex].soals.forEach((s: SoalData, i: number) => {
+                s.order = i;
+              });
               state.isDirty = true;
             });
           }
+        },
+
+        reorderSoals: (koleksiIndex: number, fromIndex: number, toIndex: number) => {
+          set((state) => {
+            const koleksiSoal = state.koleksiSoals[koleksiIndex];
+            if (!koleksiSoal || !koleksiSoal.soals[fromIndex] || !koleksiSoal.soals[toIndex]) return;
+
+            const soals = koleksiSoal.soals;
+            const [movedSoal] = soals.splice(fromIndex, 1);
+            soals.splice(toIndex, 0, movedSoal);
+            
+            // Update order for all soals in this koleksi
+            soals.forEach((soal: SoalData, index: number) => {
+              soal.order = index;
+            });
+            
+            state.isDirty = true;
+          });
         },
 
         // Opsi actions within Soal
@@ -1266,6 +1296,36 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                   }
                 }
               }
+            }
+
+            // Handle reordering for saved soals
+            const reorderBatches: {koleksiSoalId: number, soalOrders: {id: number, order: number}[]}[] = [];
+            
+            for (let koleksiIndex = 0; koleksiIndex < koleksiSoals.length; koleksiIndex++) {
+              const koleksiSoal = koleksiSoals[koleksiIndex];
+              
+              // Only proceed if koleksiSoal is saved (has real ID)
+              if (koleksiSoal.id) {
+                const soalOrders = koleksiSoal.soals
+                  .filter(soal => soal.id) // Only include saved soals
+                  .map(soal => ({
+                    id: soal.id!,
+                    order: soal.order ?? 0
+                  }));
+                
+                if (soalOrders.length > 0) {
+                  reorderBatches.push({
+                    koleksiSoalId: koleksiSoal.id,
+                    soalOrders
+                  });
+                }
+              }
+            }
+
+            // Execute reordering for each koleksi
+            for (const batch of reorderBatches) {
+              console.log(`🔄 [AUTO-SAVE] Reordering soals for koleksi ${batch.koleksiSoalId}:`, batch.soalOrders);
+              await reorderSoals(batch.koleksiSoalId, batch.soalOrders);
             }
 
             // Clear deletion tracking

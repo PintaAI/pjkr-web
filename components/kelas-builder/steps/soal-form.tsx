@@ -12,6 +12,7 @@ import { Plus, Trash2, CheckCircle, Circle } from "lucide-react";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { Difficulty } from "@prisma/client";
 import { NovelEditor } from "@/components/novel/novel-editor";
+import React from "react";
 
 interface SoalFormProps {
   koleksiIndex: number;
@@ -30,42 +31,38 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
   const soal = koleksiSoals[koleksiIndex]?.soals[soalIndex];
 
   const {
-    register,
+  
     handleSubmit,
-    watch,
+    
     setValue,
     formState: { errors },
   } = useForm({
     defaultValues: soal || {
-      pertanyaan: null,
-      pertanyaanText: "",
-      pertanyaanHtml: "",
+      pertanyaan: "",
       difficulty: undefined,
-      explanation: null,
-      explanationText: "",
-      explanationHtml: "",
+      explanation: "",
       isActive: true,
       opsis: [],
     },
     mode: "onChange",
   });
 
-  const watchedValues = watch();
+
 
   const handleQuestionUpdate = (content: { json: any; html: string }) => {
-    setValue("pertanyaan" as any, content.json);
-    setValue("pertanyaanHtml" as any, content.html);
-    // Extract plain text for fallback
-    const plainText = content.html.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
-    setValue("pertanyaanText" as any, plainText);
+    setValue("pertanyaan", content.html);
+    // Update the store directly to ensure local state is saved
+    if (soal) {
+      updateSoal(koleksiIndex, soalIndex, { pertanyaan: content.html });
+    }
   };
 
   const handleExplanationUpdate = (content: { json: any; html: string }) => {
-    setValue("explanation" as any, content.json);
-    setValue("explanationHtml" as any, content.html);
-    // Extract plain text for fallback
-    const plainText = content.html.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
-    setValue("explanationText" as any, plainText);
+    setValue("explanation", content.html);
+    // Update the store directly to ensure local state is saved
+    if (soal) {
+      updateSoal(koleksiIndex, soalIndex, { explanation: content.html });
+    }
   };
 
   const onSubmit = (data: any) => {
@@ -154,23 +151,7 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label>Explanation (Optional)</Label>
-        <div className="border rounded-lg">
-          <NovelEditor
-            initialContent={soal?.explanation || null}
-            onUpdate={handleExplanationUpdate}
-            placeholder="Explain the correct answer here..."
-            height="min-h-[150px] max-h-[300px]"
-            width="w-full"
-            compact={true}
-            hideSaveStatus={true}
-          />
-        </div>
-        {errors.explanation && (
-          <p className="text-sm text-destructive">{errors.explanation.message}</p>
-        )}
-      </div>
+
 
       {/* Answer Options */}
       <div className="space-y-3">
@@ -259,6 +240,24 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
 
         {errors.opsis && (
           <p className="text-sm text-destructive">{errors.opsis.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label>Explanation (Optional)</Label>
+        <div className="border rounded-lg">
+          <NovelEditor
+            initialContent={soal?.explanation || null}
+            onUpdate={handleExplanationUpdate}
+            placeholder="Explain the correct answer here..."
+            height="min-h-[150px] max-h-[800px]"
+            width="w-full"
+            compact={true}
+            hideSaveStatus={true}
+          />
+        </div>
+        {errors.explanation && (
+          <p className="text-sm text-destructive">{errors.explanation.message}</p>
         )}
       </div>
 
