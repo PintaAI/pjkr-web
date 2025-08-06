@@ -9,7 +9,6 @@ import { StepContent } from "@/components/kelas-builder/steps/step-content";
 import { StepVocabulary } from "@/components/kelas-builder/steps/step-vocabulary";
 import { StepAssessment } from "@/components/kelas-builder/steps/step-assessment";
 import { StepReview } from "@/components/kelas-builder/steps/step-review";
-import { StepPublish } from "@/components/kelas-builder/steps/step-publish";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Loader2 } from "lucide-react";
@@ -50,8 +49,6 @@ export default function KelasBuilderPage() {
         return <StepAssessment />;
       case 'review':
         return <StepReview />;
-      case 'publish':
-        return <StepPublish />;
       default:
         return <StepMeta />;
     }

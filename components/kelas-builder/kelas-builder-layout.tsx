@@ -58,14 +58,8 @@ const steps = [
   },
   {
     id: 'review',
-    title: 'Review',
-    description: 'Review and finalize your course',
-    icon: Eye,
-  },
-  {
-    id: 'publish',
-    title: 'Publish',
-    description: 'Publish your course to make it live',
+    title: 'Review & Publish',
+    description: 'Review and publish your course',
     icon: Rocket,
   },
 ];
@@ -85,7 +79,6 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
     prevStep,
     saveMeta,
     saveMateris,
-    saveKoleksiSoal,
     saveAllAssessments,
     clearError,
     reset
@@ -104,9 +97,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
       case 'assessment':
         return true; // Optional steps
       case 'review':
-        return true;
-      case 'publish':
-        return false; // Last step
+        return true; // Final step
       default:
         return true;
     }
@@ -172,20 +163,9 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
         const contentComplete = materis.length > 0;
         
         if (metaComplete && contentComplete) {
-          return { status: 'complete', hasRequiredData: true, message: 'Ready for review' };
+          return { status: 'complete', hasRequiredData: true, message: 'Ready to review and publish' };
         } else if (isFirstTime) {
-          return { status: 'neutral', hasRequiredData: true, message: 'Review and finalize your course before publishing' };
-        } else {
-          return { status: 'blocked', hasRequiredData: false, message: 'Complete previous steps first' };
-        }
-        
-      case 'publish':
-        const allRequired = meta.title.trim() !== '' && meta.description && materis.length > 0;
-        
-        if (allRequired) {
-          return { status: 'complete', hasRequiredData: true, message: 'Ready to publish' };
-        } else if (isFirstTime) {
-          return { status: 'neutral', hasRequiredData: true, message: 'Publish your course to make it available to students' };
+          return { status: 'neutral', hasRequiredData: true, message: 'Review and publish your course to make it available to students' };
         } else {
           return { status: 'blocked', hasRequiredData: false, message: 'Complete required steps first' };
         }
@@ -196,65 +176,38 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
   };
 
   const saveAllUnsavedContent = async () => {
-    console.log('🔄 [AUTO-SAVE TRIGGER] saveAllUnsavedContent called for critical step transition');
-    
     let hasSaved = false;
     
     // Save unsaved materis
     if (materis.some(m => m.tempId)) {
-      console.log('📝 [AUTO-SAVE] Saving unsaved materis before critical step...');
       await saveMateris();
       hasSaved = true;
     }
     // Save unsaved assessments
     if (koleksiSoals.some(k => k.tempId)) {
-      console.log('📝 [AUTO-SAVE] Saving unsaved assessments before critical step...');
       await saveAllAssessments();
       hasSaved = true;
-    }
-    
-    if (hasSaved) {
-      console.log('✅ [AUTO-SAVE] All unsaved content saved before critical step');
-    } else {
-      console.log('ℹ️ [AUTO-SAVE] No unsaved content to save before critical step');
     }
   };
 
   const handleSave = async () => {
-    console.log('💾 [MANUAL SAVE TRIGGER] handleSave called:', {
-      step: currentStep,
-      isDirty: isDirty,
-      draftId: draftId,
-      hasUnsavedMateris: materis.some(m => m.tempId),
-      hasUnsavedAssessments: koleksiSoals.some(k => k.tempId)
-    });
-    
     try {
       switch (currentStep) {
         case 'meta':
-          console.log('📝 [MANUAL SAVE] Saving meta data...');
           await saveMeta();
-          console.log('✅ [MANUAL SAVE] Meta data saved successfully');
           break;
         case 'content':
-          console.log('📝 [MANUAL SAVE] Saving content/materis...');
           await saveMateris();
-          console.log('✅ [MANUAL SAVE] Content saved successfully');
           break;
         case 'assessment':
-          console.log('📝 [MANUAL SAVE] Saving assessments...');
           await saveAllAssessments();
-          console.log('✅ [MANUAL SAVE] Assessments saved successfully');
           break;
         case 'review':
-        case 'publish':
-          console.log('📝 [MANUAL SAVE] Saving all unsaved content for review/publish...');
           await saveAllUnsavedContent();
-          console.log('✅ [MANUAL SAVE] All content saved successfully');
           break;
       }
     } catch (error) {
-      console.error('❌ [MANUAL SAVE] Save error:', error);
+      // Error handling is done by the store
     }
   };
 
@@ -563,8 +516,8 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                 </span>
               </div>
 
-              {/* Hide next button on publish step since it's the last step */}
-              {currentStep !== 'publish' && (
+              {/* Hide next button on review step since it's the last step */}
+              {currentStep !== 'review' && (
                 <Button
                   onClick={async () => await nextStep()}
                   disabled={!canGoNext() || isLoading}
@@ -576,8 +529,8 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
               )}
               
               {/* Add invisible spacer when next button is hidden to maintain layout */}
-              {currentStep === 'publish' && (
-                <div className="w-[88px]" /> 
+              {currentStep === 'review' && (
+                <div className="w-[88px]" />
               )}
             </div>
           </div>
