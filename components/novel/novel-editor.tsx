@@ -99,6 +99,7 @@ export function NovelEditor({
           </EditorCommand>
           
           <EditorBubble
+            key={`editor-bubble-${Math.random()}`}
             tippyOptions={{
               placement: "top",
             }}

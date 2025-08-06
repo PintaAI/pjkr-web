@@ -128,7 +128,6 @@ export function StepMeta() {
                       <NovelEditor
                         initialContent={watch("jsonDescription")}
                         onUpdate={(data) => {
-                          // Use debounce to prevent excessive state updates
                           form.setValue("jsonDescription", data.json, { shouldTouch: true, shouldDirty: true });
                           form.setValue("htmlDescription", data.html, { shouldTouch: true, shouldDirty: true });
                         }}

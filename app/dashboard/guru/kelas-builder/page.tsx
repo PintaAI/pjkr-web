@@ -60,11 +60,11 @@ export default function KelasBuilderPage() {
   if (isLoading) {
     return (
       <KelasBuilderLayout>
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="bg-background border rounded-lg p-6 shadow-lg">
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-              <p className="text-muted-foreground">Loading kelas builder...</p>
+        {/* Minimalist loading overlay */}
+        <div className="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm">
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="bg-background/80 border border-border rounded-lg p-6 shadow-sm">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           </div>
         </div>

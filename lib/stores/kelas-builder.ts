@@ -300,16 +300,11 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           const { draftId, meta } = get();
           if (!draftId) return;
 
-          set((state) => {
-            state.isLoading = true;
-            state.error = null;
-          });
-
           try {
             // Serialize JSON data to ensure it's safe for server actions
             const serializedMeta = {
               ...meta,
-              jsonDescription: meta.jsonDescription 
+              jsonDescription: meta.jsonDescription
                 ? JSON.parse(JSON.stringify(meta.jsonDescription))
                 : undefined
             };
@@ -318,7 +313,6 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             if (result.success) {
               set((state) => {
                 state.isDirty = false;
-                state.isLoading = false;
               });
               toast.success('Meta information updated successfully');
             } else {
@@ -326,7 +320,6 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
             }
           } catch (error) {
             set((state) => {
-              state.isLoading = false;
               state.error = error instanceof Error ? error.message : 'Failed to update meta';
             });
             toast.error('Failed to update meta information');
@@ -1052,7 +1045,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                   })),
                 }));
 
-                state.isDirty = false;
+               
                 state.isLoading = false;
                 state.currentStep = 'meta';
               });
