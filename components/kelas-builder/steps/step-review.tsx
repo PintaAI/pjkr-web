@@ -92,6 +92,7 @@ export function StepReview() {
       liveSessions: 0,
       vocabularySets: vocabSets.length,
       posts: 0,
+      kelasKoleksiSoals: soalSets.length,
     },
   };
 

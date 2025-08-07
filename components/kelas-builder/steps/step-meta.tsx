@@ -14,10 +14,10 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Badge } from "@/components/ui/badge";
 import { NovelEditor } from "@/components/novel/novel-editor";
 import { MediaUpload } from "@/components/ui/media-upload";
-import { 
-  BookOpen, 
-  DollarSign, 
-  Image as ImageIcon,
+import {
+  BookOpen,
+  DollarSign,
+ ImageIcon,
   Hash,
   Percent
 } from "lucide-react";
@@ -253,28 +253,34 @@ export function StepMeta() {
                   <FormItem>
                     <FormLabel>Course Thumbnail</FormLabel>
                     <FormControl>
-                      <MediaUpload
-                        onUpload={(files) => {
-                          if (files.length > 0) {
-                            field.onChange(files[0].url);
-                          }
-                        }}
-                        maxFiles={1}
-                        maxSize={5}
-                        allowedTypes={['image']}
-                        accept="image/*"
-                        className="max-w-md"
-                      />
+                      <div className="flex justify-center">
+                        <MediaUpload
+                          onUpload={(files) => {
+                            if (files.length > 0) {
+                              field.onChange(files[0].url);
+                            }
+                          }}
+                          existingFiles={field.value ? [{
+                            url: field.value,
+                            publicId: field.value.split('/').pop() || 'thumbnail',
+                            format: field.value.split('.').pop() || 'jpg',
+                            bytes: 0,
+                            type: 'image'
+                          }] : []}
+                          maxFiles={1}
+                          maxSize={5}
+                          allowedTypes={['image']}
+                          accept="image/*"
+                          className="max-w-md"
+                        />
+                      </div>
                     </FormControl>
-                    <FormDescription>
-                      Upload an image or provide a URL for your course thumbnail. This will be displayed in course listings and previews.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name="icon"
                 render={({ field }) => (
@@ -284,7 +290,8 @@ export function StepMeta() {
                       <Input
                         placeholder="BookOpen"
                         {...field}
-                        value={field.value || ""}
+                        value={field.value || "book-open"}
+                        disabled
                       />
                     </FormControl>
                     <FormDescription>
@@ -293,7 +300,7 @@ export function StepMeta() {
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              /> */}
             </CardContent>
           </Card>
 

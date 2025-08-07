@@ -25,36 +25,36 @@ import { cn } from "@/lib/utils";
 interface KelasBuilderLayoutProps {
   children: React.ReactNode;
 }
-
+// Define the steps for the Kelas Builder
 const steps = [
   {
     id: 'meta',
-    title: 'Basic Info',
-    description: 'Course title, description, and settings',
+    title: 'Info Dasar Kelas',
+    description: 'Judul Kelas, deskripsi, dan pengaturan',
     icon: BookOpen,
   },
   {
     id: 'content',
-    title: 'Content',
-    description: 'Add lessons and learning materials',
+    title: 'Materi Pembelajaran',
+    description: 'Tambahkan modul atau materi pembelajaran',
     icon: FileText,
   },
   {
     id: 'vocabulary',
-    title: 'Vocabulary',
-    description: 'Add vocabulary sets (optional)',
+    title: 'Kosakata',
+    description: 'Tambahkan set kosakata (opsional)',
     icon: MessageSquare,
   },
   {
     id: 'assessment',
-    title: 'Assessment',
-    description: 'Link question sets (optional)',
+    title: 'Paket Soal',
+    description: 'tambahkan pake soal (opsional)',
     icon: ClipboardList,
   },
   {
     id: 'review',
-    title: 'Review & Publish',
-    description: 'Review and publish your course',
+    title: 'Tinjau & Publikasikan',
+    description: 'Tinjau dan publikasikan kursus',
     icon: Rocket,
   },
 ];
@@ -83,25 +83,6 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
   const currentStepIndex = steps.findIndex(step => step.id === currentStep);
   const progress = calculateOverallProgress();
 
-  const canGoNext = () => {
-    switch (currentStep) {
-      case 'meta':
-        return meta.title.trim() !== '' && meta.description;
-      case 'content':
-        return materis.length > 0;
-      case 'vocabulary':
-      case 'assessment':
-        return true; // Optional steps
-      case 'review':
-        return true; // Final step
-      default:
-        return true;
-    }
-  };
-
-  const canGoPrev = () => {
-    return currentStepIndex > 0;
-  };
 
 
   const getStepCompletionStatus = (stepId: string) => {
@@ -164,7 +145,6 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
     if (materis.some(m => m.tempId)) {
       await saveMateris();
     }
-    // Save unsaved vocabulary sets
     if (stepDirtyFlags.vocabulary) {
       // Note: This would need to be implemented in the store to save all vocabulary sets
       // For now, we'll save individual sets when they're edited
@@ -198,7 +178,6 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
           break;
       }
     } catch {
-      // Error handling is done by the store
     }
   };
 
@@ -227,25 +206,19 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
           {/* Title Row */}
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Course Builder</h1>
+              <h1 className="text-3xl font-bold tracking-tight">Kelas Builder</h1>
               <p className="text-muted-foreground">
-                Create and manage your educational content
+                Bikin kelas dan materi pembelajaran yang menarik untuk siswa
               </p>
             </div>
             <div className="flex items-center gap-2">
               {isDirty && (
                 <Badge variant="secondary" className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  Unsaved changes
+                  Belum di simpan
                 </Badge>
               )}
               
-              {draftId && (
-                <Badge variant="outline" className="flex items-center gap-1">
-                  <FileText className="h-3 w-3" />
-                  Draft #{draftId}
-                </Badge>
-              )}
             </div>
           </div>
           
@@ -283,7 +256,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <BookOpen className="h-5 w-5" />
-                  Course Steps
+                  Buat Kelas
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-1">
@@ -421,7 +394,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
               <Button
                 variant="outline"
                 onClick={prevStep}
-                disabled={!canGoPrev() || isLoading}
+                disabled={isLoading}
                 className="flex items-center gap-2"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -430,7 +403,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
               
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">
-                  Step {currentStepIndex + 1} of {steps.length}
+                  Langkah {currentStepIndex + 1} dari {steps.length}
                 </span>
               </div>
 
@@ -438,7 +411,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
               {currentStep !== 'review' && (
                 <Button
                   onClick={async () => await nextStep()}
-                  disabled={!canGoNext() || isLoading}
+                  disabled={isLoading}
                   className="flex items-center gap-2"
                 >
                   Next

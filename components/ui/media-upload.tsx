@@ -209,39 +209,67 @@ export function MediaUpload({
             disabled={disabled}
           />
           
-          <div 
-            className="cursor-pointer"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (!disabled) {
-                fileInputRef.current?.click();
-              }
-            }}
-          >
-            <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-sm text-muted-foreground mb-2">
-              Drag and drop files here, or{' '}
-              <Button
-                type="button"
-                variant="link"
-                className="p-0 h-auto text-primary underline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (!disabled) {
-                    fileInputRef.current?.click();
-                  }
-                }}
-                disabled={disabled}
-              >
-                browse
-              </Button>
-            </p>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Max {maxFiles} files, {maxSize}MB each
-          </p>
+          {/* Show uploaded image instead of upload area if there's an image */}
+          {uploadedFiles.length > 0 && uploadedFiles[0].type === 'image' ? (
+            <div className="space-y-4">
+              <div className="relative">
+                <Image
+                  src={uploadedFiles[0].url}
+                  alt="Course thumbnail"
+                  width={400}
+                  height={200}
+                  className="w-full h-48 object-cover rounded-lg"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="absolute top-2 right-2"
+                  onClick={() => handleRemove(uploadedFiles[0].publicId)}
+                  disabled={disabled}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Click to replace image or drag and drop a new one
+              </p>
+            </div>
+          ) : (
+            <div
+              className="cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!disabled) {
+                  fileInputRef.current?.click();
+                }
+              }}
+            >
+              <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-sm text-muted-foreground mb-2">
+                Drag and drop files here, or{' '}
+                <Button
+                  type="button"
+                  variant="link"
+                  className="p-0 h-auto text-primary underline"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!disabled) {
+                      fileInputRef.current?.click();
+                    }
+                  }}
+                  disabled={disabled}
+                >
+                  browse
+                </Button>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Max {maxFiles} files, {maxSize}MB each
+              </p>
+            </div>
+          )}
           
           {uploading && (
             <div className="mt-4">
@@ -254,59 +282,61 @@ export function MediaUpload({
         </CardContent>
       </Card>
 
-      {/* Uploaded Files */}
-      {uploadedFiles.length > 0 && (
+      {/* Uploaded Files (only show for non-image files) */}
+      {uploadedFiles.length > 0 && uploadedFiles.some(file => file.type !== 'image') && (
         <div className="space-y-2">
           <h4 className="text-sm font-medium">Uploaded Files</h4>
           {uploadedFiles.map((file) => (
-            <Card key={file.publicId} className="p-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  {file.type === 'image' ? (
-                    <Image
-                      src={file.url}
-                      alt="Uploaded"
-                      width={40}
-                      height={40}
-                      className="h-10 w-10 object-cover rounded"
-                    />
-                  ) : (
-                    <div className="h-10 w-10 bg-secondary rounded flex items-center justify-center">
-                      {getFileIcon(file.format)}
-                    </div>
-                  )}
-                  
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {file.publicId.split('_').slice(1).join('_')}.{file.format}
-                    </p>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="secondary" className="text-xs">
-                        {file.type}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {formatFileSize(file.bytes)}
-                      </span>
-                      {file.width && file.height && (
+            file.type !== 'image' && (
+              <Card key={file.publicId} className="p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    {file.type === 'image' ? (
+                      <Image
+                        src={file.url}
+                        alt="Uploaded"
+                        width={40}
+                        height={40}
+                        className="h-10 w-10 object-cover rounded"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 bg-secondary rounded flex items-center justify-center">
+                        {getFileIcon(file.format)}
+                      </div>
+                    )}
+                    
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {file.publicId.split('_').slice(1).join('_')}.{file.format}
+                      </p>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="secondary" className="text-xs">
+                          {file.type}
+                        </Badge>
                         <span className="text-xs text-muted-foreground">
-                          {file.width}×{file.height}
+                          {formatFileSize(file.bytes)}
                         </span>
-                      )}
+                        {file.width && file.height && (
+                          <span className="text-xs text-muted-foreground">
+                            {file.width}×{file.height}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemove(file.publicId)}
+                    disabled={disabled}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
-                
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemove(file.publicId)}
-                  disabled={disabled}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </Card>
+              </Card>
+            )
           ))}
         </div>
       )}
