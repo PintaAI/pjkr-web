@@ -1,0 +1,67 @@
+import type { StateCreator } from 'zustand';
+import { toast } from 'sonner';
+import type { KelasBuilderState, KelasMetaData } from './types';
+import { updateKelas } from '@/app/actions/kelas';
+import { KelasType, Difficulty } from '@prisma/client';
+
+export const initialMeta: KelasMetaData = {
+  title: '',
+  description: '',
+  type: KelasType.REGULAR,
+  level: Difficulty.BEGINNER,
+  isPaidClass: false,
+};
+
+export interface Meta {
+  meta: KelasMetaData;
+  updateMeta: (meta: Partial<KelasMetaData>) => void;
+  saveMeta: () => Promise<void>;
+}
+
+export const createMeta: StateCreator<
+  KelasBuilderState,
+  [],
+  [],
+  Meta
+> = (set, get) => ({
+  meta: initialMeta,
+  updateMeta: (meta: Partial<KelasMetaData>) => {
+    set((state) => ({
+      meta: { ...state.meta, ...meta },
+      isDirty: true,
+      stepDirtyFlags: { ...state.stepDirtyFlags, meta: true },
+    }));
+  },
+  saveMeta: async () => {
+    const { draftId, meta } = get();
+    if (!draftId) return;
+
+    set({ isLoading: true, error: null });
+
+    try {
+      // Serialize JSON data to ensure it's safe for server actions
+      const serializedMeta = {
+        ...meta,
+        jsonDescription: meta.jsonDescription
+          ? JSON.parse(JSON.stringify(meta.jsonDescription))
+          : undefined
+      };
+      
+      const result = await updateKelas(draftId, serializedMeta);
+      if (result.success) {
+        set((state) => ({
+          isDirty: false,
+          stepDirtyFlags: { ...state.stepDirtyFlags, meta: false },
+          isLoading: false,
+        }));
+        toast.success('Meta information updated successfully');
+      } else {
+        throw new Error(result.error || 'Failed to update meta');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update meta';
+      set({ isLoading: false, error: errorMessage });
+      toast.error('Failed to update meta information');
+    }
+  },
+});

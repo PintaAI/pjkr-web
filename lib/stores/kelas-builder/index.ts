@@ -1,41 +1,245 @@
-// Main store that combines all modular stores
-export { useMetaStore } from './meta-store';
-export { useContentStore } from './content-store';
-export { useVocabularyStore } from './vocabulary-store';
-export { useAssessmentStore } from './assessment-store';
-export { useNavigationStore, type BuilderStep } from './navigation-store';
+import { create } from 'zustand';
+import { devtools, subscribeWithSelector } from 'zustand/middleware';
+import { immer } from 'zustand/middleware/immer';
+import { enableMapSet } from 'immer';
 
-// Export types for external use
-export type {
-  KelasMetaData,
-  MateriData,
-  VocabularyItemData,
-  VocabularySetData,
-  SoalOpsiData,
-  SoalData,
-  KoleksiSoalData,
-  SoalSetData
-} from './kelas-builder-types';
+import type { KelasBuilderState, KelasMetaData } from './types';
+import { createProgress, type Progress } from './progress';
+import { createNavigation, type Navigation } from './navigation';
+import { createMeta, type Meta, initialMeta } from './meta';
+import { createContent, type Content } from './content';
+import { createVocabulary, type Vocabulary } from './vocabulary';
+import { createAssessment, type Assessment } from './assessment';
 
-// Utility hook to access all stores together
-import { useMetaStore } from './meta-store';
-import { useContentStore } from './content-store';
-import { useVocabularyStore } from './vocabulary-store';
-import { useAssessmentStore } from './assessment-store';
-import { useNavigationStore } from './navigation-store';
+import {
+  createDraftKelas,
+  publishKelas,
+  deleteDraftKelas,
+  getKelasById,
+} from '@/app/actions/kelas';
+import { toast } from 'sonner';
 
-export const useKelasBuilderStore = () => {
-  const metaStore = useMetaStore();
-  const contentStore = useContentStore();
-  const vocabularyStore = useVocabularyStore();
-  const assessmentStore = useAssessmentStore();
-  const navigationStore = useNavigationStore();
+// Enable MapSet plugin for Immer before using it
+enableMapSet();
 
-  return {
-    meta: metaStore,
-    content: contentStore,
-    vocabulary: vocabularyStore,
-    assessment: assessmentStore,
-    navigation: navigationStore
-  };
-};
+type Store = KelasBuilderState &
+  Progress &
+  Navigation &
+  Meta &
+  Content &
+  Vocabulary &
+  Assessment;
+
+export const useKelasBuilderStore = create<Store>()(
+  devtools(
+    subscribeWithSelector(
+      immer((set, get, store) => ({
+        draftId: null,
+        isLoading: false,
+        error: null,
+        isDirty: false,
+        optimisticUpdates: new Set(),
+        ...createProgress(set, get, store),
+        ...createNavigation(set, get, store),
+        ...createMeta(set, get, store),
+        ...createContent(set, get, store),
+        ...createVocabulary(set, get, store),
+        ...createAssessment(set, get, store),
+
+        // Global Actions
+        createDraft: async (initialMeta: KelasMetaData) => {
+          set({ isLoading: true, error: null });
+          try {
+            const serializedMeta = {
+              ...initialMeta,
+              jsonDescription: initialMeta.jsonDescription
+                ? JSON.parse(JSON.stringify(initialMeta.jsonDescription))
+                : undefined,
+            };
+            const result = await createDraftKelas(serializedMeta);
+            if (result.success && result.data) {
+              set({
+                draftId: result.data.id,
+                meta: initialMeta,
+                isDirty: false,
+                isLoading: false,
+              });
+              toast.success('Draft created successfully');
+            } else {
+              throw new Error(result.error || 'Failed to create draft');
+            }
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to create draft';
+            set({ isLoading: false, error: errorMessage });
+            toast.error('Failed to create draft');
+          }
+        },
+        loadDraft: async (kelasId: number) => {
+          set({ isLoading: true, error: null });
+          try {
+            const result = await getKelasById(kelasId);
+            if (result.success && result.data) {
+              const kelas = result.data;
+              set({
+                draftId: kelas.id,
+                meta: {
+                  title: kelas.title,
+                  description: kelas.description || '',
+                  jsonDescription: kelas.jsonDescription,
+                  htmlDescription: kelas.htmlDescription || '',
+                  type: kelas.type,
+                  level: kelas.level,
+                  thumbnail: kelas.thumbnail || '',
+                  icon: kelas.icon || '',
+                  isPaidClass: kelas.isPaidClass,
+                  price: kelas.price ? Number(kelas.price) : undefined,
+                  discount: kelas.discount ? Number(kelas.discount) : undefined,
+                  promoCode: kelas.promoCode || '',
+                },
+                materis: (kelas.materis || []).map((materi: any) => ({
+                  id: materi.id,
+                  title: materi.title,
+                  description: materi.description,
+                  jsonDescription: materi.jsonDescription,
+                  htmlDescription: materi.htmlDescription,
+                  order: materi.order,
+                  isDemo: materi.isDemo,
+                  isDraft: materi.isDraft,
+                })),
+                koleksiSoals: (kelas.koleksiSoals || []).map((koleksiSoal: any) => ({
+                  id: koleksiSoal.id,
+                  nama: koleksiSoal.nama,
+                  deskripsi: koleksiSoal.deskripsi,
+                  isPrivate: koleksiSoal.isPrivate,
+                  isDraft: koleksiSoal.isDraft,
+                  soals: (koleksiSoal.soals || []).map((soal: any) => ({
+                    id: soal.id,
+                    pertanyaan: soal.pertanyaan,
+                    difficulty: soal.difficulty,
+                    explanation: soal.explanation,
+                    isActive: soal.isActive,
+                    opsis: (soal.opsis || []).map((opsi: any) => ({
+                      id: opsi.id,
+                      opsiText: opsi.opsiText,
+                      isCorrect: opsi.isCorrect,
+                      order: opsi.order,
+                    })),
+                  })),
+                })),
+                vocabSets: (kelas.vocabularySets || []).map((vocabSet: any) => ({
+                  id: vocabSet.id,
+                  title: vocabSet.title,
+                  description: vocabSet.description,
+                  icon: vocabSet.icon,
+                  isPublic: vocabSet.isPublic,
+                  items: (vocabSet.items || []).map((item: any) => ({
+                    id: item.id,
+                    korean: item.korean,
+                    indonesian: item.indonesian,
+                    type: item.type,
+                    pos: item.pos,
+                    audioUrl: item.audioUrl,
+                    exampleSentences: item.exampleSentences,
+                    order: item.order,
+                  })),
+                })),
+                isLoading: false,
+                currentStep: 'meta',
+              });
+              toast.success('Class loaded successfully');
+            } else {
+              throw new Error(result.error || 'Failed to load draft');
+            }
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to load draft';
+            set({ isLoading: false, error: errorMessage });
+            toast.error('Failed to load draft');
+          }
+        },
+        publishDraft: async () => {
+          const { draftId, materis, saveMateris } = get();
+          if (!draftId) return;
+
+          set({ isLoading: true, error: null });
+
+          try {
+            const unsavedMateris = materis.filter(m => m.tempId);
+            if (unsavedMateris.length > 0) {
+              await saveMateris();
+            }
+
+            const result = await publishKelas(draftId);
+            if (result.success) {
+              set({ isLoading: false });
+              toast.success('Class published successfully');
+            } else {
+              throw new Error(result.error || 'Failed to publish class');
+            }
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to publish class';
+            set({ isLoading: false, error: errorMessage });
+            toast.error('Failed to publish class');
+          }
+        },
+        deleteDraft: async () => {
+          const { draftId } = get();
+          if (!draftId) return;
+
+          set({ isLoading: true, error: null });
+
+          try {
+            const result = await deleteDraftKelas(draftId);
+            if (result.success) {
+              get().reset();
+              toast.success('Draft deleted successfully');
+            } else {
+              throw new Error(result.error || 'Failed to delete draft');
+            }
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to delete draft';
+            set({ isLoading: false, error: errorMessage });
+            toast.error('Failed to delete draft');
+          }
+        },
+        reset: () => {
+          set({
+            draftId: null,
+            currentStep: 'meta',
+            isLoading: false,
+            error: null,
+            meta: initialMeta,
+            materis: [],
+            vocabSets: [],
+            soalSets: [],
+            koleksiSoals: [],
+            isDirty: false,
+            stepDirtyFlags: {
+              meta: false,
+              content: false,
+              vocabulary: false,
+              assessment: false,
+              review: false,
+            },
+            optimisticUpdates: new Set(),
+            deletedMateris: [],
+            deletedKoleksiSoals: [],
+            deletedSoals: [],
+            deletedOpsi: [],
+          });
+        },
+        setError: (error: string | null) => {
+          set({ error });
+        },
+        clearError: () => {
+          set({ error: null });
+        },
+        setIsDirty: (dirty: boolean) => {
+          set({ isDirty: dirty });
+        },
+      }))
+    ),
+    {
+      name: 'kelas-builder-store',
+    }
+  )
+);
