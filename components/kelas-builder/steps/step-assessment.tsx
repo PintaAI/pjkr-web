@@ -54,7 +54,7 @@ export function StepAssessment() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2">
 
       {/* Assessment Summary */}
       <Card className="bg-muted/50">

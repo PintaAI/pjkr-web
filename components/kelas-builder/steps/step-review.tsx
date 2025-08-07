@@ -183,7 +183,7 @@ export function StepReview() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Content Summary */}
       <Card>
         <CardHeader>

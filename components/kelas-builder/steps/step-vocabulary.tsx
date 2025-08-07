@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { MessageSquare, Plus, BookOpen, Edit, Trash2, MousePointerClick } from "lucide-react";
 import { VocabularySetBasicForm } from "./vocabulary-set-basic-form";
 import { ManageVocabularyItems } from "./manage-vocabulary-items";
@@ -15,6 +16,7 @@ export function StepVocabulary() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | undefined>();
   const [managingItemsIndex, setManagingItemsIndex] = useState<number | undefined>();
+  const [deleteIndex, setDeleteIndex] = useState<number | undefined>();
   const {
     vocabSets,
     addVocabularySet,
@@ -71,13 +73,18 @@ export function StepVocabulary() {
   };
 
   const handleDelete = (index: number) => {
-    if (confirm("Are you sure you want to delete this vocabulary set?")) {
-      removeVocabularySet(index);
+    setDeleteIndex(index);
+  };
+
+  const confirmDelete = () => {
+    if (deleteIndex !== undefined) {
+      removeVocabularySet(deleteIndex);
+      setDeleteIndex(undefined);
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
 
       {/* Vocabulary Summary */}
       <Card className="bg-muted/50">
@@ -171,17 +178,35 @@ export function StepVocabulary() {
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(index);
-                      }}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(index);
+                          }}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Vocabulary Set</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete "{vocabSet.title}"? This action cannot be undone and all vocabulary items in this set will be permanently removed.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               </CardHeader>

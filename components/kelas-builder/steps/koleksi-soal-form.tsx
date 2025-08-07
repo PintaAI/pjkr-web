@@ -20,6 +20,7 @@ export function KoleksiSoalForm({ koleksiIndex, onCancel, onSave }: KoleksiSoalF
     koleksiSoals,
     addKoleksiSoal,
     updateKoleksiSoal,
+    saveKoleksiSoal,
     draftId
   } = useKelasBuilderStore();
 
@@ -41,7 +42,7 @@ export function KoleksiSoalForm({ koleksiIndex, onCancel, onSave }: KoleksiSoalF
     mode: "onChange",
   });
 
-  const onSubmit = (data: any) => {
+  const onSubmit = async (data: any) => {
     const submissionData = {
       ...data,
       isPrivate: false, // Always public
@@ -55,6 +56,15 @@ export function KoleksiSoalForm({ koleksiIndex, onCancel, onSave }: KoleksiSoalF
         soals: koleksiSoal?.soals || [] // Preserve existing questions
       };
       updateKoleksiSoal(koleksiIndex, updateData);
+      
+      // Save the updated collection to database
+      try {
+        await saveKoleksiSoal(koleksiIndex);
+      } catch (error) {
+        console.error('Failed to save collection:', error);
+        // Don't prevent the dialog from closing even if save fails
+        // User can try again later
+      }
     } else {
       addKoleksiSoal(submissionData);
     }

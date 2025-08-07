@@ -177,7 +177,7 @@ export function StepContent() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
 
       {/* Summary */}
       <Card className="bg-muted/50">

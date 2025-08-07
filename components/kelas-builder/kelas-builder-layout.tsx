@@ -41,7 +41,7 @@ const steps = [
   },
   {
     id: 'vocabulary',
-    title: 'Kosakata',
+    title: 'Kosa-kata',
     description: 'Tambahkan set kosakata (opsional)',
     icon: MessageSquare,
   },
@@ -218,7 +218,18 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                   Belum di simpan
                 </Badge>
               )}
-              
+              {stepDirtyFlags[currentStep as keyof typeof stepDirtyFlags] && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={isLoading}
+                  className="flex items-center gap-2"
+                >
+                  <Save className="h-4 w-4" />
+                  Save
+                </Button>
+              )}
             </div>
           </div>
           
@@ -348,82 +359,62 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
 
           {/* Main Content */}
           <div className="lg:col-span-3">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      {(() => {
-                        const currentStepData = steps.find(s => s.id === currentStep);
-                        const Icon = currentStepData?.icon || BookOpen;
-                        return (
-                          <>
-                            <Icon className="h-5 w-5" />
-                            {currentStepData?.title}
-                          </>
-                        );
-                      })()}
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      {steps.find(s => s.id === currentStep)?.description}
-                    </p>
-                  </div>
+            {/* Navigation */}
+            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border border-primary/20 rounded-lg p-4 mb-2">
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={prevStep}
+                  disabled={isLoading}
+                  className="flex items-center gap-2 hover:bg-muted/50"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+                
+                <div className="flex flex-row items-center gap-2 px-4 py-2 bg-white/80 dark:bg-muted/80 backdrop-blur-sm rounded-lg border border-primary/20 shadow-sm">
                   <div className="flex items-center gap-2">
-                    {stepDirtyFlags[currentStep as keyof typeof stepDirtyFlags] && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleSave}
-                        disabled={isLoading}
-                        className="flex items-center gap-2"
-                      >
-                        <Save className="h-4 w-4" />
-                        Save
-                      </Button>
-                    )}
+                    {(() => {
+                      const currentStepData = steps.find(s => s.id === currentStep);
+                      const Icon = currentStepData?.icon || BookOpen;
+                      return (
+                        <Icon className="h-6 w-6 text-primary" />
+                      );
+                    })()}
+                  </div>
+                  <div className="flex flex-col items-start gap-0">
+                    <span className="text-base font-medium text-primary">
+                      {steps.find(s => s.id === currentStep)?.title}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {steps.find(s => s.id === currentStep)?.description}
+                    </span>
                   </div>
                 </div>
-              </CardHeader>
+
+                {/* Hide next button on review step since it's last step */}
+                {currentStep !== 'review' ? (
+                  <Button
+                    size="sm"
+                    onClick={async () => await nextStep()}
+                    disabled={isLoading}
+                    className="flex items-center gap-2 bg-primary hover:bg-primary/90"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <div className="w-[88px]" />
+                )}
+              </div>
+            </div>
+
+            <Card >
               <CardContent>
                 {children}
               </CardContent>
             </Card>
-
-            {/* Navigation */}
-            <div className="flex items-center justify-between mt-6">
-              <Button
-                variant="outline"
-                onClick={prevStep}
-                disabled={isLoading}
-                className="flex items-center gap-2"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-              
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  Langkah {currentStepIndex + 1} dari {steps.length}
-                </span>
-              </div>
-
-              {/* Hide next button on review step since it's the last step */}
-              {currentStep !== 'review' && (
-                <Button
-                  onClick={async () => await nextStep()}
-                  disabled={isLoading}
-                  className="flex items-center gap-2"
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              )}
-              
-              {/* Add invisible spacer when next button is hidden to maintain layout */}
-              {currentStep === 'review' && (
-                <div className="w-[88px]" />
-              )}
-            </div>
           </div>
         </div>
       </div>

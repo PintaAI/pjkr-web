@@ -23,6 +23,7 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
   const {
     koleksiSoals,
     updateSoal,
+    saveSoal,
     addOpsi,
     updateOpsi,
     removeOpsi
@@ -39,7 +40,7 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
   } = useForm({
     defaultValues: soal || {
       pertanyaan: "",
-      difficulty: undefined,
+      difficulty: Difficulty.BEGINNER,
       explanation: "",
       isActive: true,
       opsis: [],
@@ -65,8 +66,17 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
     }
   };
 
-  const onSubmit = (data: any) => {
+  const onSubmit = async (data: any) => {
     updateSoal(koleksiIndex, soalIndex, data);
+    
+    // Save the updated question to database
+    try {
+      await saveSoal(koleksiIndex, soalIndex);
+    } catch (error) {
+      console.error('Failed to save question:', error);
+      // Don't prevent the form submission even if save fails
+      // User can try again later
+    }
   };
 
   const handleAddOpsi = () => {
@@ -121,7 +131,7 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
         <div className="space-y-2">
           <Label htmlFor="difficulty">Difficulty</Label>
           <Select
-            value={soal?.difficulty || ""}
+            value={soal?.difficulty || Difficulty.BEGINNER}
             onValueChange={(value) =>
               updateSoal(koleksiIndex, soalIndex, {
                 difficulty: value as Difficulty | undefined
@@ -129,7 +139,7 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
             }
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select difficulty" />
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="BEGINNER">Beginner</SelectItem>

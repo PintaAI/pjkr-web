@@ -901,8 +901,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           if (!koleksiSoals[index] || !draftId) return;
 
           const koleksiSoal = koleksiSoals[index];
-          if (!koleksiSoal.tempId) return; // Already saved
-
+          
           set((state) => {
             state.isLoading = true;
             state.error = null;
@@ -911,33 +910,54 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           try {
             const { saveKoleksiSoal: saveKoleksiSoalAction } = await import('@/app/actions/kelas');
             
-            const result = await saveKoleksiSoalAction(
-              draftId, // kelasId
-              {
-                nama: koleksiSoal.nama,
-                deskripsi: koleksiSoal.deskripsi,
-                isPrivate: false,
-                isDraft: true,
-              },
-              koleksiSoal.id
-            );
+            let result: any;
+            if (koleksiSoal.tempId) {
+              // New koleksi - create it
+              result = await saveKoleksiSoalAction(
+                draftId, // kelasId
+                {
+                  nama: koleksiSoal.nama,
+                  deskripsi: koleksiSoal.deskripsi,
+                  isPrivate: false,
+                  isDraft: true,
+                },
+                undefined // No ID for new items
+              );
+              
+              if (result.success && result.data) {
+                // Update the koleksi with the real ID
+                set((state) => {
+                  state.koleksiSoals[index] = {
+                    ...koleksiSoal,
+                    id: result.data.id,
+                    tempId: undefined, // Clear temp ID as it's now saved
+                  };
+                  if (koleksiSoal.tempId) {
+                    state.optimisticUpdates.delete(koleksiSoal.tempId);
+                  }
+                });
+              }
+            } else {
+              // Existing koleksi - update it
+              result = await saveKoleksiSoalAction(
+                draftId, // kelasId
+                {
+                  nama: koleksiSoal.nama,
+                  deskripsi: koleksiSoal.deskripsi,
+                  isPrivate: false,
+                  isDraft: true,
+                },
+                koleksiSoal.id // Existing ID
+              );
+            }
             
-            if (result.success && result.data) {
-              // Update the koleksi with the real ID
+            if (result.success) {
               set((state) => {
-                state.koleksiSoals[index] = {
-                  ...koleksiSoal,
-                  id: result.data.id,
-                  tempId: undefined, // Clear temp ID as it's now saved
-                };
                 state.isDirty = false;
                 state.stepDirtyFlags.assessment = false;
                 state.isLoading = false;
-                if (koleksiSoal.tempId) {
-                  state.optimisticUpdates.delete(koleksiSoal.tempId);
-                }
               });
-              toast.success('Question collection saved successfully');
+              toast.success(koleksiSoal.tempId ? 'Question collection created successfully' : 'Question collection updated successfully');
             } else {
               throw new Error(result.error || 'Failed to save question collection');
             }
@@ -1115,8 +1135,8 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           const koleksiSoal = koleksiSoals[koleksiIndex];
           const soal = koleksiSoal.soals[soalIndex];
           
-          // Only save if koleksiSoal has a real ID (is saved) and soal has tempId (is unsaved)
-          if (!koleksiSoal.id || !soal.tempId) return;
+          // Only save if koleksiSoal has a real ID (is saved)
+          if (!koleksiSoal.id) return;
 
           // Validate the soal data before saving
           if (!soal.pertanyaan || soal.pertanyaan.trim() === '') {
@@ -1140,7 +1160,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                 explanation: soal.explanation,
                 isActive: soal.isActive,
               },
-              soal.id
+              soal.id || undefined // Pass undefined for new items, existing ID for updates
             );
             
             if (result.success && result.data) {
@@ -1162,7 +1182,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                 await get().saveOpsi(koleksiIndex, soalIndex, opsiIndex);
               }
 
-              toast.success('Question saved successfully');
+              toast.success(soal.tempId ? 'Question created successfully' : 'Question updated successfully');
             } else {
               throw new Error(result.error || 'Failed to save question');
             }
@@ -1524,18 +1544,21 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
               }
             }
 
-            // First, save all unsaved koleksi soals
+            // Get the current state to check dirty flags
+            const currentState = get();
+            
+            // First, save all koleksi soals (both new and existing)
             for (let koleksiIndex = 0; koleksiIndex < koleksiSoals.length; koleksiIndex++) {
               const koleksiSoal = koleksiSoals[koleksiIndex];
               
-              // Save koleksi soal if it has tempId (unsaved)
-              if (koleksiSoal.tempId) {
+              // Save koleksi soal if it has tempId (new) OR if it has changes (existing)
+              if (koleksiSoal.tempId || currentState.stepDirtyFlags.assessment) {
                 console.log(`📝 [AUTO-SAVE] Saving koleksi soal ${koleksiIndex}: ${koleksiSoal.nama}`);
                 await get().saveKoleksiSoal(koleksiIndex);
               }
             }
 
-            // Then, save all unsaved soals and their opsis
+            // Then, save all soals and their opsis
             for (let koleksiIndex = 0; koleksiIndex < koleksiSoals.length; koleksiIndex++) {
               const koleksiSoal = koleksiSoals[koleksiIndex];
               
@@ -1544,8 +1567,8 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                 for (let soalIndex = 0; soalIndex < koleksiSoal.soals.length; soalIndex++) {
                   const soal = koleksiSoal.soals[soalIndex];
                   
-                  // Save soal if it has tempId (unsaved) and has valid data
-                  if (soal.tempId) {
+                  // Save soal if it has tempId (new) OR if it has changes (existing) and has valid data
+                  if (soal.tempId || currentState.stepDirtyFlags.assessment) {
                     // Only save if the question has content
                     if (soal.pertanyaan && soal.pertanyaan.trim() !== '') {
                       console.log(`📝 [AUTO-SAVE] Saving soal ${soalIndex} in koleksi ${koleksiIndex}: ${soal.pertanyaan.substring(0, 50)}...`);

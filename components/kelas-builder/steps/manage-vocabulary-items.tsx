@@ -5,7 +5,8 @@ import { Card, CardContent, } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import {  Edit, Trash2, GripVertical, Plus,} from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Edit, Trash2, GripVertical, Plus } from "lucide-react";
 import { VocabularyType, PartOfSpeech } from "@prisma/client";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { VocabularyItemForm } from "./vocabulary-item-form";
@@ -30,7 +31,6 @@ export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsPr
   const {
     vocabSets,
     updateVocabularySet,
-    removeVocabularySet,
     updateVocabularyItem,
     removeVocabularyItem,
   
@@ -38,6 +38,7 @@ export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsPr
   } = useKelasBuilderStore();
 
   const [editingItem, setEditingItem] = useState<{ setIndex: number; itemIndex: number } | null>(null);
+  const [deleteItemIndex, setDeleteItemIndex] = useState<number | undefined>();
 
   const vocabSet = vocabSets[vocabSetIndex];
 
@@ -77,20 +78,25 @@ export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsPr
   };
 
   const handleDeleteItem = (setIndex: number, itemIndex: number) => {
-    if (confirm("Are you sure you want to delete this vocabulary item?")) {
-      const vocabSetId = vocabSets[setIndex].items[itemIndex].id;
+    setDeleteItemIndex(itemIndex);
+  };
+
+  const confirmDeleteItem = () => {
+    if (deleteItemIndex !== undefined) {
+      const vocabSetId = vocabSet.items[deleteItemIndex].id;
       
       if (vocabSetId) {
         removeVocabularyItem(vocabSetId);
       } else {
         // For new items, update the local state
-        updateVocabularySet(setIndex, {
+        updateVocabularySet(vocabSetIndex, {
           ...vocabSet,
-          items: vocabSet.items.filter((_, i) => i !== itemIndex),
+          items: vocabSet.items.filter((_, i) => i !== deleteItemIndex),
         });
       }
       
       setIsDirty(true);
+      setDeleteItemIndex(undefined);
     }
   };
 
@@ -203,11 +209,34 @@ export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsPr
             Manage vocabulary items for this set
           </p>
         </div>
-        <Button onClick={handleAddItem} size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Item
-        </Button>
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-muted-foreground">
+            Total items: {vocabSet.items.length}
+          </div>
+          <Button onClick={handleAddItem} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Item
+          </Button>
+        </div>
       </div>
+
+      {/* Delete Vocabulary Item Dialog */}
+      <AlertDialog open={deleteItemIndex !== undefined} onOpenChange={() => setDeleteItemIndex(undefined)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Vocabulary Item</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this vocabulary item? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteItem} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {vocabSet.items.length === 0 ? (
         <Card>
@@ -227,20 +256,6 @@ export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsPr
         </div>
       )}
 
-      <div className="border-t pt-4">
-        <div className="flex justify-between items-center">
-          <div className="text-sm text-muted-foreground">
-            Total items: {vocabSet.items.length}
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => removeVocabularySet(vocabSet.id!)}
-            className="text-destructive hover:text-destructive"
-          >
-            Delete Vocabulary Set
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }
