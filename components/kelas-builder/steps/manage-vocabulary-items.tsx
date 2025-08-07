@@ -1,207 +1,77 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Edit, Trash2, GripVertical, Plus } from "lucide-react";
+import { Plus, Trash2, GripVertical, BookOpen, Edit } from "lucide-react";
 import { VocabularyType, PartOfSpeech } from "@prisma/client";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { VocabularyItemForm } from "./vocabulary-item-form";
-
-interface VocabularyItem {
-  id?: number;
-  korean: string;
-  indonesian: string;
-  type: VocabularyType;
-  pos?: PartOfSpeech;
-  audioUrl?: string;
-  exampleSentences: string[];
-  order: number;
-  tempId?: string;
-}
 
 interface ManageVocabularyItemsProps {
   vocabSetIndex: number;
 }
 
 export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsProps) {
-  const {
-    vocabSets,
-    updateVocabularySet,
-    updateVocabularyItem,
-    removeVocabularyItem,
-  
-    setIsDirty,
-  } = useKelasBuilderStore();
-
-  const [editingItem, setEditingItem] = useState<{ setIndex: number; itemIndex: number } | null>(null);
-  const [deleteItemIndex, setDeleteItemIndex] = useState<number | undefined>();
-
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [editingItemIndex, setEditingItemIndex] = useState<number | undefined>();
+  const { vocabSets, updateVocabularySet, setIsDirty } = useKelasBuilderStore();
   const vocabSet = vocabSets[vocabSetIndex];
 
-  const handleEditItem = (setIndex: number, itemIndex: number) => {
-    setEditingItem({ setIndex, itemIndex });
-  };
-
-  const handleSaveItem = (item: VocabularyItem) => {
-    if (!editingItem) return;
-
-    const { setIndex, itemIndex } = editingItem;
-    const vocabSetId = vocabSets[setIndex].id;
+  const handleAddItem = () => {
+    // Add a new empty item to the end of the array
+    const newItems = [...vocabSet.items, {
+      korean: "",
+      indonesian: "",
+      type: VocabularyType.WORD,
+      exampleSentences: [],
+      order: vocabSet.items.length,
+    }];
     
-    if (vocabSetId) {
-      // Update existing item
-      updateVocabularyItem(vocabSetId, { ...item, order: itemIndex });
-    } else {
-      // For new items (itemIndex === -1), add to the end of the array
-      if (itemIndex === -1) {
-        updateVocabularySet(setIndex, {
-          ...vocabSet,
-          items: [...vocabSet.items, { ...item, order: vocabSet.items.length }],
-        });
-      } else {
-        // Update existing item in local state
-        updateVocabularySet(setIndex, {
-          ...vocabSet,
-          items: vocabSet.items.map((i, idx) =>
-            idx === itemIndex ? { ...item, order: idx } : i
-          ),
-        });
-      }
-    }
-
-    setEditingItem(null);
+    updateVocabularySet(vocabSetIndex, {
+      ...vocabSet,
+      items: newItems,
+    });
+    
+    setEditingItemIndex(newItems.length - 1);
+    setShowCreateDialog(true);
     setIsDirty(true);
   };
 
-  const handleDeleteItem = (setIndex: number, itemIndex: number) => {
-    setDeleteItemIndex(itemIndex);
+  const handleEditItem = (itemIndex: number) => {
+    setEditingItemIndex(itemIndex);
+    setShowCreateDialog(true);
   };
 
-  const confirmDeleteItem = () => {
-    if (deleteItemIndex !== undefined) {
-      const vocabSetId = vocabSet.items[deleteItemIndex].id;
+  const handleCloseDialog = () => {
+    setShowCreateDialog(false);
+    setEditingItemIndex(undefined);
+  };
+
+  const handleRemoveItem = (itemIndex: number) => {
+    if (confirm("Are you sure you want to delete this vocabulary item?")) {
+      const newItems = vocabSet.items.filter((_, i) => i !== itemIndex);
       
-      if (vocabSetId) {
-        removeVocabularyItem(vocabSetId);
-      } else {
-        // For new items, update the local state
-        updateVocabularySet(vocabSetIndex, {
-          ...vocabSet,
-          items: vocabSet.items.filter((_, i) => i !== deleteItemIndex),
-        });
-      }
+      updateVocabularySet(vocabSetIndex, {
+        ...vocabSet,
+        items: newItems.map((item, index) => ({
+          ...item,
+          order: index,
+        })),
+      });
       
       setIsDirty(true);
-      setDeleteItemIndex(undefined);
     }
   };
-
-  const handleAddItem = () => {
-    setEditingItem({ setIndex: vocabSetIndex, itemIndex: -1 });
-  };
-
-
-  const renderVocabularyItem = (item: VocabularyItem, itemIndex: number) => (
-    <Card className="mb-4 hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
-              <span className="font-medium">Item {itemIndex + 1}</span>
-              <Badge variant="secondary" className="text-xs">
-                {item.type}
-              </Badge>
-              {item.pos && (
-                <Badge variant="outline" className="text-xs">
-                  {item.pos}
-                </Badge>
-              )}
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-              <div>
-                <div className="text-sm text-muted-foreground mb-1">Korean</div>
-                <div className="font-medium">{item.korean || <span className="text-muted-foreground">Not set</span>}</div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground mb-1">Indonesian</div>
-                <div className="font-medium">{item.indonesian || <span className="text-muted-foreground">Not set</span>}</div>
-              </div>
-            </div>
-
-            {item.exampleSentences.length > 0 && item.exampleSentences.some(s => s.trim()) && (
-              <div className="mb-3">
-                <div className="text-sm text-muted-foreground mb-1">Examples</div>
-                <div className="text-sm">
-                  {item.exampleSentences
-                    .filter(s => s.trim())
-                    .map((sentence, i) => (
-                      <div key={i} className="text-muted-foreground">
-                        • {sentence}
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
-            {item.audioUrl && (
-              <div className="text-sm text-muted-foreground">
-                Audio: {item.audioUrl}
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 ml-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleEditItem(vocabSetIndex, itemIndex)}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleDeleteItem(vocabSetIndex, itemIndex)}
-              className="text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
 
   if (!vocabSet) {
     return <div>Vocabulary set not found</div>;
   }
 
   return (
-    <div className="space-y-6">
-      {/* Vocabulary Item Dialog */}
-      <Dialog open={editingItem !== null} onOpenChange={() => setEditingItem(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingItem?.itemIndex === -1 ? "Add New Vocabulary Item" : "Edit Vocabulary Item"}
-            </DialogTitle>
-          </DialogHeader>
-          {editingItem && (
-            <VocabularyItemForm
-              item={editingItem.itemIndex >= 0 ? vocabSet.items[editingItem.itemIndex] : undefined}
-              onSave={handleSaveItem}
-              onCancel={() => setEditingItem(null)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-
+    <div className="space-y-7">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">{vocabSet.title}</h3>
@@ -209,53 +79,119 @@ export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsPr
             Manage vocabulary items for this set
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="text-sm text-muted-foreground">
-            Total items: {vocabSet.items.length}
-          </div>
-          <Button onClick={handleAddItem} size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Item
-          </Button>
-        </div>
+        <Button onClick={handleAddItem} size="sm">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Item
+        </Button>
       </div>
-
-      {/* Delete Vocabulary Item Dialog */}
-      <AlertDialog open={deleteItemIndex !== undefined} onOpenChange={() => setDeleteItemIndex(undefined)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Vocabulary Item</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this vocabulary item? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeleteItem} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {vocabSet.items.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
-            <div className="text-muted-foreground">
-              No vocabulary items added yet.
+            <div className="space-y-4">
+              <BookOpen className="h-16 w-16 mx-auto text-muted-foreground/50" />
+              <div>
+                <h3 className="font-semibold mb-2">No Vocabulary Items Yet</h3>
+                <p className="text-muted-foreground mb-4">
+                  Add your first vocabulary item to this set.
+                </p>
+                <Button onClick={handleAddItem} variant="outline" size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add First Item
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
-          {vocabSet.items.map((item, itemIndex) => (
-            <div key={item.id || item.tempId || itemIndex}>
-              {renderVocabularyItem(item, itemIndex)}
-            </div>
-          ))}
+        <div className="space-y-2">
+          {vocabSet.items
+            .slice()
+            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+            .map((item, itemIndex) => {
+              const originalIndex = vocabSet.items.findIndex(i => i === item);
+              return (
+                <Card key={item.id || item.tempId || itemIndex} className="py-2">
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="touch-none cursor-move">
+                          <GripVertical className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                        </div>
+                        <Badge variant="outline" className="text-xs shrink-0">No. {itemIndex + 1}</Badge>
+                        <div className="flex-1">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Korean: </span>
+                              <span className="font-medium">
+                                {item.korean || <span className="text-muted-foreground">Not set</span>}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Indonesian: </span>
+                              <span className="font-medium">
+                                {item.indonesian || <span className="text-muted-foreground">Not set</span>}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge variant="secondary" className="text-xs">
+                              {item.type}
+                            </Badge>
+                       
+                            {item.exampleSentences.length > 0 && (
+                              <Badge variant="outline" className="text-xs">
+                                {item.exampleSentences.length} example{item.exampleSentences.length > 1 ? 's' : ''}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 ml-3">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditItem(originalIndex)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveItem(originalIndex)}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
         </div>
       )}
 
+      {/* Create/Edit Vocabulary Item Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={handleCloseDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingItemIndex !== undefined && editingItemIndex < vocabSet.items.length 
+                ? `Edit Vocabulary Item ${editingItemIndex + 1}` 
+                : "Create New Vocabulary Item"}
+            </DialogTitle>
+          </DialogHeader>
+          {editingItemIndex !== undefined && (
+            <VocabularyItemForm
+              vocabSetIndex={vocabSetIndex}
+              itemIndex={editingItemIndex}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

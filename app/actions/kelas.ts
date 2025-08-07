@@ -316,6 +316,13 @@ export async function getKelasById(id: number) {
             }
           }
         },
+        vocabularySets: {
+          include: {
+            items: {
+              orderBy: { order: "asc" }
+            }
+          }
+        },
         _count: { select: { materis: true, members: true } },
       },
     });
@@ -336,6 +343,8 @@ export async function getKelasById(id: number) {
       discount: kelas.discount ? Number(kelas.discount) : null,
       // Flatten the koleksiSoals from the junction table
       koleksiSoals: kelas.kelasKoleksiSoals.map(junction => junction.koleksiSoal),
+      // Include vocabulary sets directly
+      vocabularySets: kelas.vocabularySets,
     };
 
     return { success: true, data: serializedKelas };

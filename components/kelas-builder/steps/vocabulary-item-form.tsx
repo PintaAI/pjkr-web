@@ -1,9 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,121 +19,138 @@ interface VocabularyItem {
 }
 
 interface VocabularyItemFormProps {
-  item?: VocabularyItem;
-  onSave: (data: VocabularyItem) => void;
-  onCancel: () => void;
+  vocabSetIndex: number;
+  itemIndex: number;
 }
 
-export function VocabularyItemForm({ item, onSave, onCancel }: VocabularyItemFormProps) {
-  const [formData, setFormData] = useState<VocabularyItem>({
-    korean: item?.korean || "",
-    indonesian: item?.indonesian || "",
-    type: item?.type || VocabularyType.WORD,
-    pos: item?.pos,
-    audioUrl: item?.audioUrl || "",
-    exampleSentences: item?.exampleSentences || [""],
-    order: item?.order || 0,
-  });
+export function VocabularyItemForm({ vocabSetIndex, itemIndex }: VocabularyItemFormProps) {
+  const {
+    vocabSets,
+    updateVocabularySet,
+    saveVocabularySet,
+  } = useKelasBuilderStore();
 
-  // Define validation schema
-  const VocabularyItemSchema = z.object({
-    korean: z.string().min(1, "Korean word is required"),
-    indonesian: z.string().min(1, "Indonesian translation is required"),
-    type: z.nativeEnum(VocabularyType).default(VocabularyType.WORD),
-    pos: z.nativeEnum(PartOfSpeech).optional(),
-    audioUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
-    exampleSentences: z.array(z.string()).default([]),
-  });
+  const vocabSet = vocabSets[vocabSetIndex];
+  const item = vocabSet?.items[itemIndex];
 
-  const { setError } = useKelasBuilderStore();
-
-  const form = useForm({
-    resolver: zodResolver(VocabularyItemSchema),
-    defaultValues: formData,
-  });
 
   const addItem = () => {
-    setFormData(prev => ({
-      ...prev,
-      exampleSentences: [...prev.exampleSentences, ""],
-    }));
+    const currentItems = vocabSet?.items || [];
+    const newItems = [...currentItems];
+    newItems[itemIndex] = {
+      ...newItems[itemIndex],
+      exampleSentences: [...(newItems[itemIndex]?.exampleSentences || []), ""],
+    };
+    updateVocabularySet(vocabSetIndex, {
+      ...vocabSet,
+      items: newItems,
+    });
   };
 
-  const removeItem = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      exampleSentences: prev.exampleSentences.filter((_, i) => i !== index),
-    }));
+  const removeItem = (sentenceIndex: number) => {
+    const currentItems = vocabSet?.items || [];
+    const newItems = [...currentItems];
+    newItems[itemIndex] = {
+      ...newItems[itemIndex],
+      exampleSentences: newItems[itemIndex]?.exampleSentences.filter((_, i) => i !== sentenceIndex) || [],
+    };
+    updateVocabularySet(vocabSetIndex, {
+      ...vocabSet,
+      items: newItems,
+    });
   };
 
   const updateItem = (field: keyof VocabularyItem, value: any) => {
-    setFormData(prev => ({
-      ...prev,
+    const currentItems = vocabSet?.items || [];
+    const newItems = [...currentItems];
+    newItems[itemIndex] = {
+      ...newItems[itemIndex],
       [field]: value,
-    }));
+    };
+    updateVocabularySet(vocabSetIndex, {
+      ...vocabSet,
+      items: newItems,
+    });
   };
 
   const updateExampleSentence = (sentenceIndex: number, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      exampleSentences: prev.exampleSentences.map((sentence, j) =>
+    const currentItems = vocabSet?.items || [];
+    const newItems = [...currentItems];
+    newItems[itemIndex] = {
+      ...newItems[itemIndex],
+      exampleSentences: newItems[itemIndex]?.exampleSentences.map((sentence, j) =>
         j === sentenceIndex ? value : sentence
-      ),
-    }));
+      ) || [],
+    };
+    updateVocabularySet(vocabSetIndex, {
+      ...vocabSet,
+      items: newItems,
+    });
   };
 
-  const onSubmit = (data: any) => {
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Get current form data from the currentItem
+    const formData = {
+      ...currentItem,
+      order: itemIndex,
+    };
+    
+    updateVocabularySet(vocabSetIndex, {
+      ...vocabSet,
+      items: vocabSet.items.map((i, idx) =>
+        idx === itemIndex ? formData : i
+      ),
+    });
+    
+    // Save the updated vocabulary set to database
     try {
-      onSave(data);
+      await saveVocabularySet(vocabSetIndex);
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to save vocabulary item");
+      console.error('Failed to save vocabulary item:', error);
+      // Don't prevent the form submission even if save fails
+      // User can try again later
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    form.handleSubmit(onSubmit)();
+  const currentItem = vocabSet?.items[itemIndex] || {
+    korean: "",
+    indonesian: "",
+    type: VocabularyType.WORD,
+    pos: undefined,
+    audioUrl: "",
+    exampleSentences: [""],
+    order: itemIndex || 0,
   };
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="korean">Korean *</Label>
               <Input
                 id="korean"
-                {...form.register("korean")}
-                value={form.watch("korean")}
+                value={currentItem.korean}
                 onChange={(e) => {
-                  form.setValue("korean", e.target.value);
                   updateItem("korean", e.target.value);
                 }}
                 placeholder="e.g., 안녕하세요"
-                className={form.formState.errors.korean ? "border-destructive" : ""}
               />
-              {form.formState.errors.korean && (
-                <p className="text-sm text-destructive">{form.formState.errors.korean.message}</p>
-              )}
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="indonesian">Indonesian *</Label>
               <Input
                 id="indonesian"
-                {...form.register("indonesian")}
-                value={form.watch("indonesian")}
+                value={currentItem.indonesian}
                 onChange={(e) => {
-                  form.setValue("indonesian", e.target.value);
                   updateItem("indonesian", e.target.value);
                 }}
                 placeholder="e.g., Halo"
-                className={form.formState.errors.indonesian ? "border-destructive" : ""}
               />
-              {form.formState.errors.indonesian && (
-                <p className="text-sm text-destructive">{form.formState.errors.indonesian.message}</p>
-              )}
             </div>
           </div>
 
@@ -145,9 +158,8 @@ export function VocabularyItemForm({ item, onSave, onCancel }: VocabularyItemFor
             <div className="space-y-2">
               <Label htmlFor="type">Type</Label>
               <Select
-                value={form.watch("type")}
+                value={currentItem.type}
                 onValueChange={(value) => {
-                  form.setValue("type", value as VocabularyType);
                   updateItem("type", value);
                 }}
               >
@@ -165,10 +177,9 @@ export function VocabularyItemForm({ item, onSave, onCancel }: VocabularyItemFor
             <div className="space-y-2">
               <Label htmlFor="pos">Part of Speech</Label>
               <Select
-                value={form.watch("pos") || "none"}
+                value={currentItem.pos || "none"}
                 onValueChange={(value) => {
                   const parsedValue = value === "none" ? undefined : (value as PartOfSpeech);
-                  form.setValue("pos", parsedValue);
                   updateItem("pos", parsedValue);
                 }}
               >
@@ -190,10 +201,8 @@ export function VocabularyItemForm({ item, onSave, onCancel }: VocabularyItemFor
             <Label htmlFor="audio">Audio URL (optional)</Label>
             <Input
               id="audio"
-              {...form.register("audioUrl")}
-              value={form.watch("audioUrl")}
+              value={currentItem.audioUrl}
               onChange={(e) => {
-                form.setValue("audioUrl", e.target.value);
                 updateItem("audioUrl", e.target.value);
               }}
               placeholder="https://example.com/audio.mp3"
@@ -214,28 +223,20 @@ export function VocabularyItemForm({ item, onSave, onCancel }: VocabularyItemFor
               </Button>
             </div>
             <div className="space-y-2">
-              {formData.exampleSentences.map((sentence, sentenceIndex) => (
+              {currentItem.exampleSentences.map((sentence, sentenceIndex) => (
                 <div key={sentenceIndex} className="flex gap-2">
                   <Input
                     value={sentence}
                     onChange={(e) => {
                       updateExampleSentence(sentenceIndex, e.target.value);
-                      form.setValue("exampleSentences", [
-                        ...formData.exampleSentences.map((s, i) =>
-                          i === sentenceIndex ? e.target.value : s
-                        )
-                      ]);
                     }}
                     placeholder={`Example ${sentenceIndex + 1}`}
                   />
-                  {formData.exampleSentences.length > 1 && (
+                  {currentItem.exampleSentences.length > 1 && (
                     <Button
                       type="button"
                       onClick={() => {
                         removeItem(sentenceIndex);
-                        form.setValue("exampleSentences", [
-                          ...formData.exampleSentences.filter((_, i) => i !== sentenceIndex)
-                        ]);
                       }}
                       variant="ghost"
                       size="sm"
@@ -250,14 +251,6 @@ export function VocabularyItemForm({ item, onSave, onCancel }: VocabularyItemFor
           </div>
         </div>
 
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="submit">
-            {item ? "Update Item" : "Add Item"}
-          </Button>
-        </div>
       </form>
     </div>
   );

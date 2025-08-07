@@ -1348,7 +1348,24 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
                   })),
                 }));
 
-               
+                // Load existing vocabulary sets
+                state.vocabSets = (kelas.vocabularySets || []).map((vocabSet: any) => ({
+                  id: vocabSet.id,
+                  title: vocabSet.title,
+                  description: vocabSet.description,
+                  icon: vocabSet.icon,
+                  isPublic: vocabSet.isPublic,
+                  items: (vocabSet.items || []).map((item: any, index: number) => ({
+                    id: item.id,
+                    korean: item.korean,
+                    indonesian: item.indonesian,
+                    type: item.type,
+                    pos: item.pos,
+                    audioUrl: item.audioUrl,
+                    exampleSentences: item.exampleSentences,
+                    order: item.order,
+                  })),
+                }));
                 state.isLoading = false;
                 state.currentStep = 'meta';
               });
