@@ -60,11 +60,6 @@ const levelLabels: Record<Difficulty, string> = {
   ADVANCED: "Advanced",
 };
 
-const levelColors: Record<Difficulty, string> = {
-  BEGINNER: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-  INTERMEDIATE: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-  ADVANCED: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-};
 
 export default function KelasListPage({ initialKelas, initialStats, initialMeta }: KelasListPageProps) {
   const [kelas, setKelas] = useState<KelasItem[]>(initialKelas);

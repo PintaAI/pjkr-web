@@ -301,7 +301,7 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
               {koleksiSoal.soals
                 .slice()
                 .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-                .map((soal, sortedIndex) => {
+                .map((soal, ) => {
                   const soalIndex = koleksiSoal.soals.findIndex(s => s === soal);
                   const isExpanded = expandedQuestions.has(soalIndex);
                   return (

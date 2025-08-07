@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { RefreshCw, UserPlus, UserCheck, CheckCircle, Shield, Trash2, Users, ArrowUpDown, ArrowUp, ArrowDown, User, UserCog, TrendingUp, Calendar, Settings } from "lucide-react";
 
 import { UserManagementData } from "./types";
-import { calculateUserStats, filterUsers, sortUsers } from "./utils";
+import {  filterUsers, sortUsers } from "./utils";
 import { useUserManagement } from "./use-user-management";
 import { StatsCard } from "./stats-card";
 import { UserFilters } from "./user-filters";

@@ -135,14 +135,14 @@ export function StepReview() {
           <div>
             <h2 className="text-2xl font-bold text-green-600">Course Published Successfully!</h2>
             <p className="text-muted-foreground mt-2">
-              Your course "{meta.title}" is now live and available to students.
+              Your course {meta.title} is now live and available to students.
             </p>
           </div>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>What's Next?</CardTitle>
+            <CardTitle>Done</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -331,7 +331,7 @@ export function StepReview() {
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Your course doesn't meet all the requirements for publishing.
+                cek lagi apa yang kurang, pastikan semua langkah sudah lengkap:
               </AlertDescription>
             </Alert>
             

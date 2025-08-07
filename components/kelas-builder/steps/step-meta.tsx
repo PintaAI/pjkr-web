@@ -39,7 +39,7 @@ export function StepMeta() {
     mode: "onChange", // Validate on change
   });
 
-  const { watch, formState: { errors, isValid, isSubmitting } } = form;
+  const { watch, formState: { errors, isValid, } } = form;
   const watchedValues = watch();
   
   useEffect(() => {

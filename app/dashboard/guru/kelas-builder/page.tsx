@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { KelasBuilderLayout } from "@/components/kelas-builder/kelas-builder-layout";

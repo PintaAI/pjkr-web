@@ -37,7 +37,6 @@ export function NovelEditor({
   compact = false,
   height = "min-h-[500px]",
   width = "w-full",
-  hideSaveStatus = false,
 }: NovelEditorProps) {
   const [content, setContent] = useState(initialContent);
   const [openColor, setOpenColor] = useState(false);

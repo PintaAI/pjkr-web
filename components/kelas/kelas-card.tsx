@@ -1,11 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BookOpen, Users, DollarSign, MoreVertical, Eye, Edit3, FileText, Trash2, Settings, EyeOff } from "lucide-react";
+import { BookOpen, Users,  MoreVertical, Eye, Edit3, FileText, Trash2,  EyeOff } from "lucide-react";
 import { Difficulty, KelasType } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -99,7 +98,7 @@ export function KelasCard({
   onUnpublish
 }: KelasCardProps) {
   const isDraft = (data as GuruKelas).isDraft || false;
-  const shouldShowActions = isGuruMode;
+
 
   const handleView = (e: React.MouseEvent) => {
     e.preventDefault();

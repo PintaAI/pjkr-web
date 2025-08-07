@@ -56,11 +56,6 @@ const LEVEL_LABELS: Record<Difficulty, string> = {
   ADVANCED: "Advanced",
 };
 
-const LEVEL_COLORS: Record<Difficulty, string> = {
-  BEGINNER: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-  INTERMEDIATE: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-  ADVANCED: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-};
 
 // Filter options
 const FILTER_TYPES = [
@@ -120,7 +115,7 @@ const useClassManagement = (initialClasses: any[]) => {
       } else {
         toast.error(result.error || "Failed to delete class");
       }
-    } catch (error) {
+    } catch {
       toast.error("An unexpected error occurred");
     } finally {
       setIsDeleting(null);
@@ -139,7 +134,7 @@ const useClassManagement = (initialClasses: any[]) => {
       } else {
         toast.error(result.error || "Failed to publish class");
       }
-    } catch (error) {
+    } catch {
       toast.error("An unexpected error occurred");
     } finally {
       setIsPublishing(null);
@@ -158,7 +153,7 @@ const useClassManagement = (initialClasses: any[]) => {
       } else {
         toast.error(result.error || "Failed to unpublish class");
       }
-    } catch (error) {
+    } catch {
       toast.error("An unexpected error occurred");
     } finally {
       setIsUnpublishing(null);
@@ -354,9 +349,9 @@ const ClassTabs = ({
               actions={{
                 onView: (id: number) => (window.location.href = `/kelas/${id}`),
                 onEdit: (id: number) => (window.location.href = `/dashboard/guru/kelas-builder?edit=${id}`),
-                onDelete: (id: number) => {}, // Will be bound in parent
-                onPublish: (id: number) => {}, // Will be bound in parent
-                onUnpublish: (id: number) => {}, // Will be bound in parent
+                onDelete: () => {}, // Will be bound in parent
+                onPublish: () => {}, // Will be bound in parent
+                onUnpublish: () => {}, // Will be bound in parent
               }}
             />
           ))}
@@ -376,9 +371,9 @@ const ClassTabs = ({
               actions={{
                 onView: (id: number) => (window.location.href = `/kelas/${id}`),
                 onEdit: (id: number) => (window.location.href = `/dashboard/guru/kelas-builder?edit=${id}`),
-                onDelete: (id: number) => {}, // Will be bound in parent
-                onPublish: (id: number) => {}, // Will be bound in parent
-                onUnpublish: (id: number) => {}, // Will be bound in parent
+                onDelete: () => {}, // Will be bound in parent
+                onPublish: () => {}, // Will be bound in parent
+                onUnpublish: () => {}, // Will be bound in parent
               }}
             />
           ))}

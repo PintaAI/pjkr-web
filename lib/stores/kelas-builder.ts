@@ -727,7 +727,6 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
 
         // Vocabulary item actions
         updateVocabularyItem: async (vocabSetId: number, itemData: Partial<VocabularyItemData>) => {
-          const { vocabSets } = get();
           
           // Find the vocabulary set and update the item
           set((state) => {
@@ -747,7 +746,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
         },
 
         removeVocabularyItem: async (vocabSetId: number) => {
-          const { vocabSets } = get();
+          
           
           set((state) => {
             const vocabSetIndex = state.vocabSets.findIndex(vs => vs.id === vocabSetId);
@@ -761,7 +760,7 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
         },
 
         reorderVocabularyItems: async (vocabSetId: number, itemOrders: { id: number; order: number }[]) => {
-          const { vocabSets } = get();
+          
           
           set((state) => {
             const vocabSetIndex = state.vocabSets.findIndex(vs => vs.id === vocabSetId);

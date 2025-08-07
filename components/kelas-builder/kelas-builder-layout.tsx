@@ -197,7 +197,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
           await saveAllUnsavedContent();
           break;
       }
-    } catch (error) {
+    } catch {
       // Error handling is done by the store
     }
   };

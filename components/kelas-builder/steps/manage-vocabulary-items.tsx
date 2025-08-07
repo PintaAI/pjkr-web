@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { X, Edit, Trash2, GripVertical, Plus, Edit2 } from "lucide-react";
+import {  Edit, Trash2, GripVertical, Plus,} from "lucide-react";
 import { VocabularyType, PartOfSpeech } from "@prisma/client";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { VocabularyItemForm } from "./vocabulary-item-form";
@@ -33,7 +33,7 @@ export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsPr
     removeVocabularySet,
     updateVocabularyItem,
     removeVocabularyItem,
-    reorderVocabularyItems,
+  
     setIsDirty,
   } = useKelasBuilderStore();
 
@@ -98,18 +98,6 @@ export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsPr
     setEditingItem({ setIndex: vocabSetIndex, itemIndex: -1 });
   };
 
-  const handleReorder = (fromIndex: number, toIndex: number) => {
-    const newItems = [...vocabSet.items];
-    const [movedItem] = newItems.splice(fromIndex, 1);
-    newItems.splice(toIndex, 0, movedItem);
-    
-    updateVocabularySet(vocabSetIndex, {
-      ...vocabSet,
-      items: newItems.map((item, index) => ({ ...item, order: index })),
-    });
-    
-    setIsDirty(true);
-  };
 
   const renderVocabularyItem = (item: VocabularyItem, itemIndex: number) => (
     <Card className="mb-4 hover:shadow-md transition-shadow">

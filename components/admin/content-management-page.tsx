@@ -271,7 +271,7 @@ export function ContentManagementPage({
                       {cls.isDraft ? "Publish" : "Unpublish"} Class
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      Are you sure you want to {cls.isDraft ? "publish" : "unpublish"} "{cls.title}"? 
+                      Are you sure you want to {cls.isDraft ? "publish" : "unpublish"} {cls.title}? 
                       {cls.isDraft 
                         ? " This will make the class available to students."
                         : " This will hide the class from students and move it back to drafts."
@@ -305,7 +305,7 @@ export function ContentManagementPage({
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete Class</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Are you sure you want to delete "{cls.title}"? This action cannot be undone and will remove all associated materials and enrollments.
+                      Are you sure you want to delete {cls.title}? This action cannot be undone and will remove all associated materials and enrollments.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

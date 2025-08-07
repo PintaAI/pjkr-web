@@ -48,19 +48,10 @@ interface GuruDashboardProps {
   user: DashboardUser;
 }
 
-const levelLabels: Record<Difficulty, string> = {
-  BEGINNER: "Beginner",
-  INTERMEDIATE: "Intermediate", 
-  ADVANCED: "Advanced",
-};
 
-const levelColors: Record<Difficulty, string> = {
-  BEGINNER: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-  INTERMEDIATE: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-  ADVANCED: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-};
 
-export function GuruDashboard({ stats, recentClasses, user }: GuruDashboardProps) {
+
+export function GuruDashboard({ stats, user }: GuruDashboardProps) {
   return (
     <div className="container mx-auto px-6 py-8 max-w-6xl">
       {/* Header */}
