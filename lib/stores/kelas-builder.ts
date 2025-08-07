@@ -191,7 +191,7 @@ interface KelasBuilderActions {
   
   // Vocabulary actions
   updateVocabularyItem: (vocabSetId: number, itemData: Partial<VocabularyItemData>) => Promise<void>;
-  removeVocabularyItem: (vocabSetId: number) => Promise<void>;
+  removeVocabularyItem: (vocabSetId: number, itemId?: number) => Promise<void>;
   reorderVocabularyItems: (vocabSetId: number, itemOrders: { id: number; order: number }[]) => Promise<void>;
   
   // Global actions
@@ -745,18 +745,67 @@ export const useKelasBuilderStore = create<KelasBuilderState & KelasBuilderActio
           });
         },
 
-        removeVocabularyItem: async (vocabSetId: number) => {
+        removeVocabularyItem: async (vocabSetId: number, itemId?: number) => {
+          const { vocabSets } = get();
+          const vocabSetIndex = vocabSets.findIndex(vs => vs.id === vocabSetId);
           
+          if (vocabSetIndex === -1) return;
           
+          // If no itemId provided, use the last item's ID or return
+          if (!itemId) {
+            const lastItem = vocabSets[vocabSetIndex].items[vocabSets[vocabSetIndex].items.length - 1];
+            if (!lastItem) return;
+            itemId = lastItem.id;
+          }
+          
+          if (!itemId) return;
+          
+          // First, update local state optimistically
           set((state) => {
-            const vocabSetIndex = state.vocabSets.findIndex(vs => vs.id === vocabSetId);
-            if (vocabSetIndex !== -1) {
+            const vocabSet = state.vocabSets[vocabSetIndex];
+            const itemIndex = vocabSet.items.findIndex(item => item.id === itemId);
+            
+            if (itemIndex !== -1) {
               // Remove the item from the array
-              state.vocabSets[vocabSetIndex].items = state.vocabSets[vocabSetIndex].items.filter(item => item.id !== vocabSetId);
+              vocabSet.items.splice(itemIndex, 1);
+              
+              // Reorder remaining items
+              vocabSet.items.forEach((item, index) => {
+                item.order = index;
+              });
+              
               state.isDirty = true;
               state.stepDirtyFlags.vocabulary = true;
             }
           });
+          
+          try {
+            // Use the server action to delete from database
+            const { deleteVocabularyItem: deleteVocabularyItemAction } = await import('@/app/actions/kelas');
+            const result = await deleteVocabularyItemAction(itemId);
+            
+            if (result.success) {
+              console.log('✅ [VOCAB ITEM] Vocabulary item deleted from database successfully');
+              // The local state is already updated, just clear dirty flags
+              set((state) => {
+                state.isDirty = false;
+                state.stepDirtyFlags.vocabulary = false;
+              });
+            } else {
+              throw new Error(result.error || 'Failed to delete vocabulary item');
+            }
+          } catch (error) {
+            console.error('❌ [VOCAB ITEM] Failed to delete vocabulary item from database:', error);
+            // Revert local state if database delete fails
+            set((state) => {
+              const vocabSet = state.vocabSets[vocabSetIndex];
+              // Note: We can't easily revert without the original item, so we'll just keep the local state
+              // and mark as dirty so user can try again
+              state.isDirty = true;
+              state.stepDirtyFlags.vocabulary = true;
+            });
+            throw error;
+          }
         },
 
         reorderVocabularyItems: async (vocabSetId: number, itemOrders: { id: number; order: number }[]) => {

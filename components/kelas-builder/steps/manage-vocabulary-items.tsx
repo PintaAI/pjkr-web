@@ -17,7 +17,7 @@ interface ManageVocabularyItemsProps {
 export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState<number | undefined>();
-  const { vocabSets, updateVocabularySet, setIsDirty } = useKelasBuilderStore();
+  const { vocabSets, updateVocabularySet, setIsDirty, removeVocabularyItem } = useKelasBuilderStore();
   const vocabSet = vocabSets[vocabSetIndex];
 
   const handleAddItem = () => {
@@ -50,19 +50,31 @@ export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsPr
     setEditingItemIndex(undefined);
   };
 
-  const handleRemoveItem = (itemIndex: number) => {
+  const handleRemoveItem = async (itemIndex: number) => {
     if (confirm("Are you sure you want to delete this vocabulary item?")) {
-      const newItems = vocabSet.items.filter((_, i) => i !== itemIndex);
+      const item = vocabSet.items[itemIndex];
       
-      updateVocabularySet(vocabSetIndex, {
-        ...vocabSet,
-        items: newItems.map((item, index) => ({
-          ...item,
-          order: index,
-        })),
-      });
-      
-      setIsDirty(true);
+      try {
+        // Use the store method to remove the item
+        if (vocabSet.id && item.id) {
+          await removeVocabularyItem(vocabSet.id, item.id);
+        } else {
+          // Fallback for unsaved items
+          const newItems = vocabSet.items.filter((_, i) => i !== itemIndex);
+          
+          updateVocabularySet(vocabSetIndex, {
+            ...vocabSet,
+            items: newItems.map((item, index) => ({
+              ...item,
+              order: index,
+            })),
+          });
+          
+          setIsDirty(true);
+        }
+      } catch (error) {
+        console.error('Failed to remove vocabulary item:', error);
+      }
     }
   };
 

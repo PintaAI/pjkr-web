@@ -68,12 +68,14 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
     draftId,
     meta,
     materis,
+    vocabSets,
     stepDirtyFlags,
     setCurrentStep,
     nextStep,
     prevStep,
     saveMeta,
     saveMateris,
+    saveVocabularySet,
     saveAllAssessments,
     calculateOverallProgress,
     clearError,
@@ -146,13 +148,35 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
       await saveMateris();
     }
     if (stepDirtyFlags.vocabulary) {
-      // Note: This would need to be implemented in the store to save all vocabulary sets
+      // Save all vocabulary sets
+      console.log('Saving vocabulary sets...');
+      // This would need to be implemented in the store to save all vocabulary sets
       // For now, we'll save individual sets when they're edited
-      console.log('Vocabulary sets have unsaved changes');
     }
     // Save unsaved assessments
     if (stepDirtyFlags.assessment) {
       await saveAllAssessments();
+    }
+  };
+
+  const saveAllVocabularySets = async () => {
+    if (!vocabSets.length) return;
+    
+    console.log('💾 [AUTO-SAVE] Saving all vocabulary sets...');
+    
+    let hasChanges = false;
+    for (let i = 0; i < vocabSets.length; i++) {
+      if (vocabSets[i].tempId || stepDirtyFlags.vocabulary) {
+        console.log(`📝 [AUTO-SAVE] Saving vocabulary set ${i}: ${vocabSets[i].title}`);
+        await saveVocabularySet(i);
+        hasChanges = true;
+      }
+    }
+    
+    // Clear dirty flag after successful save
+    if (hasChanges) {
+      console.log('✅ [AUTO-SAVE] All vocabulary sets saved successfully');
+      // The dirty flags are cleared by the individual saveVocabularySet calls in the store
     }
   };
 
@@ -166,9 +190,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
           await saveMateris();
           break;
         case 'vocabulary':
-          // For vocabulary step, we need to save all unsaved vocabulary sets
-          // This would need to be implemented in the store
-          console.log('Saving vocabulary sets...');
+          await saveAllVocabularySets();
           break;
         case 'assessment':
           await saveAllAssessments();

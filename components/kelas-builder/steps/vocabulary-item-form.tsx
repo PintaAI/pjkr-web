@@ -28,6 +28,7 @@ export function VocabularyItemForm({ vocabSetIndex, itemIndex }: VocabularyItemF
     vocabSets,
     updateVocabularySet,
     saveVocabularySet,
+    setIsDirty,
   } = useKelasBuilderStore();
 
   const vocabSet = vocabSets[vocabSetIndex];
@@ -88,9 +89,8 @@ export function VocabularyItemForm({ vocabSetIndex, itemIndex }: VocabularyItemF
     });
   };
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  // Handle real-time updates without form submission
+  const handleFormChange = () => {
     // Get current form data from the currentItem
     const formData = {
       ...currentItem,
@@ -104,14 +104,8 @@ export function VocabularyItemForm({ vocabSetIndex, itemIndex }: VocabularyItemF
       ),
     });
     
-    // Save the updated vocabulary set to database
-    try {
-      await saveVocabularySet(vocabSetIndex);
-    } catch (error) {
-      console.error('Failed to save vocabulary item:', error);
-      // Don't prevent the form submission even if save fails
-      // User can try again later
-    }
+    // Mark as dirty to trigger save button
+    setIsDirty(true);
   };
 
   const currentItem = vocabSet?.items[itemIndex] || {
@@ -126,8 +120,7 @@ export function VocabularyItemForm({ vocabSetIndex, itemIndex }: VocabularyItemF
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div className="space-y-4">
+      <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="korean">Korean *</Label>
@@ -136,6 +129,7 @@ export function VocabularyItemForm({ vocabSetIndex, itemIndex }: VocabularyItemF
                 value={currentItem.korean}
                 onChange={(e) => {
                   updateItem("korean", e.target.value);
+                  handleFormChange();
                 }}
                 placeholder="e.g., 안녕하세요"
               />
@@ -148,6 +142,7 @@ export function VocabularyItemForm({ vocabSetIndex, itemIndex }: VocabularyItemF
                 value={currentItem.indonesian}
                 onChange={(e) => {
                   updateItem("indonesian", e.target.value);
+                  handleFormChange();
                 }}
                 placeholder="e.g., Halo"
               />
@@ -161,6 +156,7 @@ export function VocabularyItemForm({ vocabSetIndex, itemIndex }: VocabularyItemF
                 value={currentItem.type}
                 onValueChange={(value) => {
                   updateItem("type", value);
+                  handleFormChange();
                 }}
               >
                 <SelectTrigger>
@@ -181,6 +177,7 @@ export function VocabularyItemForm({ vocabSetIndex, itemIndex }: VocabularyItemF
                 onValueChange={(value) => {
                   const parsedValue = value === "none" ? undefined : (value as PartOfSpeech);
                   updateItem("pos", parsedValue);
+                  handleFormChange();
                 }}
               >
                 <SelectTrigger>
@@ -204,6 +201,7 @@ export function VocabularyItemForm({ vocabSetIndex, itemIndex }: VocabularyItemF
               value={currentItem.audioUrl}
               onChange={(e) => {
                 updateItem("audioUrl", e.target.value);
+                handleFormChange();
               }}
               placeholder="https://example.com/audio.mp3"
             />
@@ -214,7 +212,10 @@ export function VocabularyItemForm({ vocabSetIndex, itemIndex }: VocabularyItemF
               <Label>Example Sentences</Label>
               <Button
                 type="button"
-                onClick={addItem}
+                onClick={() => {
+                  addItem();
+                  handleFormChange();
+                }}
                 variant="ghost"
                 size="sm"
               >
@@ -229,6 +230,7 @@ export function VocabularyItemForm({ vocabSetIndex, itemIndex }: VocabularyItemF
                     value={sentence}
                     onChange={(e) => {
                       updateExampleSentence(sentenceIndex, e.target.value);
+                      handleFormChange();
                     }}
                     placeholder={`Example ${sentenceIndex + 1}`}
                   />
@@ -237,6 +239,7 @@ export function VocabularyItemForm({ vocabSetIndex, itemIndex }: VocabularyItemF
                       type="button"
                       onClick={() => {
                         removeItem(sentenceIndex);
+                        handleFormChange();
                       }}
                       variant="ghost"
                       size="sm"
@@ -249,9 +252,7 @@ export function VocabularyItemForm({ vocabSetIndex, itemIndex }: VocabularyItemF
               ))}
             </div>
           </div>
-        </div>
-
-      </form>
+      </div>
     </div>
   );
 }
