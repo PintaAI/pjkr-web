@@ -104,6 +104,9 @@ export interface KelasBuilderState {
   deletedKoleksiSoals: number[];
   deletedSoals: number[];
   deletedOpsi: number[];
+  dirtyMateris: Set<number>;
+  dirtyVocabSets: Set<number>;
+  dirtyKoleksiSoals: Set<number>;
 
   // Slices
   meta: KelasMetaData;
@@ -141,8 +144,8 @@ export interface KelasBuilderState {
   updateVocabularySet: (index: number, vocabSet: Partial<VocabularySetData>) => void;
   removeVocabularySet: (index: number) => void;
   saveVocabularySet: (index: number) => Promise<void>;
-  updateVocabularyItem: (vocabSetId: number, itemData: Partial<VocabularyItemData>) => Promise<void>;
-  removeVocabularyItem: (vocabSetId: number, itemId?: number) => Promise<void>;
+  updateVocabularyItem: (vocabSetIndex: number, itemIndex: number, itemData: Partial<VocabularyItemData>) => void;
+  removeVocabularyItem: (vocabSetIndex: number, itemIndex: number) => Promise<void>;
   reorderVocabularyItems: (vocabSetId: number, itemOrders: { id: number; order: number }[]) => Promise<void>;
 
   // Assessment

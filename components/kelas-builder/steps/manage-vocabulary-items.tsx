@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Plus, Trash2, GripVertical, BookOpen, Edit } from "lucide-react";
 import { VocabularyType, PartOfSpeech } from "@prisma/client";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
-import { VocabularyItemForm } from "./vocabulary-item-form";
+import { VocabularyItemForm } from "./vocabulary-form";
 
 interface ManageVocabularyItemsProps {
   vocabSetIndex: number;
@@ -52,26 +52,8 @@ export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsPr
 
   const handleRemoveItem = async (itemIndex: number) => {
     if (confirm("Are you sure you want to delete this vocabulary item?")) {
-      const item = vocabSet.items[itemIndex];
-      
       try {
-        // Use the store method to remove the item
-        if (vocabSet.id && item.id) {
-          await removeVocabularyItem(vocabSet.id, item.id);
-        } else {
-          // Fallback for unsaved items
-          const newItems = vocabSet.items.filter((_, i) => i !== itemIndex);
-          
-          updateVocabularySet(vocabSetIndex, {
-            ...vocabSet,
-            items: newItems.map((item, index) => ({
-              ...item,
-              order: index,
-            })),
-          });
-          
-          setIsDirty(true);
-        }
+        await removeVocabularyItem(vocabSetIndex, itemIndex);
       } catch (error) {
         console.error('Failed to remove vocabulary item:', error);
       }

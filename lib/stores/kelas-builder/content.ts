@@ -6,6 +6,7 @@ import { addMateris, reorderMateris, deleteMateri, updateMateri } from '@/app/ac
 export interface Content {
   materis: MateriData[];
   deletedMateris: number[];
+  dirtyMateris: Set<number>;
   addMateri: (materi: Omit<MateriData, 'order'>) => void;
   updateMateri: (index: number, materi: Partial<MateriData>) => void;
   removeMateri: (index: number) => void;
@@ -22,6 +23,7 @@ export const createContent: StateCreator<
 > = (set, get) => ({
   materis: [],
   deletedMateris: [],
+  dirtyMateris: new Set(),
   addMateri: (materi) => {
     set((state) => {
       const tempId = `temp-${Date.now()}`;
@@ -41,13 +43,18 @@ export const createContent: StateCreator<
   updateMateri: (index, materi) => {
     set((state) => {
       const newMateris = [...state.materis];
+      const newDirtyMateris = new Set(state.dirtyMateris);
       if (newMateris[index]) {
         newMateris[index] = { ...newMateris[index], ...materi };
+        if (newMateris[index].id) {
+          newDirtyMateris.add(newMateris[index].id!);
+        }
       }
       return {
         materis: newMateris,
         isDirty: true,
         stepDirtyFlags: { ...state.stepDirtyFlags, content: true },
+        dirtyMateris: newDirtyMateris,
       };
     });
   },
@@ -95,16 +102,23 @@ export const createContent: StateCreator<
       const [movedItem] = newMateris.splice(fromIndex, 1);
       newMateris.splice(toIndex, 0, movedItem);
 
-      // Update order for all materis
-      const reorderedMateris = newMateris.map((materi, index) => ({
-        ...materi,
-        order: index,
-      }));
+      const newDirtyMateris = new Set(state.dirtyMateris);
+      // Update order for all materis and mark them as dirty
+      const reorderedMateris = newMateris.map((materi, index) => {
+        if (materi.id) {
+          newDirtyMateris.add(materi.id);
+        }
+        return {
+          ...materi,
+          order: index,
+        };
+      });
 
       return {
         materis: reorderedMateris,
         isDirty: true,
         stepDirtyFlags: { ...state.stepDirtyFlags, content: true },
+        dirtyMateris: newDirtyMateris,
       };
     });
   },
@@ -168,8 +182,13 @@ export const createContent: StateCreator<
     }
   },
   saveMateris: async () => {
-    const { draftId, materis, deletedMateris } = get();
-    if (!draftId || (materis.length === 0 && deletedMateris.length === 0)) return;
+    const { draftId, materis, deletedMateris, dirtyMateris } = get();
+    if (!draftId) return;
+
+    const newMateris = materis.filter((m) => m.tempId);
+    if (newMateris.length === 0 && deletedMateris.length === 0 && dirtyMateris.size === 0) {
+      return;
+    }
 
     set({ isLoading: true, error: null });
 
@@ -185,23 +204,19 @@ export const createContent: StateCreator<
         }
       }
 
-      // Only save new materis (those with tempId)
-      const newMateris = materis.filter(m => m.tempId);
-
+      // Handle additions
       if (newMateris.length > 0) {
         console.log('➕ [SAVE] Adding new materis:', newMateris.length);
-        // Serialize JSON data to ensure it's safe for server actions
-        const serializedMateris = newMateris.map(materi => ({
+        const serializedMateris = newMateris.map((materi) => ({
           ...materi,
-          jsonDescription: JSON.parse(JSON.stringify(materi.jsonDescription || {}))
+          jsonDescription: JSON.parse(JSON.stringify(materi.jsonDescription || {})),
         }));
 
         const result = await addMateris(draftId, serializedMateris);
         if (result.success) {
-          // Clear optimistic updates
           set((state) => {
             const newOptimisticUpdates = new Set(state.optimisticUpdates);
-            const updatedMateris = state.materis.map(m => {
+            const updatedMateris = state.materis.map((m) => {
               if (m.tempId) {
                 newOptimisticUpdates.delete(m.tempId);
                 const { tempId, ...rest } = m;
@@ -215,35 +230,41 @@ export const createContent: StateCreator<
             };
           });
         } else {
-          throw new Error(result.error || 'Failed to save materis');
+          throw new Error(result.error || 'Failed to save new materis');
         }
       }
 
-      // Handle reordering if needed
-      const existingMateris = materis.filter(m => m.id && !m.tempId);
-      if (existingMateris.length > 0) {
-        console.log('🔄 [SAVE] Reordering existing materis:', existingMateris.length);
-        const reorderData = existingMateris.map(m => ({ id: m.id!, order: m.order }));
-        const reorderResult = await reorderMateris(draftId, reorderData);
-        if (!reorderResult.success) {
-          throw new Error(reorderResult.error || 'Failed to reorder materis');
+      // Handle updates for existing materis
+      if (dirtyMateris.size > 0) {
+        const materisToUpdate = materis.filter((m) => m.id && dirtyMateris.has(m.id));
+        console.log('📝 [SAVE] Updating existing materis:', materisToUpdate.length);
+        for (const materi of materisToUpdate) {
+          const { id, tempId, ...dataToUpdate } = materi;
+          const result = await updateMateri(id!, {
+            ...dataToUpdate,
+            jsonDescription: JSON.parse(JSON.stringify(dataToUpdate.jsonDescription || {})),
+          });
+          if (!result.success) {
+            throw new Error(`Failed to update materi ${id}: ${result.error}`);
+          }
         }
       }
 
-      // Clear deletion tracking
+      // Clear deletion and dirty tracking
       set((state) => ({
         deletedMateris: [],
+        dirtyMateris: new Set(),
         isDirty: false,
         stepDirtyFlags: { ...state.stepDirtyFlags, content: false },
         isLoading: false,
       }));
-      toast.success('Materis saved successfully');
+      toast.success('Content saved successfully');
     } catch (error) {
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to save materis',
+        error: error instanceof Error ? error.message : 'Failed to save content',
       });
-      toast.error('Failed to save materis');
+      toast.error('Failed to save content');
     }
   },
 });

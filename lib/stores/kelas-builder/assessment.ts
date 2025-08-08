@@ -17,6 +17,7 @@ export interface Assessment {
   deletedKoleksiSoals: number[];
   deletedSoals: number[];
   deletedOpsi: number[];
+  dirtyKoleksiSoals: Set<number>;
   addSoalSet: (soalSet: Omit<SoalSetData, 'id'>) => void;
   removeSoalSet: (index: number) => void;
   saveSoalSet: (index: number) => Promise<void>;
@@ -47,6 +48,7 @@ export const createAssessment: StateCreator<
   deletedKoleksiSoals: [],
   deletedSoals: [],
   deletedOpsi: [],
+  dirtyKoleksiSoals: new Set(),
   addSoalSet: (soalSet) => {
     set((state) => {
       const tempId = `temp-soal-${Date.now()}`;
@@ -128,15 +130,15 @@ export const createAssessment: StateCreator<
   },
   updateKoleksiSoal: (index, koleksiSoal) => {
     set((state) => {
-      const newKoleksiSoals = [...state.koleksiSoals];
-      if (newKoleksiSoals[index]) {
-        newKoleksiSoals[index] = { ...newKoleksiSoals[index], ...koleksiSoal };
+      if (state.koleksiSoals[index]) {
+        state.koleksiSoals[index] = { ...state.koleksiSoals[index], ...koleksiSoal };
+        if (state.koleksiSoals[index].id) {
+          state.dirtyKoleksiSoals.add(state.koleksiSoals[index].id!);
+        }
       }
-      return {
-        koleksiSoals: newKoleksiSoals,
-        isDirty: true,
-        stepDirtyFlags: { ...state.stepDirtyFlags, assessment: true },
-      };
+      state.isDirty = true;
+      state.stepDirtyFlags.assessment = true;
+      return state;
     });
   },
   removeKoleksiSoal: (index) => {
@@ -275,17 +277,16 @@ export const createAssessment: StateCreator<
   },
   updateSoal: (koleksiIndex, soalIndex, soal) => {
     set((state) => {
-      const newKoleksiSoals = [...state.koleksiSoals];
-      if (newKoleksiSoals[koleksiIndex] && newKoleksiSoals[koleksiIndex].soals[soalIndex]) {
-        newKoleksiSoals[koleksiIndex].soals[soalIndex] = {
-          ...newKoleksiSoals[koleksiIndex].soals[soalIndex],
+      if (state.koleksiSoals[koleksiIndex] && state.koleksiSoals[koleksiIndex].soals[soalIndex]) {
+        state.koleksiSoals[koleksiIndex].soals[soalIndex] = {
+          ...state.koleksiSoals[koleksiIndex].soals[soalIndex],
           ...soal,
         };
-        return {
-          koleksiSoals: newKoleksiSoals,
-          isDirty: true,
-          stepDirtyFlags: { ...state.stepDirtyFlags, assessment: true },
-        };
+        if (state.koleksiSoals[koleksiIndex].id) {
+          state.dirtyKoleksiSoals.add(state.koleksiSoals[koleksiIndex].id!);
+        }
+        state.isDirty = true;
+        state.stepDirtyFlags.assessment = true;
       }
       return state;
     });

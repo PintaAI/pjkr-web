@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import { Card,} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import { Difficulty } from "@prisma/client";
 import { NovelEditor } from "@/components/novel/novel-editor";
 import React from "react";
 
+
 interface SoalFormProps {
   koleksiIndex: number;
   soalIndex: number;
@@ -26,18 +27,12 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
     saveSoal,
     addOpsi,
     updateOpsi,
-    removeOpsi
+    removeOpsi,
   } = useKelasBuilderStore();
 
   const soal = koleksiSoals[koleksiIndex]?.soals[soalIndex];
 
-  const {
-  
-    handleSubmit,
-    
-    setValue,
-    formState: { errors },
-  } = useForm({
+  const methods = useForm({
     defaultValues: soal || {
       pertanyaan: "",
       difficulty: Difficulty.BEGINNER,
@@ -47,6 +42,12 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
     },
     mode: "onChange",
   });
+
+  const {
+    handleSubmit,
+    setValue,
+    formState: { errors, isDirty, isSubmitting },
+  } = methods;
 
 
 
@@ -68,16 +69,9 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
 
   const onSubmit = async (data: any) => {
     updateSoal(koleksiIndex, soalIndex, data);
-    
-    // Save the updated question to database
-    try {
-      await saveSoal(koleksiIndex, soalIndex);
-    } catch (error) {
-      console.error('Failed to save question:', error);
-      // Don't prevent the form submission even if save fails
-      // User can try again later
-    }
+    await saveSoal(koleksiIndex, soalIndex);
   };
+
 
   const handleAddOpsi = () => {
     const currentOpsis = soal?.opsis || [];
@@ -108,10 +102,11 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
   const correctOpsiCount = soal?.opsis.filter(opsi => opsi.isCorrect).length || 0;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="space-y-2">
-        <Label>Question *</Label>
-        <div className="border rounded-lg">
+    <FormProvider {...methods}>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-2">
+          <Label>Question *</Label>
+          <div className="border rounded-lg">
           <NovelEditor
             initialContent={soal?.pertanyaan || null}
             onUpdate={handleQuestionUpdate}
@@ -276,6 +271,17 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
         <p>• Exactly one option must be marked as correct</p>
         <p>• Minimum 2 options, maximum 5 options</p>
       </div>
+
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" >
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isSubmitting || !isDirty}>
+          {isSubmitting ? "Saving..." : "Save Changes"}
+        </Button>
+       
+      </div>
     </form>
+  </FormProvider>
   );
 }

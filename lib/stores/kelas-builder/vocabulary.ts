@@ -8,12 +8,13 @@ import {
 
 export interface Vocabulary {
   vocabSets: VocabularySetData[];
+  dirtyVocabSets: Set<number>;
   addVocabularySet: (vocabSet: Omit<VocabularySetData, 'items'> & { items: Omit<VocabularyItemData, 'order'>[] }) => void;
   updateVocabularySet: (index: number, vocabSet: Partial<VocabularySetData>) => void;
   removeVocabularySet: (index: number) => void;
   saveVocabularySet: (index: number) => Promise<void>;
-  updateVocabularyItem: (vocabSetId: number, itemData: Partial<VocabularyItemData>) => Promise<void>;
-  removeVocabularyItem: (vocabSetId: number, itemId?: number) => Promise<void>;
+  updateVocabularyItem: (vocabSetIndex: number, itemIndex: number, itemData: Partial<VocabularyItemData>) => void;
+  removeVocabularyItem: (vocabSetIndex: number, itemIndex: number) => Promise<void>;
   reorderVocabularyItems: (vocabSetId: number, itemOrders: { id: number; order: number }[]) => Promise<void>;
 }
 
@@ -24,6 +25,7 @@ export const createVocabulary: StateCreator<
   Vocabulary
 > = (set, get) => ({
   vocabSets: [],
+  dirtyVocabSets: new Set(),
   addVocabularySet: (vocabSet) => {
     set((state) => {
       const tempId = `temp-vocab-${Date.now()}`;
@@ -49,6 +51,9 @@ export const createVocabulary: StateCreator<
       const newVocabSets = [...state.vocabSets];
       if (newVocabSets[index]) {
         newVocabSets[index] = { ...newVocabSets[index], ...vocabSet };
+        if (newVocabSets[index].id) {
+          (get().dirtyVocabSets as Set<number>).add(newVocabSets[index].id!);
+        }
       }
       return {
         vocabSets: newVocabSets,
@@ -80,7 +85,6 @@ export const createVocabulary: StateCreator<
     if (!vocabSets[index] || !draftId) return;
 
     const vocabSet = vocabSets[index];
-    if (!vocabSet.tempId) return; // Already saved
 
     set({ isLoading: true, error: null });
 
@@ -92,7 +96,7 @@ export const createVocabulary: StateCreator<
           description: vocabSet.description,
           icon: vocabSet.icon,
           isPublic: vocabSet.isPublic,
-          items: vocabSet.items.map(item => ({
+          items: vocabSet.items.map((item) => ({
             korean: item.korean,
             indonesian: item.indonesian,
             type: item.type,
@@ -105,22 +109,25 @@ export const createVocabulary: StateCreator<
       );
 
       if (result.success && result.data) {
-        // Update the vocabulary set with the real ID
         set((state) => {
           const newVocabSets = [...state.vocabSets];
-          const updatedVocabSet = { ...newVocabSets[index] };
-          updatedVocabSet.id = result.data.id;
+          const updatedVocabSet = { ...newVocabSets[index], id: result.data.id };
           const newOptimisticUpdates = new Set(state.optimisticUpdates);
           if (updatedVocabSet.tempId) {
             newOptimisticUpdates.delete(updatedVocabSet.tempId);
             delete updatedVocabSet.tempId;
           }
           newVocabSets[index] = updatedVocabSet;
+          const newDirtyVocabSets = new Set(state.dirtyVocabSets);
+          newDirtyVocabSets.delete(result.data.id);
+
           return {
             vocabSets: newVocabSets,
             isLoading: false,
             stepDirtyFlags: { ...state.stepDirtyFlags, vocabulary: false },
             optimisticUpdates: newOptimisticUpdates,
+            dirtyVocabSets: newDirtyVocabSets,
+            isDirty: newDirtyVocabSets.size > 0,
           };
         });
 
@@ -136,83 +143,50 @@ export const createVocabulary: StateCreator<
       toast.error('Failed to save vocabulary set');
     }
   },
-  updateVocabularyItem: async (vocabSetId, itemData) => {
-    // Find the vocabulary set and update the item
+  updateVocabularyItem: (vocabSetIndex, itemIndex, itemData) => {
     set((state) => {
-      const newVocabSets = [...state.vocabSets];
-      const vocabSetIndex = newVocabSets.findIndex(vs => vs.id === vocabSetId);
-      if (vocabSetIndex !== -1) {
-        const newItems = [...newVocabSets[vocabSetIndex].items];
-        const itemIndex = newItems.findIndex(item => item.id === itemData.id);
-        if (itemIndex !== -1) {
-          newItems[itemIndex] = { ...newItems[itemIndex], ...itemData };
-          newVocabSets[vocabSetIndex] = { ...newVocabSets[vocabSetIndex], items: newItems };
-          return {
-            vocabSets: newVocabSets,
-            isDirty: true,
-            stepDirtyFlags: { ...state.stepDirtyFlags, vocabulary: true },
-          };
+      if (state.vocabSets[vocabSetIndex] && state.vocabSets[vocabSetIndex].items[itemIndex]) {
+        state.vocabSets[vocabSetIndex].items[itemIndex] = {
+          ...state.vocabSets[vocabSetIndex].items[itemIndex],
+          ...itemData,
+        };
+        if (state.vocabSets[vocabSetIndex].id) {
+          state.dirtyVocabSets.add(state.vocabSets[vocabSetIndex].id!);
         }
       }
+      state.isDirty = true;
+      state.stepDirtyFlags.vocabulary = true;
       return state;
     });
   },
-  removeVocabularyItem: async (vocabSetId, itemId) => {
+  removeVocabularyItem: async (vocabSetIndex, itemIndex) => {
     const { vocabSets } = get();
-    const vocabSetIndex = vocabSets.findIndex(vs => vs.id === vocabSetId);
+    const vocabSet = vocabSets[vocabSetIndex];
+    const item = vocabSet?.items[itemIndex];
 
-    if (vocabSetIndex === -1) return;
+    if (!item) return;
 
-    // If no itemId provided, use the last item's ID or return
-    if (!itemId) {
-      const lastItem = vocabSets[vocabSetIndex].items[vocabSets[vocabSetIndex].items.length - 1];
-      if (!lastItem) return;
-      itemId = lastItem.id;
+    if (item.id) {
+      await deleteVocabularyItemAction(item.id);
     }
 
-    if (!itemId) return;
-
-    // First, update local state optimistically
     set((state) => {
       const newVocabSets = [...state.vocabSets];
       const vocabSet = newVocabSets[vocabSetIndex];
-      const newItems = vocabSet.items.filter(item => item.id !== itemId);
-      const reorderedItems = newItems.map((item, index) => ({ ...item, order: index }));
-      newVocabSets[vocabSetIndex] = { ...vocabSet, items: reorderedItems };
+      if (vocabSet) {
+        const newItems = vocabSet.items.filter((_, i) => i !== itemIndex);
+        const reorderedItems = newItems.map((item, index) => ({ ...item, order: index }));
+        newVocabSets[vocabSetIndex] = { ...vocabSet, items: reorderedItems };
+        if (vocabSet.id) {
+          (get().dirtyVocabSets as Set<number>).add(vocabSet.id);
+        }
+      }
       return {
         vocabSets: newVocabSets,
         isDirty: true,
         stepDirtyFlags: { ...state.stepDirtyFlags, vocabulary: true },
       };
     });
-
-    try {
-      // Use the server action to delete from database
-      const result = await deleteVocabularyItemAction(itemId);
-
-      if (result.success) {
-        console.log('✅ [VOCAB ITEM] Vocabulary item deleted from database successfully');
-        // The local state is already updated, just clear dirty flags
-        set((state) => ({
-          isDirty: false,
-          stepDirtyFlags: { ...state.stepDirtyFlags, vocabulary: false },
-        }));
-      } else {
-        throw new Error(result.error || 'Failed to delete vocabulary item');
-      }
-    } catch (error) {
-      console.error('❌ [VOCAB ITEM] Failed to delete vocabulary item from database:', error);
-      // Revert local state if database delete fails
-      set((state) => {
-        // Note: We can't easily revert without the original item, so we'll just keep the local state
-        // and mark as dirty so user can try again
-        return {
-          isDirty: true,
-          stepDirtyFlags: { ...state.stepDirtyFlags, vocabulary: true },
-        };
-      });
-      throw error;
-    }
   },
   reorderVocabularyItems: async (vocabSetId, itemOrders) => {
     set((state) => {

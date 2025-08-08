@@ -225,6 +225,9 @@ export const useKelasBuilderStore = create<Store>()(
             deletedKoleksiSoals: [],
             deletedSoals: [],
             deletedOpsi: [],
+            dirtyMateris: new Set(),
+            dirtyVocabSets: new Set(),
+            dirtyKoleksiSoals: new Set(),
           });
         },
         setError: (error: string | null) => {

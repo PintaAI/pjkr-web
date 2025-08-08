@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { MessageSquare, Plus, BookOpen, Edit, Trash2, MousePointerClick } from "lucide-react";
-import { VocabularySetBasicForm } from "./vocabulary-set-basic-form";
+import { VocabularySetBasicForm } from "./vocabulary-set-form";
 import { ManageVocabularyItems } from "./manage-vocabulary-items";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 
@@ -18,6 +18,7 @@ export function StepVocabulary() {
   const {
     vocabSets,
     addVocabularySet,
+    updateVocabularySet,
     removeVocabularySet,
     setIsDirty
   } = useKelasBuilderStore();
@@ -47,7 +48,10 @@ export function StepVocabulary() {
   }) => {
     if (editingIndex !== undefined) {
       // Update existing set
-      // This would need to be implemented in the store
+      updateVocabularySet(editingIndex, {
+        ...data,
+        icon: data.icon || "FaBook",
+      });
       setShowCreateForm(false);
       setEditingIndex(undefined);
     } else {

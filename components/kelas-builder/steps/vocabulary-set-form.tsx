@@ -48,6 +48,7 @@ export function VocabularySetBasicForm({ vocabSet, onSave, onCancel }: Vocabular
   });
 
   const onSubmit = (data: any) => {
+    console.log("Vocabulary Set Form Submitted:", data);
     try {
       onSave(data);
     } catch (error) {
@@ -65,7 +66,7 @@ export function VocabularySetBasicForm({ vocabSet, onSave, onCancel }: Vocabular
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Title *</Label>
+            <Label htmlFor="title">Title</Label>
             <Input
               id="title"
               {...form.register("title")}
