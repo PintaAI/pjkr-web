@@ -17,7 +17,7 @@ interface ManageVocabularyItemsProps {
 export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState<number | undefined>();
-  const { vocabSets, updateVocabularySet, setIsDirty, removeVocabularyItem } = useKelasBuilderStore();
+  const { vocabSets, updateVocabularySet, updateVocabularyItem, setIsDirty, removeVocabularyItem } = useKelasBuilderStore();
   const vocabSet = vocabSets[vocabSetIndex];
 
   const handleAddItem = () => {

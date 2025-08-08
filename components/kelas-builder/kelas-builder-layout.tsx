@@ -69,6 +69,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
     meta,
     materis,
     vocabSets,
+    dirtyVocabSets,
     stepDirtyFlags,
     setCurrentStep,
     nextStep,
@@ -82,7 +83,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
     reset
   } = useKelasBuilderStore();
 
-  const currentStepIndex = steps.findIndex(step => step.id === currentStep);
+
   const progress = calculateOverallProgress();
 
 
@@ -148,10 +149,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
       await saveMateris();
     }
     if (stepDirtyFlags.vocabulary) {
-      // Save all vocabulary sets
-      console.log('Saving vocabulary sets...');
-      // This would need to be implemented in the store to save all vocabulary sets
-      // For now, we'll save individual sets when they're edited
+      await saveAllVocabularySets();
     }
     // Save unsaved assessments
     if (stepDirtyFlags.assessment) {
@@ -162,21 +160,19 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
   const saveAllVocabularySets = async () => {
     if (!vocabSets.length) return;
     
-    console.log('💾 [AUTO-SAVE] Saving all vocabulary sets...');
-    
     let hasChanges = false;
-    for (let i = 0; i < vocabSets.length; i++) {
-      if (vocabSets[i].tempId || stepDirtyFlags.vocabulary) {
-        console.log(`📝 [AUTO-SAVE] Saving vocabulary set ${i}: ${vocabSets[i].title}`);
-        await saveVocabularySet(i);
-        hasChanges = true;
-      }
-    }
     
-    // Clear dirty flag after successful save
-    if (hasChanges) {
-      console.log('✅ [AUTO-SAVE] All vocabulary sets saved successfully');
-      // The dirty flags are cleared by the individual saveVocabularySet calls in the store
+    // Save existing sets that have tempId (unsaved) or are in dirtyVocabSets
+    for (let i = 0; i < vocabSets.length; i++) {
+      const vocabSet = vocabSets[i];
+      if (vocabSet.tempId || (vocabSet.id && dirtyVocabSets.has(vocabSet.id))) {
+        try {
+          await saveVocabularySet(i);
+          hasChanges = true;
+        } catch (error) {
+          // Don't throw here to allow other sets to be saved
+        }
+      }
     }
   };
 

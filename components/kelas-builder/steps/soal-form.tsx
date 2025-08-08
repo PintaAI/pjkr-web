@@ -91,12 +91,14 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
   };
 
   const handleOpsiCorrectChange = (opsiIndex: number, isCorrect: boolean) => {
-    // First, set all options to false
-    soal?.opsis.forEach((_, index) => {
-      updateOpsi(koleksiIndex, soalIndex, index, { isCorrect: false });
-    });
-    // Then set the selected one to true
-    updateOpsi(koleksiIndex, soalIndex, opsiIndex, { isCorrect });
+    // Create a new array with all options set to false except the selected one
+    const updatedOpsis = (soal?.opsis || []).map((opsi, index) => ({
+      ...opsi,
+      isCorrect: index === opsiIndex ? isCorrect : false,
+    }));
+    
+    // Update the store with all options at once
+    updateSoal(koleksiIndex, soalIndex, { opsis: updatedOpsis });
   };
 
   const correctOpsiCount = soal?.opsis.filter(opsi => opsi.isCorrect).length || 0;

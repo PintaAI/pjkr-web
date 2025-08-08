@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { devtools, subscribeWithSelector } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { enableMapSet } from 'immer';
-
 import type { KelasBuilderState, KelasMetaData } from './types';
 import { createProgress, type Progress } from './progress';
 import { createNavigation, type Navigation } from './navigation';
@@ -10,7 +9,6 @@ import { createMeta, type Meta, initialMeta } from './meta';
 import { createContent, type Content } from './content';
 import { createVocabulary, type Vocabulary } from './vocabulary';
 import { createAssessment, type Assessment } from './assessment';
-
 import {
   createDraftKelas,
   publishKelas,

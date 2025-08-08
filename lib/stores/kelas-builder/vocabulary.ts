@@ -49,15 +49,21 @@ export const createVocabulary: StateCreator<
   updateVocabularySet: (index, vocabSet) => {
     set((state) => {
       const newVocabSets = [...state.vocabSets];
+      const newDirtyVocabSets = new Set(state.dirtyVocabSets);
+      let isDirty = state.isDirty;
+      
       if (newVocabSets[index]) {
         newVocabSets[index] = { ...newVocabSets[index], ...vocabSet };
         if (newVocabSets[index].id) {
-          (get().dirtyVocabSets as Set<number>).add(newVocabSets[index].id!);
+          newDirtyVocabSets.add(newVocabSets[index].id!);
+          isDirty = true;
         }
       }
+      
       return {
         vocabSets: newVocabSets,
-        isDirty: true,
+        dirtyVocabSets: newDirtyVocabSets,
+        isDirty,
         stepDirtyFlags: { ...state.stepDirtyFlags, vocabulary: true },
       };
     });
@@ -72,8 +78,16 @@ export const createVocabulary: StateCreator<
         newOptimisticUpdates.delete(vocabSet.tempId);
       }
       const newVocabSets = state.vocabSets.filter((_, i) => i !== index);
+      const newDirtyVocabSets = new Set(state.dirtyVocabSets);
+      
+      // Remove from dirty sets if it was there
+      if (vocabSet.id) {
+        newDirtyVocabSets.delete(vocabSet.id);
+      }
+
       return {
         vocabSets: newVocabSets,
+        dirtyVocabSets: newDirtyVocabSets,
         isDirty: true,
         stepDirtyFlags: { ...state.stepDirtyFlags, vocabulary: true },
         optimisticUpdates: newOptimisticUpdates,
@@ -108,18 +122,21 @@ export const createVocabulary: StateCreator<
         vocabSet.id
       );
 
-      if (result.success && result.data) {
+      if (result.success && result.data?.id) {
         set((state) => {
           const newVocabSets = [...state.vocabSets];
-          const updatedVocabSet = { ...newVocabSets[index], id: result.data.id };
+          const updatedVocabSet = { ...newVocabSets[index], id: result.data!.id };
           const newOptimisticUpdates = new Set(state.optimisticUpdates);
+          const newDirtyVocabSets = new Set(state.dirtyVocabSets);
+          let isDirty = state.isDirty;
+          
           if (updatedVocabSet.tempId) {
             newOptimisticUpdates.delete(updatedVocabSet.tempId);
             delete updatedVocabSet.tempId;
           }
           newVocabSets[index] = updatedVocabSet;
-          const newDirtyVocabSets = new Set(state.dirtyVocabSets);
-          newDirtyVocabSets.delete(result.data.id);
+          newDirtyVocabSets.delete(result.data!.id);
+          isDirty = newDirtyVocabSets.size > 0;
 
           return {
             vocabSets: newVocabSets,
@@ -127,7 +144,7 @@ export const createVocabulary: StateCreator<
             stepDirtyFlags: { ...state.stepDirtyFlags, vocabulary: false },
             optimisticUpdates: newOptimisticUpdates,
             dirtyVocabSets: newDirtyVocabSets,
-            isDirty: newDirtyVocabSets.size > 0,
+            isDirty,
           };
         });
 
@@ -145,18 +162,35 @@ export const createVocabulary: StateCreator<
   },
   updateVocabularyItem: (vocabSetIndex, itemIndex, itemData) => {
     set((state) => {
-      if (state.vocabSets[vocabSetIndex] && state.vocabSets[vocabSetIndex].items[itemIndex]) {
-        state.vocabSets[vocabSetIndex].items[itemIndex] = {
-          ...state.vocabSets[vocabSetIndex].items[itemIndex],
+      const newVocabSets = [...state.vocabSets];
+      const newDirtyVocabSets = new Set(state.dirtyVocabSets);
+      let isDirty = state.isDirty;
+      
+      if (newVocabSets[vocabSetIndex] && newVocabSets[vocabSetIndex].items[itemIndex]) {
+        // Create new items array to avoid mutation
+        const newItems = [...newVocabSets[vocabSetIndex].items];
+        newItems[itemIndex] = {
+          ...newItems[itemIndex],
           ...itemData,
         };
-        if (state.vocabSets[vocabSetIndex].id) {
-          state.dirtyVocabSets.add(state.vocabSets[vocabSetIndex].id!);
+        
+        newVocabSets[vocabSetIndex] = {
+          ...newVocabSets[vocabSetIndex],
+          items: newItems,
+        };
+        
+        if (newVocabSets[vocabSetIndex].id) {
+          newDirtyVocabSets.add(newVocabSets[vocabSetIndex].id!);
+          isDirty = true;
         }
       }
-      state.isDirty = true;
-      state.stepDirtyFlags.vocabulary = true;
-      return state;
+      
+      return {
+        vocabSets: newVocabSets,
+        dirtyVocabSets: newDirtyVocabSets,
+        isDirty,
+        stepDirtyFlags: { ...state.stepDirtyFlags, vocabulary: true },
+      };
     });
   },
   removeVocabularyItem: async (vocabSetIndex, itemIndex) => {
@@ -172,18 +206,31 @@ export const createVocabulary: StateCreator<
 
     set((state) => {
       const newVocabSets = [...state.vocabSets];
+      const newDirtyVocabSets = new Set(state.dirtyVocabSets);
+      let isDirty = state.isDirty;
+      
       const vocabSet = newVocabSets[vocabSetIndex];
       if (vocabSet) {
-        const newItems = vocabSet.items.filter((_, i) => i !== itemIndex);
-        const reorderedItems = newItems.map((item, index) => ({ ...item, order: index }));
-        newVocabSets[vocabSetIndex] = { ...vocabSet, items: reorderedItems };
+        // Create new items array and reorder properly
+        const newItems = vocabSet.items
+          .filter((_, i) => i !== itemIndex)
+          .map((item, index) => ({ ...item, order: index }));
+        
+        newVocabSets[vocabSetIndex] = {
+          ...vocabSet,
+          items: newItems,
+        };
+        
         if (vocabSet.id) {
-          (get().dirtyVocabSets as Set<number>).add(vocabSet.id);
+          newDirtyVocabSets.add(vocabSet.id);
+          isDirty = true;
         }
       }
+      
       return {
         vocabSets: newVocabSets,
-        isDirty: true,
+        dirtyVocabSets: newDirtyVocabSets,
+        isDirty,
         stepDirtyFlags: { ...state.stepDirtyFlags, vocabulary: true },
       };
     });

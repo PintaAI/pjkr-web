@@ -131,13 +131,22 @@ export const createAssessment: StateCreator<
   updateKoleksiSoal: (index, koleksiSoal) => {
     set((state) => {
       if (state.koleksiSoals[index]) {
-        state.koleksiSoals[index] = { ...state.koleksiSoals[index], ...koleksiSoal };
-        if (state.koleksiSoals[index].id) {
-          state.dirtyKoleksiSoals.add(state.koleksiSoals[index].id!);
+        const newKoleksiSoals = [...state.koleksiSoals];
+        newKoleksiSoals[index] = { ...newKoleksiSoals[index], ...koleksiSoal };
+        
+        const newDirtyKoleksiSoals = new Set(state.dirtyKoleksiSoals);
+        if (newKoleksiSoals[index].id) {
+          newDirtyKoleksiSoals.add(newKoleksiSoals[index].id!);
         }
+        
+        return {
+          ...state,
+          koleksiSoals: newKoleksiSoals,
+          dirtyKoleksiSoals: newDirtyKoleksiSoals,
+          isDirty: true,
+          stepDirtyFlags: { ...state.stepDirtyFlags, assessment: true },
+        };
       }
-      state.isDirty = true;
-      state.stepDirtyFlags.assessment = true;
       return state;
     });
   },
@@ -278,15 +287,28 @@ export const createAssessment: StateCreator<
   updateSoal: (koleksiIndex, soalIndex, soal) => {
     set((state) => {
       if (state.koleksiSoals[koleksiIndex] && state.koleksiSoals[koleksiIndex].soals[soalIndex]) {
-        state.koleksiSoals[koleksiIndex].soals[soalIndex] = {
-          ...state.koleksiSoals[koleksiIndex].soals[soalIndex],
+        const newKoleksiSoals = [...state.koleksiSoals];
+        newKoleksiSoals[koleksiIndex] = {
+          ...newKoleksiSoals[koleksiIndex],
+          soals: [...newKoleksiSoals[koleksiIndex].soals],
+        };
+        newKoleksiSoals[koleksiIndex].soals[soalIndex] = {
+          ...newKoleksiSoals[koleksiIndex].soals[soalIndex],
           ...soal,
         };
-        if (state.koleksiSoals[koleksiIndex].id) {
-          state.dirtyKoleksiSoals.add(state.koleksiSoals[koleksiIndex].id!);
+        
+        const newDirtyKoleksiSoals = new Set(state.dirtyKoleksiSoals);
+        if (newKoleksiSoals[koleksiIndex].id) {
+          newDirtyKoleksiSoals.add(newKoleksiSoals[koleksiIndex].id!);
         }
-        state.isDirty = true;
-        state.stepDirtyFlags.assessment = true;
+        
+        return {
+          ...state,
+          koleksiSoals: newKoleksiSoals,
+          dirtyKoleksiSoals: newDirtyKoleksiSoals,
+          isDirty: true,
+          stepDirtyFlags: { ...state.stepDirtyFlags, assessment: true },
+        };
       }
       return state;
     });
@@ -389,11 +411,22 @@ export const createAssessment: StateCreator<
         newKoleksiSoals[koleksiIndex].soals[soalIndex] &&
         newKoleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex]
       ) {
+        // Create new arrays to avoid direct draft modification
+        newKoleksiSoals[koleksiIndex] = {
+          ...newKoleksiSoals[koleksiIndex],
+          soals: [...newKoleksiSoals[koleksiIndex].soals],
+        };
+        newKoleksiSoals[koleksiIndex].soals[soalIndex] = {
+          ...newKoleksiSoals[koleksiIndex].soals[soalIndex],
+          opsis: [...newKoleksiSoals[koleksiIndex].soals[soalIndex].opsis],
+        };
         newKoleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex] = {
           ...newKoleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex],
           ...opsi,
         };
+        
         return {
+          ...state,
           koleksiSoals: newKoleksiSoals,
           isDirty: true,
           stepDirtyFlags: { ...state.stepDirtyFlags, assessment: true },
@@ -640,7 +673,16 @@ export const createAssessment: StateCreator<
         // Save koleksi soal if it has tempId (new) OR if it has changes (existing)
         if (koleksiSoal.tempId || currentState.stepDirtyFlags.assessment) {
           console.log(`📝 [AUTO-SAVE] Saving koleksi soal ${koleksiIndex}: ${koleksiSoal.nama}`);
-          await get().saveKoleksiSoal(koleksiIndex);
+          await saveKoleksiSoalAction(
+            draftId,
+            {
+              nama: koleksiSoal.nama,
+              deskripsi: koleksiSoal.deskripsi,
+              isPrivate: false,
+              isDraft: true,
+            },
+            koleksiSoal.id
+          );
         }
       }
 
@@ -658,7 +700,16 @@ export const createAssessment: StateCreator<
               // Only save if the question has content
               if (soal.pertanyaan && soal.pertanyaan.trim() !== '') {
                 console.log(`📝 [AUTO-SAVE] Saving soal ${soalIndex} in koleksi ${koleksiIndex}: ${soal.pertanyaan.substring(0, 50)}...`);
-                await get().saveSoal(koleksiIndex, soalIndex);
+                await saveSoalAction(
+                  koleksiSoal.id,
+                  {
+                    pertanyaan: soal.pertanyaan,
+                    difficulty: soal.difficulty,
+                    explanation: soal.explanation,
+                    isActive: soal.isActive,
+                  },
+                  soal.id
+                );
               } else {
                 console.warn(`⚠️ [AUTO-SAVE] Skipping save for empty question in koleksi ${koleksiIndex}, soal ${soalIndex}`);
               }
@@ -697,15 +748,15 @@ export const createAssessment: StateCreator<
         await reorderSoals(batch.koleksiSoalId, batch.soalOrders);
       }
 
-      // Clear deletion tracking
-      set({
+      // Clear deletion tracking and update state
+      set((state) => ({
         deletedKoleksiSoals: [],
         deletedSoals: [],
         deletedOpsi: [],
         isDirty: false,
-        stepDirtyFlags: { ...get().stepDirtyFlags, assessment: false },
+        stepDirtyFlags: { ...state.stepDirtyFlags, assessment: false },
         isLoading: false,
-      });
+      }));
 
       console.log('✅ [AUTO-SAVE] Batch save of assessments completed successfully');
       toast.success('All assessments saved successfully');
