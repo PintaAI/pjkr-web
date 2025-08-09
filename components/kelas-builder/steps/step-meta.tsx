@@ -304,12 +304,12 @@ export function StepMeta() {
             </CardContent>
           </Card>
 
-          {/* Pricing Settings */}
+          {/* Pengaturan Harga */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5" />
-                Pricing Settings
+                Pengaturan Harga
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -320,10 +320,10 @@ export function StepMeta() {
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
                       <FormLabel className="text-base">
-                        Paid Course
+                        Kursus Berbayar
                       </FormLabel>
                       <FormDescription>
-                        Enable this if you want to charge for your course.
+                        Aktifkan jika Anda ingin memungut biaya untuk kursus Anda. Anda dapat mengubahnya kapan saja.
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -337,83 +337,120 @@ export function StepMeta() {
               />
 
               {isPaidClass && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="price"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Price *</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              type="number"
-                              placeholder="99.99"
-                              className={`pl-9 ${errors.price ? "border-destructive" : ""}`}
-                              {...field}
-                              value={field.value || ""}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Harga *</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max="9999.99"
+                                placeholder="99.99"
+                                className={`pl-9 ${errors.price ? "border-destructive" : ""}`}
+                                {...field}
+                                value={field.value || ""}
+                                onChange={(e) => {
+                                  const value = parseFloat(e.target.value) || 0;
+                                  if (value >= 0 && value <= 9999.99) {
+                                    field.onChange(value);
+                                  }
+                                }}
+                              />
+                            </div>
+                          </FormControl>
+                       
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="discount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Discount</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Percent className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              type="number"
-                              placeholder="20"
-                              className="pl-9"
-                              {...field}
-                              value={field.value || ""}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormDescription>
-                          Discount percentage (optional)
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="discount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Diskon %</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Percent className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="number"
+                                min="0"
+                                max="100"
+                                placeholder="20"
+                                className={`pl-9 ${errors.discount ? "border-destructive" : ""}`}
+                                {...field}
+                                value={field.value || ""}
+                                onChange={(e) => {
+                                  const value = parseFloat(e.target.value) || 0;
+                                  if (value >= 0 && value <= 100) {
+                                    field.onChange(value);
+                                  }
+                                }}
+                              />
+                            </div>
+                          </FormControl>
+           
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="promoCode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Promo Code</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Hash className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              placeholder="SAVE20"
-                              className="pl-9"
-                              {...field}
-                              value={field.value || ""}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormDescription>
-                          Custom promo code (optional)
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                    <FormField
+                      control={form.control}
+                      name="promoCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Kode Promo</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Hash className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                placeholder="SAVE20"
+                                className="pl-9"
+                                {...field}
+                                value={field.value || ""}
+                              />
+                            </div>
+                          </FormControl>
+            
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Ringkasan Harga */}
+                  <div className="bg-muted/50 rounded-lg p-4 border">
+                    <h4 className="font-medium mb-3">Ringkasan Harga</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Harga Asli:</span>
+                        <span className="font-medium">${(watchedValues.price || 0).toFixed(2)}</span>
+                      </div>
+                      {watchedValues.discount && watchedValues.discount > 0 && (
+                        <div className="flex justify-between text-green-600">
+                          <span>Diskon ({watchedValues.discount}%):</span>
+                          <span>-${((watchedValues.price || 0) * watchedValues.discount / 100).toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="border-t pt-2 flex justify-between font-medium text-lg">
+                        <span>Harga Akhir:</span>
+                        <span className={watchedValues.discount && watchedValues.discount > 0 ? "text-green-600" : ""}>
+                          ${((watchedValues.price || 0) * (1 - (watchedValues.discount || 0) / 100)).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>

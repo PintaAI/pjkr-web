@@ -67,10 +67,6 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
     }
   };
 
-  const onSubmit = async (data: any) => {
-    updateSoal(koleksiIndex, soalIndex, data);
-    await saveSoal(koleksiIndex, soalIndex);
-  };
 
 
   const handleAddOpsi = () => {
@@ -105,7 +101,7 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form  className="space-y-4">
         <div className="space-y-2">
           <Label>Question *</Label>
           <div className="border rounded-lg">
@@ -131,7 +127,7 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
             value={soal?.difficulty || Difficulty.BEGINNER}
             onValueChange={(value) =>
               updateSoal(koleksiIndex, soalIndex, {
-                difficulty: value as Difficulty | undefined
+                difficulty: value as Difficulty
               })
             }
           >
@@ -272,16 +268,6 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
         <p>• Click the circle icon to mark the correct answer</p>
         <p>• Exactly one option must be marked as correct</p>
         <p>• Minimum 2 options, maximum 5 options</p>
-      </div>
-
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" >
-          Cancel
-        </Button>
-        <Button type="submit" disabled={isSubmitting || !isDirty}>
-          {isSubmitting ? "Saving..." : "Save Changes"}
-        </Button>
-       
       </div>
     </form>
   </FormProvider>

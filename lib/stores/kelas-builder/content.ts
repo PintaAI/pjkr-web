@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import { toast } from 'sonner';
 import type { KelasBuilderState, MateriData } from './types';
-import { addMateris, reorderMateris, deleteMateri, updateMateri } from '@/app/actions/kelas';
+import { addMateris,deleteMateri, updateMateri } from '@/app/actions/kelas';
 
 export interface Content {
   materis: MateriData[];
@@ -219,6 +219,7 @@ export const createContent: StateCreator<
             const updatedMateris = state.materis.map((m) => {
               if (m.tempId) {
                 newOptimisticUpdates.delete(m.tempId);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const { tempId, ...rest } = m;
                 return rest;
               }
@@ -239,13 +240,14 @@ export const createContent: StateCreator<
         const materisToUpdate = materis.filter((m) => m.id && dirtyMateris.has(m.id));
         console.log('📝 [SAVE] Updating existing materis:', materisToUpdate.length);
         for (const materi of materisToUpdate) {
-          const { id, tempId, ...dataToUpdate } = materi;
-          const result = await updateMateri(id!, {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { tempId, ...dataToUpdate } = materi;
+          const result = await updateMateri(materi.id!, {
             ...dataToUpdate,
             jsonDescription: JSON.parse(JSON.stringify(dataToUpdate.jsonDescription || {})),
           });
           if (!result.success) {
-            throw new Error(`Failed to update materi ${id}: ${result.error}`);
+            throw new Error(`Failed to update materi ${materi.id}: ${result.error}`);
           }
         }
       }

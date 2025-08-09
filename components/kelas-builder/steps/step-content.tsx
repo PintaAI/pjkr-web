@@ -69,9 +69,9 @@ function SortableMateriItem({
       <Card
         ref={setNodeRef}
         style={style}
-        className={`relative ${isDragging ? "opacity-50" : ""}`}
+        className={`relative py-4 ${isDragging ? "opacity-50" : ""}`}
       >
-        <CardContent className="p-4">
+        <CardContent >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 flex-1">
               <div
@@ -209,6 +209,14 @@ export function StepContent() {
         </CardContent>
       </Card>
 
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <FileText className="h-5 w-5" />
+          <span className="font-semibold">Lessons ({materis.length})</span>
+        </div>
+        <LessonForm onSubmit={handleAddMateri} />
+      </div>
+
       {/* Existing Materis */}
       <DndContext
         sensors={sensors}
@@ -233,9 +241,6 @@ export function StepContent() {
           </div>
         </SortableContext>
       </DndContext>
-
-      {/* Add New Materi */}
-      <LessonForm onSubmit={handleAddMateri} />
 
 
       {/* Note: Global save button is available in the header when there are unsaved changes */}

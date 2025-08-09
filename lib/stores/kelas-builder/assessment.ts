@@ -5,10 +5,12 @@ import {
   deleteKoleksiSoal,
   deleteSoal,
   deleteOpsi,
+  deleteSoalSet as deleteSoalSetAction,
   reorderSoals,
   saveKoleksiSoal as saveKoleksiSoalAction,
   saveSoal as saveSoalAction,
   saveOpsi as saveOpsiAction,
+  saveSoalSet as saveSoalSetAction,
 } from '@/app/actions/kelas';
 
 export interface Assessment {
@@ -389,10 +391,17 @@ export const createAssessment: StateCreator<
           order: currentOpsis.length,
           tempId,
         };
+        
+        // Create proper nested copies to avoid direct draft modification
+        newKoleksiSoals[koleksiIndex] = {
+          ...newKoleksiSoals[koleksiIndex],
+          soals: [...newKoleksiSoals[koleksiIndex].soals],
+        };
         newKoleksiSoals[koleksiIndex].soals[soalIndex] = {
           ...newKoleksiSoals[koleksiIndex].soals[soalIndex],
           opsis: [...currentOpsis, newOpsi],
         };
+        
         return {
           koleksiSoals: newKoleksiSoals,
           isDirty: true,
@@ -700,7 +709,7 @@ export const createAssessment: StateCreator<
               // Only save if the question has content
               if (soal.pertanyaan && soal.pertanyaan.trim() !== '') {
                 console.log(`📝 [AUTO-SAVE] Saving soal ${soalIndex} in koleksi ${koleksiIndex}: ${soal.pertanyaan.substring(0, 50)}...`);
-                await saveSoalAction(
+                const result = await saveSoalAction(
                   koleksiSoal.id,
                   {
                     pertanyaan: soal.pertanyaan,
@@ -710,6 +719,23 @@ export const createAssessment: StateCreator<
                   },
                   soal.id
                 );
+
+                // If soal is new and saved successfully, save its opsis
+                if (result.success && result.data && soal.tempId) {
+                  console.log(`📝 [AUTO-SAVE] Saving opsis for soal ${soalIndex} in koleksi ${koleksiIndex}`);
+                  const opsisToSave = soal.opsis.filter(opsi => opsi.tempId);
+                  for (let opsiIndex = 0; opsiIndex < opsisToSave.length; opsiIndex++) {
+                    await saveOpsiAction(
+                      result.data.id, // Use the newly created soal ID
+                      {
+                        opsiText: opsisToSave[opsiIndex].opsiText,
+                        isCorrect: opsisToSave[opsiIndex].isCorrect,
+                        order: opsisToSave[opsiIndex].order,
+                      },
+                      undefined // No ID for new opsi
+                    );
+                  }
+                }
               } else {
                 console.warn(`⚠️ [AUTO-SAVE] Skipping save for empty question in koleksi ${koleksiIndex}, soal ${soalIndex}`);
               }

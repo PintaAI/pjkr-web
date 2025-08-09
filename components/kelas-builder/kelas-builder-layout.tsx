@@ -160,7 +160,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
   const saveAllVocabularySets = async () => {
     if (!vocabSets.length) return;
     
-    let hasChanges = false;
+   
     
     // Save existing sets that have tempId (unsaved) or are in dirtyVocabSets
     for (let i = 0; i < vocabSets.length; i++) {
@@ -168,9 +168,10 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
       if (vocabSet.tempId || (vocabSet.id && dirtyVocabSets.has(vocabSet.id))) {
         try {
           await saveVocabularySet(i);
-          hasChanges = true;
+          
+
         } catch (error) {
-          // Don't throw here to allow other sets to be saved
+          console.error(`Failed to save vocabulary set ${vocabSet.id || vocabSet.tempId}:`, error);
         }
       }
     }

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Trash2, GripVertical, BookOpen, Edit } from "lucide-react";
-import { VocabularyType, PartOfSpeech } from "@prisma/client";
+import { VocabularyType, } from "@prisma/client";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { VocabularyItemForm } from "./vocabulary-form";
 
@@ -17,7 +17,7 @@ interface ManageVocabularyItemsProps {
 export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState<number | undefined>();
-  const { vocabSets, updateVocabularySet, updateVocabularyItem, setIsDirty, removeVocabularyItem } = useKelasBuilderStore();
+  const { vocabSets, updateVocabularySet, setIsDirty, removeVocabularyItem } = useKelasBuilderStore();
   const vocabSet = vocabSets[vocabSetIndex];
 
   const handleAddItem = () => {

@@ -104,12 +104,9 @@ export function LessonForm({
   };
 
   const defaultTrigger = mode === 'add' ? (
-    <Button
-      className="flex items-center gap-2"
-      variant="outline"
-    >
+    <Button className="flex items-center gap-2">
       <Plus className="h-4 w-4" />
-      Add New Lesson
+      Add Lesson
     </Button>
   ) : (
     <Button
