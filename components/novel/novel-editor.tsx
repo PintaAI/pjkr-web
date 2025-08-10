@@ -39,27 +39,23 @@ interface NovelEditorProps {
   editorClassName?: string;
   initialContent?: any;
   onUpdate?: (data: { json: any; html: string }) => void;
+  onSave?: (data: { json: any; html: string }) => void;
   className?: string;
 }
 
 /* Defaults preserve original sizing when props not supplied */
 const NovelEditor = ({
- 
-  initialContent: propInitialContent,
   onUpdate,
+  onSave,
+  initialContent: propInitialContent,
   
 }: NovelEditorProps) => {
   const [initialContent, setInitialContent] = useState<null | JSONContent>(null);
   const [saveStatus, setSaveStatus] = useState("Saved");
-  const [charsCount, setCharsCount] = useState();
-
   const [openNode, setOpenNode] = useState(false);
   const [openColor, setOpenColor] = useState(false);
   const [openLink, setOpenLink] = useState(false);
-  /* AI menu state removed */
-  // const [openAI, setOpenAI] = useState(false);
 
-  //Apply Codeblock Highlighting on the HTML from editor.getHTML()
   const highlightCodeblocks = (content: string) => {
     const doc = new DOMParser().parseFromString(content, "text/html");
     doc.querySelectorAll("pre code").forEach((el) => {
@@ -72,17 +68,25 @@ const NovelEditor = ({
 
   const debouncedUpdates = useDebouncedCallback(async (editor: EditorInstance) => {
     const json = editor.getJSON();
-    setCharsCount(editor.storage.characterCount.words());
-    window.localStorage.setItem("html-content", highlightCodeblocks(editor.getHTML()));
-    window.localStorage.setItem("novel-content", JSON.stringify(json));
+    const html = highlightCodeblocks(editor.getHTML());
+   
+    console.log("Editor content saved to database");
     setSaveStatus("Saved");
+    
+    // TODO: Implement save to database functionality
+    // Call onSave prop if provided for database saving
+    if (onSave) {
+      onSave({ json, html });
+    }
   }, 500);
 
+  // Removed localStorage hydration. Now we only respect the passed initialContent prop (or fallback).
   useEffect(() => {
-    const content = window.localStorage.getItem("novel-content");
-    if (content) setInitialContent(JSON.parse(content));
-    else if (propInitialContent) setInitialContent(propInitialContent);
-    else setInitialContent(defaultEditorContent);
+    if (propInitialContent) {
+      setInitialContent(propInitialContent);
+    } else {
+      setInitialContent(defaultEditorContent);
+    }
   }, [propInitialContent]);
 
   if (!initialContent) return null;
@@ -91,9 +95,7 @@ const NovelEditor = ({
     <div className="relative w-full">
       <div className="flex absolute right-5 top-5 z-10 mb-5 gap-2 pointer-events-none">
         <div className="rounded-lg bg-accent px-2 py-1 text-sm text-muted-foreground">{saveStatus}</div>
-        <div className={charsCount ? "rounded-lg bg-accent px-2 py-1 text-sm text-muted-foreground" : "hidden"}>
-          {charsCount} Words
-        </div>
+  
       </div>
       <EditorRoot>
         <EditorContent
@@ -114,6 +116,13 @@ const NovelEditor = ({
           onUpdate={({ editor }) => {
             debouncedUpdates(editor);
             setSaveStatus("Unsaved");
+            
+            // Call the onUpdate prop if provided
+            if (onUpdate) {
+              const json = editor.getJSON();
+              const html = highlightCodeblocks(editor.getHTML());
+              onUpdate({ json, html });
+            }
           }}
           slotAfter={<ImageResizer />}
         >

@@ -33,7 +33,7 @@ const placeholder = Placeholder.configure({
   includeChildren: false,
   placeholder: ({ node, editor }) => {
     if (node.type.name === "paragraph" && editor.isEmpty) {
-      return "Press '/' for commands";
+      return "ketik '/' atau mulai dengan mengetik";
     }
     if (node.type.name === "heading") {
       return `Heading ${node.attrs.level}`;

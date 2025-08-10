@@ -98,35 +98,12 @@ export function StepMeta() {
     }
   }, [errors, clearError]);
 
-  const onSubmit = async (data: any) => {
-    try {
-      clearError(); // Clear any previous errors
-      
-      // Check if form is valid before submission
-      if (!isValid) {
-        console.error("Form has validation errors:", errors);
-        return;
-      }
-
-      if (!draftId) {
-        await createDraft(data);
-      } else {
-        await saveMeta();
-      }
-    } catch (error) {
-      console.error("Error saving meta:", error);
-      setError(error instanceof Error ? error.message : "Failed to save meta information");
-    }
-  };
-
   const isPaidClass = watch("isPaidClass");
 
   return (
     <div className="space-y-4">
-
-
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8" noValidate>
+        <form className="space-y-8" noValidate>
           {/* Basic Information */}
           <Card>
             <CardHeader>
@@ -334,7 +311,6 @@ export function StepMeta() {
                           form.setValue("jsonDescription", data.json, { shouldTouch: true, shouldDirty: true });
                           form.setValue("htmlDescription", data.html, { shouldTouch: true, shouldDirty: true });
                         }}
-                        
                       />
                     </FormControl>
                     <FormDescription>
@@ -346,10 +322,8 @@ export function StepMeta() {
               />
             </CardContent>
           </Card>
-
-
           {/* Pengaturan Harga */}
-          <Card>
+          <Card >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5" />
@@ -361,7 +335,7 @@ export function StepMeta() {
                 control={form.control}
                 name="isPaidClass"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border  p-2">
                     <div className="space-y-0.5">
                       <FormLabel className="text-base">
                         Kursus Berbayar
@@ -471,7 +445,7 @@ export function StepMeta() {
                   </div>
 
                   {/* Ringkasan Harga */}
-                  <div className="bg-muted/50 rounded-lg p-4 border">
+                  <div className="bg-muted/50 rounded-lg p-4 ">
                     <h4 className="font-medium mb-3">Ringkasan Harga</h4>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
