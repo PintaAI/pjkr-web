@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { z } from "zod";
 import { Card, CardContent,} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Trash2, FileText, CheckCircle, Circle, ChevronDown, ChevronRight, GripVertical } from "lucide-react";
+import { Plus, Trash2, FileText, CheckCircle, Circle, ChevronDown, ChevronRight, GripVertical, AlertTriangle } from "lucide-react";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { Difficulty } from "@prisma/client";
 import { SoalForm } from "./soal-form";
@@ -28,6 +29,47 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
+// Reuse the same validation schema from soal-form
+const soalValidationSchema = z.object({
+  pertanyaan: z.string().min(1, "Question is required"),
+  difficulty: z.nativeEnum(Difficulty, {
+    errorMap: () => ({ message: "Please select a difficulty level" })
+  }),
+  explanation: z.string().optional(),
+  isActive: z.boolean(),
+  opsis: z.array(z.object({
+    opsiText: z.string().min(1, "Option text is required"),
+    isCorrect: z.boolean(),
+    order: z.number(),
+  })).min(2, "At least 2 options are required").max(5, "Maximum 5 options allowed")
+    .refine(
+      (opsis) => opsis.filter(opsi => opsi.isCorrect).length === 1,
+      { message: "Exactly one option must be marked as correct" }
+    ),
+});
+
+// Validation function using Zod
+function validateSoal(soal: any): { isValid: boolean; errors: string[] } {
+  try {
+    // Clean the question text for validation
+    const cleanedSoal = {
+      ...soal,
+      pertanyaan: soal.pertanyaan?.replace(/<[^>]*>/g, "").trim() || "",
+    };
+    
+    soalValidationSchema.parse(cleanedSoal);
+    return { isValid: true, errors: [] };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return {
+        isValid: false,
+        errors: error.errors.map(err => err.message)
+      };
+    }
+    return { isValid: false, errors: ["Unknown validation error"] };
+  }
+}
+
 interface ManageQuestionsProps {
   koleksiIndex: number;
 }
@@ -39,6 +81,7 @@ interface SortableSoalItemProps {
   onToggleExpand: (soalIndex: number) => void;
   onRemoveSoal: (soalIndex: number) => void;
   isExpanded: boolean;
+  hasValidationErrors?: boolean;
 }
 
 function SortableSoalItem({
@@ -48,7 +91,8 @@ function SortableSoalItem({
   onToggleExpand,
   onRemoveSoal,
   isExpanded,
-}: SortableSoalItemProps & { isExpanded: boolean }) {
+  hasValidationErrors = false,
+}: SortableSoalItemProps) {
   const {
     attributes,
     listeners,
@@ -67,7 +111,9 @@ function SortableSoalItem({
     <Card
       ref={setNodeRef}
       style={style}
-      className={`relative ${isDragging ? "opacity-50" : "py-2"}`}
+      className={`relative ${isDragging ? "opacity-50" : "py-2"} ${
+        hasValidationErrors ? "border-destructive/50 bg-destructive/5" : ""
+      }`}
     >
       <CardContent>
         <div className="space-y-3">
@@ -212,7 +258,7 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
   const handleAddSoal = () => {
     addSoal(koleksiIndex, {
       pertanyaan: "",
-      difficulty: undefined,
+      difficulty: Difficulty.BEGINNER,
       explanation: "",
       isActive: true,
       opsis: [
@@ -254,14 +300,49 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
     return <div>Collection not found</div>;
   }
 
+  // Validate all soals and get summary
+  const validationSummary = koleksiSoal.soals.map((soal, index) => ({
+    index,
+    validation: validateSoal(soal)
+  }));
+  
+  const invalidSoals = validationSummary.filter(item => !item.validation.isValid);
+  const allErrors = invalidSoals.flatMap(item =>
+    item.validation.errors.map(error => `Question ${item.index + 1}: ${error}`)
+  );
+
   return (
     <div className="space-y-7">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">{koleksiSoal.nama}</h3>
-          <p className="text-sm text-muted-foreground">
-            Manage questions for this collection
-          </p>
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">
+              Manage questions for this collection
+            </p>
+            {invalidSoals.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                  <p className="text-sm text-destructive font-medium">
+                    {invalidSoals.length} question(s) need attention:
+                  </p>
+                </div>
+                <div className="ml-6 space-y-1">
+                  {allErrors.slice(0, 5).map((error, index) => (
+                    <p key={index} className="text-xs text-destructive">
+                      • {error}
+                    </p>
+                  ))}
+                  {allErrors.length > 5 && (
+                    <p className="text-xs text-destructive">
+                      • ... and {allErrors.length - 5} more issues
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
         <Button onClick={handleAddSoal} size="sm">
           <Plus className="h-4 w-4 mr-2" />
@@ -304,6 +385,8 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
                 .map((soal, ) => {
                   const soalIndex = koleksiSoal.soals.findIndex(s => s === soal);
                   const isExpanded = expandedQuestions.has(soalIndex);
+                  const validation = validateSoal(soal);
+                  const hasValidationErrors = !validation.isValid;
                   return (
                     <SortableSoalItem
                       key={soal.tempId || soal.id || soalIndex}
@@ -313,6 +396,7 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
                       onToggleExpand={toggleExpand}
                       onRemoveSoal={handleRemoveSoal}
                       isExpanded={isExpanded}
+                      hasValidationErrors={hasValidationErrors}
                     />
                   );
                 })}

@@ -104,8 +104,10 @@ export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsPr
             .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
             .map((item, itemIndex) => {
               const originalIndex = vocabSet.items.findIndex(i => i === item);
+              // Create a unique key that doesn't depend on sorted position
+              const uniqueKey = item.id || item.tempId || `item-${originalIndex}-${item.korean}-${item.indonesian}`;
               return (
-                <Card key={item.id || item.tempId || itemIndex} className="py-2">
+                <Card key={uniqueKey} className="py-2">
                   <CardContent>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 flex-1">

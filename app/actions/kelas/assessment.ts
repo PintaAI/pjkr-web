@@ -15,7 +15,7 @@ const koleksiSoalSchema = z.object({
 
 const soalSchema = z.object({
   pertanyaan: z.string().min(1),
-  difficulty: z.nativeEnum(Difficulty).optional(),
+  difficulty: z.nativeEnum(Difficulty).optional().nullable().transform(val => val ?? undefined),
   explanation: z.string().optional(),
   isActive: z.boolean().default(true),
 });

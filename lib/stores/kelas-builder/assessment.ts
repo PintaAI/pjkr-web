@@ -11,6 +11,7 @@ import {
   saveOpsi as saveOpsiAction,
 } from '@/app/actions/kelas';
 import { saveSoalSetLink } from '@/app/actions/kelas/soal-set';
+import { Difficulty } from '@prisma/client';
 
 export interface Assessment {
   soalSets: SoalSetData[];
@@ -539,7 +540,7 @@ export const createAssessment: StateCreator<
         koleksiSoal.id,
         {
           pertanyaan: soal.pertanyaan,
-          difficulty: soal.difficulty,
+          difficulty: soal.difficulty || Difficulty.BEGINNER,
           explanation: soal.explanation,
           isActive: soal.isActive,
         },
@@ -733,7 +734,7 @@ export const createAssessment: StateCreator<
                   koleksiSoal.id,
                   {
                     pertanyaan: soal.pertanyaan,
-                    difficulty: soal.difficulty,
+                    difficulty: soal.difficulty || Difficulty.BEGINNER,
                     explanation: soal.explanation,
                     isActive: soal.isActive,
                   },

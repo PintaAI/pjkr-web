@@ -1,6 +1,8 @@
 "use client";
 
 import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Card,} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +15,27 @@ import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { Difficulty } from "@prisma/client";
 import NovelEditor from "@/components/novel/novel-editor";
 import React from "react";
+
+// Validation schema for soal form
+const soalFormSchema = z.object({
+  pertanyaan: z.string().min(1, "Question is required"),
+  difficulty: z.nativeEnum(Difficulty, {
+    errorMap: () => ({ message: "Please select a difficulty level" })
+  }),
+  explanation: z.string().optional(),
+  isActive: z.boolean(),
+  opsis: z.array(z.object({
+    opsiText: z.string().min(1, "Option text is required"),
+    isCorrect: z.boolean(),
+    order: z.number(),
+  })).min(2, "At least 2 options are required").max(5, "Maximum 5 options allowed")
+    .refine(
+      (opsis) => opsis.filter(opsi => opsi.isCorrect).length === 1,
+      { message: "Exactly one option must be marked as correct" }
+    ),
+});
+
+type SoalFormData = z.infer<typeof soalFormSchema>;
 
 
 interface SoalFormProps {
@@ -31,13 +54,17 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
 
   const soal = koleksiSoals[koleksiIndex]?.soals[soalIndex];
 
-  const methods = useForm({
-    defaultValues: soal || {
-      pertanyaan: "",
-      difficulty: Difficulty.BEGINNER,
-      explanation: "",
-      isActive: true,
-      opsis: [],
+  const methods = useForm<SoalFormData>({
+    resolver: zodResolver(soalFormSchema),
+    defaultValues: {
+      pertanyaan: soal?.pertanyaan || "",
+      difficulty: soal?.difficulty || Difficulty.BEGINNER,
+      explanation: soal?.explanation || "",
+      isActive: soal?.isActive ?? true,
+      opsis: soal?.opsis || [
+        { opsiText: "", isCorrect: false, order: 0 },
+        { opsiText: "", isCorrect: false, order: 1 },
+      ],
     },
     mode: "onChange",
   });
@@ -45,13 +72,14 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
   const {
     handleSubmit,
     setValue,
-    formState: { errors, },
+    watch,
+    formState: { errors, isValid },
   } = methods;
 
-
+  const watchedOpsis = watch("opsis");
 
   const handleQuestionUpdate = (content: { json: any; html: string }) => {
-    setValue("pertanyaan", content.html);
+    setValue("pertanyaan", content.html, { shouldValidate: true });
     // Update the store directly to ensure local state is saved
     if (soal) {
       updateSoal(koleksiIndex, soalIndex, { pertanyaan: content.html });
@@ -59,48 +87,74 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
   };
 
   const handleExplanationUpdate = (content: { json: any; html: string }) => {
-    setValue("explanation", content.html);
+    setValue("explanation", content.html, { shouldValidate: true });
     // Update the store directly to ensure local state is saved
     if (soal) {
       updateSoal(koleksiIndex, soalIndex, { explanation: content.html });
     }
   };
 
-
-
-  const handleAddOpsi = () => {
-    const currentOpsis = soal?.opsis || [];
-    addOpsi(koleksiIndex, soalIndex, {
-      opsiText: "",
-      isCorrect: false,
-      order: currentOpsis.length,
+  const handleDifficultyChange = (value: string) => {
+    setValue("difficulty", value as Difficulty, { shouldValidate: true });
+    updateSoal(koleksiIndex, soalIndex, {
+      difficulty: value as Difficulty
     });
   };
 
+  const handleActiveChange = (checked: boolean) => {
+    setValue("isActive", checked, { shouldValidate: true });
+    updateSoal(koleksiIndex, soalIndex, { isActive: checked });
+  };
+
+
+
+  const handleAddOpsi = () => {
+    const currentOpsis = watchedOpsis || soal?.opsis || [];
+    const newOpsi = {
+      opsiText: "",
+      isCorrect: false,
+      order: currentOpsis.length,
+    };
+    const updatedOpsis = [...currentOpsis, newOpsi];
+    setValue("opsis", updatedOpsis, { shouldValidate: true });
+    addOpsi(koleksiIndex, soalIndex, newOpsi);
+  };
+
   const handleRemoveOpsi = (opsiIndex: number) => {
+    const currentOpsis = watchedOpsis || soal?.opsis || [];
+    const updatedOpsis = currentOpsis.filter((_, i) => i !== opsiIndex)
+      .map((opsi, index) => ({ ...opsi, order: index }));
+    setValue("opsis", updatedOpsis, { shouldValidate: true });
     removeOpsi(koleksiIndex, soalIndex, opsiIndex);
   };
 
   const handleOpsiTextChange = (opsiIndex: number, value: string) => {
+    const currentOpsis = watchedOpsis || soal?.opsis || [];
+    const updatedOpsis = currentOpsis.map((opsi, index) =>
+      index === opsiIndex ? { ...opsi, opsiText: value } : opsi
+    );
+    setValue("opsis", updatedOpsis, { shouldValidate: true });
     updateOpsi(koleksiIndex, soalIndex, opsiIndex, { opsiText: value });
   };
 
   const handleOpsiCorrectChange = (opsiIndex: number, isCorrect: boolean) => {
+    const currentOpsis = watchedOpsis || soal?.opsis || [];
     // Create a new array with all options set to false except the selected one
-    const updatedOpsis = (soal?.opsis || []).map((opsi, index) => ({
+    const updatedOpsis = currentOpsis.map((opsi, index) => ({
       ...opsi,
       isCorrect: index === opsiIndex ? isCorrect : false,
     }));
     
+    setValue("opsis", updatedOpsis, { shouldValidate: true });
     // Update the store with all options at once
     updateSoal(koleksiIndex, soalIndex, { opsis: updatedOpsis });
   };
 
-  const correctOpsiCount = soal?.opsis.filter(opsi => opsi.isCorrect).length || 0;
+  const correctOpsiCount = (watchedOpsis || soal?.opsis || []).filter(opsi => opsi.isCorrect).length;
 
   return (
     <FormProvider {...methods}>
-      <form  className="space-y-4">
+      <form className="space-y-4">
         <div className="space-y-2">
           <Label>Tambah pertanyaan</Label>
           <div className="border rounded-lg">
@@ -122,11 +176,7 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
           <Label htmlFor="difficulty">Difficulty</Label>
           <Select
             value={soal?.difficulty || Difficulty.BEGINNER}
-            onValueChange={(value) =>
-              updateSoal(koleksiIndex, soalIndex, {
-                difficulty: value as Difficulty
-              })
-            }
+            onValueChange={handleDifficultyChange}
           >
             <SelectTrigger>
               <SelectValue />
@@ -143,9 +193,7 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
           <Switch
             id="isActive"
             checked={soal?.isActive ?? true}
-            onCheckedChange={(checked) =>
-              updateSoal(koleksiIndex, soalIndex, { isActive: checked })
-            }
+            onCheckedChange={handleActiveChange}
           />
           <Label htmlFor="isActive">Active Question</Label>
         </div>

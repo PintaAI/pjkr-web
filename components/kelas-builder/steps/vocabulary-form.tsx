@@ -70,7 +70,7 @@ export function VocabularyItemForm({ vocabSetIndex, itemIndex }: VocabularyItemF
               <Label htmlFor="korean">Korean *</Label>
               <Input
                 id="korean"
-                value={currentItem.korean}
+                value={currentItem.korean || ""}
                 onChange={(e) => {
                   updateItem("korean", e.target.value);
                 }}
@@ -82,7 +82,7 @@ export function VocabularyItemForm({ vocabSetIndex, itemIndex }: VocabularyItemF
               <Label htmlFor="indonesian">Indonesian *</Label>
               <Input
                 id="indonesian"
-                value={currentItem.indonesian}
+                value={currentItem.indonesian || ""}
                 onChange={(e) => {
                   updateItem("indonesian", e.target.value);
                 }}
@@ -138,7 +138,7 @@ export function VocabularyItemForm({ vocabSetIndex, itemIndex }: VocabularyItemF
             <Label htmlFor="audio">Audio URL (optional)</Label>
             <Input
               id="audio"
-              value={currentItem.audioUrl}
+              value={currentItem.audioUrl || ""}
               onChange={(e) => {
                 updateItem("audioUrl", e.target.value);
               }}
@@ -163,7 +163,7 @@ export function VocabularyItemForm({ vocabSetIndex, itemIndex }: VocabularyItemF
               {currentItem.exampleSentences.map((sentence, sentenceIndex) => (
                 <div key={sentenceIndex} className="flex gap-2">
                   <Input
-                    value={sentence}
+                    value={sentence || ""}
                     onChange={(e) => {
                       updateExampleSentence(sentenceIndex, e.target.value);
                     }}
