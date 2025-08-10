@@ -323,7 +323,7 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
 
       {/* Create/Edit Question Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={handleCloseDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-7xl min-w-[700px]">
           <DialogHeader>
             <DialogTitle>
               {editingSoalIndex !== undefined && editingSoalIndex < koleksiSoal.soals.length 

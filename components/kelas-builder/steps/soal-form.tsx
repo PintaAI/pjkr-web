@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, CheckCircle, Circle } from "lucide-react";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { Difficulty } from "@prisma/client";
-import { NovelEditor } from "@/components/novel/novel-editor";
+import NovelEditor from "@/components/novel/novel-editor";
 import React from "react";
 
 
@@ -24,7 +24,6 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
   const {
     koleksiSoals,
     updateSoal,
-    saveSoal,
     addOpsi,
     updateOpsi,
     removeOpsi,
@@ -46,7 +45,7 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
   const {
     handleSubmit,
     setValue,
-    formState: { errors, isDirty, isSubmitting },
+    formState: { errors, },
   } = methods;
 
 
@@ -103,16 +102,14 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
     <FormProvider {...methods}>
       <form  className="space-y-4">
         <div className="space-y-2">
-          <Label>Question *</Label>
+          <Label>Tambah pertanyaan</Label>
           <div className="border rounded-lg">
           <NovelEditor
             initialContent={soal?.pertanyaan || null}
             onUpdate={handleQuestionUpdate}
-            placeholder="Enter your question here..."
-            height="min-h-[150px] "
-            width="w-full"
-            compact={true}
-            hideSaveStatus={true}
+           
+            
+  
           />
         </div>
         {errors.pertanyaan && (
@@ -252,11 +249,7 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
           <NovelEditor
             initialContent={soal?.explanation || null}
             onUpdate={handleExplanationUpdate}
-            placeholder="Explain the correct answer here..."
-            height="min-h-[150px] max-h-[800px]"
-            width="w-full"
-            compact={true}
-            hideSaveStatus={true}
+            
           />
         </div>
         {errors.explanation && (

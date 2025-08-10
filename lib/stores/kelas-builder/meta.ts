@@ -9,6 +9,8 @@ export const initialMeta: KelasMetaData = {
   description: '',
   type: KelasType.REGULAR,
   level: Difficulty.BEGINNER,
+  thumbnail: '',
+  icon: '',
   isPaidClass: false,
 };
 

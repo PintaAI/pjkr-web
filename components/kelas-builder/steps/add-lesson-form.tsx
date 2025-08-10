@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { NovelEditor } from "@/components/novel/novel-editor";
+import NovelEditor from "@/components/novel/novel-editor";
 import { Plus, Edit2 } from "lucide-react";
 
 interface LessonFormProps {
@@ -154,7 +154,7 @@ export function LessonForm({
               initialContent={formData.jsonDescription}
               onUpdate={handleContentUpdate}
               className="min-h-[300px]"
-              compact={true}
+            
             />
           </div>
           

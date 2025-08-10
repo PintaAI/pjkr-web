@@ -404,7 +404,7 @@ export function GuruClassesPage({ classes: initialClasses }: Omit<GuruClassesPag
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Classes</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Managemen Kelas</h1>
           <p className="text-muted-foreground">
             Manage your drafted and published classes
           </p>
