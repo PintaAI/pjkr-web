@@ -5,11 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, BookOpen, Users, FileText, Tag, Video, MessageSquare, Book, ChevronDown, ChevronUp,} from "lucide-react";
+import { ArrowLeft, BookOpen, Users, FileText, Tag, Video, MessageSquare, Book, ChevronDown, ChevronUp, GraduationCap, Megaphone} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { KelasType, Difficulty } from "@prisma/client";
-import { NovelReadonly } from "@/components/novel/novel-readonly";
 import { useSession } from "@/lib/hooks/use-session";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import DetailTab from "./tabs/detail-tab";
+import LiveSessionTab from "./tabs/live-session-tab";
+import DiscussionTab from "./tabs/discussion-tab";
+import VocabularyTab from "./tabs/vocabulary-tab";
 import Image from "next/image";
 import { useState,} from "react";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
@@ -120,6 +124,8 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
 
   // State for materials list visibility
   const [showMaterials, setShowMaterials] = useState(false);
+  // Track if we already performed the automatic teaser for materials list
+  const [hasTeasedMaterials, setHasTeasedMaterials] = useState(false);
   
   // Use a state to track when we're ready to render the button content
   const [isClient, setIsClient] = useState(false);
@@ -130,20 +136,38 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
   // Set isClient to true after component mounts on client side
   React.useEffect(() => {
     setIsClient(true);
-    
-    // Trigger teaser animation once on mount
     if (kelas.materis.length > 0) {
+      // Run teaser once then leave header visible
       teaserControls.start({
-        opacity: [0, 1, 1, 0],
-        scale: [0.95, 1, 1, 0.95],
+        opacity: [0, 1],
+        scale: [0.95, 1],
         transition: {
-          duration: 2,
-          times: [0, 0.2, 0.8, 1],
-          ease: "easeInOut"
+          duration: 0.6,
+          ease: "easeOut"
         }
       });
+    } else {
+      // Ensure header shown even with no materi
+      teaserControls.start({ opacity: 1, scale: 1 });
     }
   }, [teaserControls, kelas.materis.length]);
+  
+  // Automatic "tease" animation for materials dropdown: briefly open then close
+  React.useEffect(() => {
+    if (!hasTeasedMaterials && kelas.materis.length > 0 && isClient) {
+      // Delay a bit so header animation finishes
+      const openTimeout = setTimeout(() => {
+        setShowMaterials(true);
+        // Close after a short showcase
+        const closeTimeout = setTimeout(() => {
+          setShowMaterials(false);
+          setHasTeasedMaterials(true);
+        }, 1600);
+        return () => clearTimeout(closeTimeout);
+      }, 800);
+      return () => clearTimeout(openTimeout);
+    }
+  }, [hasTeasedMaterials, kelas.materis.length, isClient]);
   
   // Check if current user is the author of this kelas
   const isAuthor = isClient && isAuthenticated && user && user.id === kelas.authorId;
@@ -194,8 +218,12 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
 
   return (
     <div className="w-full max-w-7xl mx-auto -mt-6">
-      {/* Header with blended thumbnail */}
-      <div className="relative h-80 rounded-b-2xl overflow-hidden mb-6">
+      {/* Header with blended thumbnail (motion-enabled for teaser animation) */}
+      <motion.div
+        className="relative h-80 rounded-b-2xl overflow-hidden mb-6"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={teaserControls}
+      >
         {/* Background thumbnail */}
         <div className="absolute inset-0">
           {kelas.thumbnail ? (
@@ -249,7 +277,7 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
             <p className="text-white/90 text-sm md:text-base max-w-2xl">{kelas.description}</p>
           )}
         </div>
-      </div>
+      </motion.div>
 
       <div className="px-6 space-y-6">
         {/* Compact stats and pricing row */}
@@ -284,7 +312,7 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
             </div>
 
             {/* Author */}
-            <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+            <div className="relative flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
               <Avatar className="w-10 h-10">
                 <AvatarImage src={kelas.author.image || ""} alt={kelas.author.name || "Unknown"} />
                 <AvatarFallback className="text-sm bg-primary text-primary-foreground">
@@ -299,9 +327,21 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
               </Avatar>
               <div>
                 <div className="font-medium text-sm">{kelas.author.name || "Unknown Author"}</div>
-                <div className="text-xs text-muted-foreground">Instructor</div>
+                <div className="text-xs text-muted-foreground">Author</div>
+              </div>
+              
+              {/* Running Text Ads Placeholder - Absolutely Positioned */}
+              <div className="absolute -bottom-8 left-2 right-2 h-5 bg-gradient-to-r from-blue-100 via-sky-50 to-blue-100 dark:from-blue-900/20 dark:via-sky-900/10 dark:to-blue-900/20 border border-blue-200 dark:border-blue-800/30 rounded overflow-hidden">
+                <div className="flex items-center h-full px-3">
+                  <div className="flex items-center gap-1 text-xs text-blue-700 dark:text-blue-300">
+                    <span className="w-1 h-1 bg-blue-500 rounded-full animate-pulse"></span>
+                    <span className="font-medium">AD:</span>
+                    <span className="opacity-70">Running text advertisement space</span>
+                  </div>
+                </div>
               </div>
             </div>
+
           </div>
 
           {/* Right column: Pricing */}
@@ -353,10 +393,10 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
 
             {/* Materials Section - positioned absolutely below pricing card */}
             {kelas.materis.length > 0 && (
-              <div className="hidden lg:block lg:absolute lg:top-full lg:left-0 lg:w-64 lg:mt-2 lg:pt-4 lg:border-t lg:border-border backdrop-blur-sm bg-background/80">
+              <div className="hidden lg:block lg:absolute lg:top-full lg:left-0 lg:w-64 mt-1 lg:border-border backdrop-blur-sm">
                 <button
                   onClick={() => setShowMaterials(!showMaterials)}
-                  className="flex items-center justify-between w-full text-left text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                  className={` p-2 border rounded-lg flex items-center justify-between w-full text-left text-sm font-medium text-primary hover:text-primary/80 transition-colors ${!hasTeasedMaterials ? 'animate-pulse' : ''}`}
                 >
                   <span className="flex items-center gap-2">
                     <FileText className="w-4 h-4" />
@@ -407,131 +447,76 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
           </div>
         </div>
 
-        {/* Description */}
-        {(kelas.htmlDescription || kelas.jsonDescription) && (
-          <div>
-            {kelas.htmlDescription ? (
-              <NovelReadonly html={kelas.htmlDescription} className="prose-sm" />
-            ) : kelas.jsonDescription ? (
-              <div className="prose prose-sm max-w-none dark:prose-invert space-y-2">
-                {kelas.jsonDescription.objectives && (
-                  <div>
-                    <h4 className="font-medium mb-1">Objectives:</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1">
-                      {kelas.jsonDescription.objectives.map((obj: string, index: number) => (
-                        <li key={index}>• {obj}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+        {/* Tabs Section */}
+        <div className="pt-6">
+          <Tabs defaultValue="detail" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="detail" className="flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Detail
+              </TabsTrigger>
+              <TabsTrigger value="live-session" className="flex items-center gap-2">
+                <Video className="w-4 h-4" />
+                Live Session
+              </TabsTrigger>
+              <TabsTrigger value="discussion" className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4" />
+                Discussion
+              </TabsTrigger>
+              <TabsTrigger value="vocabulary" className="flex items-center gap-2">
+                <GraduationCap className="w-4 h-4" />
+                Vocabulary
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Detail Tab */}
+            <TabsContent value="detail" className="mt-6">
+              <DetailTab
+                htmlDescription={kelas.htmlDescription}
+                jsonDescription={kelas.jsonDescription}
+              />
+            </TabsContent>
+
+            {/* Live Session Tab */}
+            <TabsContent value="live-session" className="mt-6">
+              <LiveSessionTab liveSessions={kelas.liveSessions} />
+            </TabsContent>
+
+            {/* Discussion Tab */}
+            <TabsContent value="discussion" className="mt-6">
+              <DiscussionTab
+                posts={kelas.posts}
+                postsCount={kelas._count.posts}
+              />
+            </TabsContent>
+
+            {/* Vocabulary Tab */}
+            <TabsContent value="vocabulary" className="mt-6">
+              <VocabularyTab vocabularySets={kelas.vocabularySets} />
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Running Text Ads Placeholder */}
+        <div className="mt-8 mb-6">
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-dashed border-2 border-blue-200 dark:border-blue-800">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-center gap-3 text-blue-600 dark:text-blue-400">
+                <Megaphone className="w-6 h-6" />
+                <div className="text-center">
+                  <h3 className="font-medium text-lg mb-1">Advertisement Space</h3>
+                  <p className="text-sm text-blue-500 dark:text-blue-300">
+                    Running text ads will be displayed here
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-blue-400 dark:text-blue-500">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                </div>
               </div>
-            ) : null}
-          </div>
-        )}
-
-
-        {/* Content Sections */}
-        <div className="grid gap-6 md:grid-cols-2">
-
-          {/* Live Sessions */}
-          {kelas.liveSessions.length > 0 && (
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Video className="w-4 h-4 text-primary" />
-                  <h3 className="font-semibold">Live Sessions ({kelas.liveSessions.length})</h3>
-                </div>
-                <div className="space-y-2">
-                  {kelas.liveSessions.slice(0, 3).map((session) => (
-                    <div key={session.id} className="p-2 rounded bg-muted/30">
-                      <div className="text-sm font-medium">{session.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {new Date(session.scheduledStart).toLocaleDateString()} at{" "}
-                        {new Date(session.scheduledStart).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className={`mt-1 text-xs ${
-                          session.status === "LIVE"
-                            ? "bg-fail/10 text-fail border-fail/20"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {session.status}
-                      </Badge>
-                    </div>
-                  ))}
-                  {kelas.liveSessions.length > 3 && (
-                    <div className="text-xs text-muted-foreground text-center pt-2">
-                      +{kelas.liveSessions.length - 3} more sessions
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Vocabulary Sets */}
-          {kelas.vocabularySets.length > 0 && (
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Book className="w-4 h-4 text-primary" />
-                  <h3 className="font-semibold">Vocabulary Sets ({kelas.vocabularySets.length})</h3>
-                </div>
-                <div className="space-y-2">
-                  {kelas.vocabularySets.slice(0, 3).map((vocabSet) => (
-                    <div key={vocabSet.id} className="p-2 rounded bg-muted/30">
-                      <div className="text-sm font-medium">{vocabSet.title}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {vocabSet._count.items} words
-                      </div>
-                    </div>
-                  ))}
-                  {kelas.vocabularySets.length > 3 && (
-                    <div className="text-xs text-muted-foreground text-center pt-2">
-                      +{kelas.vocabularySets.length - 3} more sets
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Recent Discussions */}
-          {kelas.posts.length > 0 && (
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <MessageSquare className="w-4 h-4 text-primary" />
-                  <h3 className="font-semibold">Recent Discussions ({kelas._count.posts})</h3>
-                </div>
-                <div className="space-y-2">
-                  {kelas.posts.map((post) => (
-                    <div key={post.id} className="p-2 rounded bg-muted/30">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="text-sm font-medium line-clamp-1">{post.title}</div>
-                          <div className="text-xs text-muted-foreground">
-                            by {post.author.name} • {new Date(post.createdAt).toLocaleDateString()}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>❤️ {post.likeCount}</span>
-                          <span>💬 {post.commentCount}</span>
-                        </div>
-                      </div>
-                      {post.isPinned && (
-                        <Badge variant="outline" className="mt-1 text-xs">
-                          Pinned
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

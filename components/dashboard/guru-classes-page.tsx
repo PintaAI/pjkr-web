@@ -321,13 +321,19 @@ const ClassTabs = ({
   publishedClasses,
   filteredDrafts,
   filteredPublished,
-  onCreateClass
+  onCreateClass,
+  onDeleteClass,
+  onPublishClass,
+  onUnpublishClass
 }: {
   draftClasses: any[];
   publishedClasses: any[];
   filteredDrafts: KelasItem[];
   filteredPublished: KelasItem[];
   onCreateClass: () => void;
+  onDeleteClass: (id: number) => void;
+  onPublishClass: (id: number) => void;
+  onUnpublishClass: (id: number) => void;
 }) => (
   <Tabs defaultValue="published" className="w-full">
     <TabsList>
@@ -349,9 +355,9 @@ const ClassTabs = ({
               actions={{
                 onView: (id: number) => (window.location.href = `/kelas/${id}`),
                 onEdit: (id: number) => (window.location.href = `/dashboard/guru/kelas-builder?edit=${id}`),
-                onDelete: () => {}, // Will be bound in parent
-                onPublish: () => {}, // Will be bound in parent
-                onUnpublish: () => {}, // Will be bound in parent
+                onDelete: (id: number) => onDeleteClass(id),
+                onPublish: (id: number) => onPublishClass(id),
+                onUnpublish: (id: number) => onUnpublishClass(id),
               }}
             />
           ))}
@@ -371,15 +377,15 @@ const ClassTabs = ({
               actions={{
                 onView: (id: number) => (window.location.href = `/kelas/${id}`),
                 onEdit: (id: number) => (window.location.href = `/dashboard/guru/kelas-builder?edit=${id}`),
-                onDelete: () => {}, // Will be bound in parent
-                onPublish: () => {}, // Will be bound in parent
-                onUnpublish: () => {}, // Will be bound in parent
+                onDelete: (id: number) => onDeleteClass(id),
+                onPublish: (id: number) => onPublishClass(id),
+                onUnpublish: (id: number) => onUnpublishClass(id),
               }}
             />
           ))}
         </div>
       ) : (
-        <EmptyState type="published" onCreateClass={() => {}} />
+        <EmptyState type="published" onCreateClass={onCreateClass} />
       )}
     </TabsContent>
   </Tabs>
@@ -429,6 +435,9 @@ export function GuruClassesPage({ classes: initialClasses }: Omit<GuruClassesPag
         filteredDrafts={management.filteredClasses(management.draftClasses)}
         filteredPublished={management.filteredClasses(management.publishedClasses)}
         onCreateClass={handleCreateClass}
+        onDeleteClass={management.handleDeleteClass}
+        onPublishClass={management.handlePublishClass}
+        onUnpublishClass={management.handleUnpublishClass}
       />
     </div>
   );

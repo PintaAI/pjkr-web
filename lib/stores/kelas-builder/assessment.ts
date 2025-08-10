@@ -10,6 +10,7 @@ import {
   saveSoal as saveSoalAction,
   saveOpsi as saveOpsiAction,
 } from '@/app/actions/kelas';
+import { saveSoalSetLink } from '@/app/actions/kelas/soal-set';
 
 export interface Assessment {
   soalSets: SoalSetData[];
@@ -83,29 +84,50 @@ export const createAssessment: StateCreator<
     });
   },
   saveSoalSet: async (index) => {
-    const { soalSets } = get();
-    if (!soalSets[index]) return;
+    const { soalSets, draftId } = get();
+    if (!soalSets[index] || !draftId) return;
 
     const soalSet = soalSets[index];
-    if (!soalSet.tempId) return; // Already saved
+    const tempId = soalSet.tempId;
 
     set({ isLoading: true, error: null });
 
     try {
-      // Note: Soal set functionality not implemented in simplified actions
-      // This would need to be implemented if assessment features are needed
-      toast.info('Question set functionality not implemented yet');
+      const result = await saveSoalSetLink(
+        draftId,
+        {
+          koleksiSoalId: soalSet.koleksiSoalId,
+          title: soalSet.title,
+          description: soalSet.description,
+          order: index,
+        },
+        soalSet.id
+      );
 
-      set({
-        isLoading: false,
-        stepDirtyFlags: { ...get().stepDirtyFlags, assessment: false },
-      });
+      if (result.success && result.data) {
+        set((state) => {
+          const newSoalSets = [...state.soalSets];
+          newSoalSets[index] = { ...newSoalSets[index], id: result.data.id, tempId: undefined };
+          const newOptimistic = new Set(state.optimisticUpdates);
+          if (tempId) newOptimistic.delete(tempId);
+          return {
+            soalSets: newSoalSets,
+            isLoading: false,
+            isDirty: false,
+            stepDirtyFlags: { ...state.stepDirtyFlags, assessment: false },
+            optimisticUpdates: newOptimistic,
+          };
+        });
+        toast.success(tempId ? 'Question set linked' : 'Question set updated');
+      } else {
+        throw new Error(result.error || 'Failed to save question set');
+      }
     } catch (error) {
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to link question set',
+        error: error instanceof Error ? error.message : 'Failed to save question set',
       });
-      toast.error('Failed to link question set');
+      toast.error('Failed to save question set');
     }
   },
   addKoleksiSoal: (koleksiSoal) => {

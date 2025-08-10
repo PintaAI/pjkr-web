@@ -1,0 +1,44 @@
+"use client";
+
+import { Card, CardContent } from "@/components/ui/card";
+import { NovelReadonly } from "@/components/novel/novel-readonly";
+import { FileText } from "lucide-react";
+
+interface DetailTabProps {
+  htmlDescription?: string | null;
+  jsonDescription?: any;
+}
+
+export default function DetailTab({ htmlDescription, jsonDescription }: DetailTabProps) {
+  return (
+    <Card>
+      <CardContent >
+        {(htmlDescription || jsonDescription) ? (
+          <>
+            {htmlDescription ? (
+              <NovelReadonly html={htmlDescription} className="prose-sm" />
+            ) : jsonDescription ? (
+              <div className="prose prose-sm max-w-none dark:prose-invert space-y-2">
+                {jsonDescription.objectives && (
+                  <div>
+                    <h4 className="font-medium mb-1">Objectives:</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      {jsonDescription.objectives.map((obj: string, index: number) => (
+                        <li key={index}>• {obj}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            <FileText className="w-12 h-12 mx-auto mb-2 opacity-50" />
+            <p>No detailed description available for this class.</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

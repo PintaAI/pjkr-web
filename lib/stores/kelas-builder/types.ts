@@ -94,6 +94,9 @@ export type BuilderStep = 'meta' | 'content' | 'vocabulary' | 'assessment' | 're
 export interface KelasBuilderState {
   // Core state
   draftId: number | null;
+  // Tracks whether the loaded kelas (course) is still a draft on the server
+  // When false, the kelas is already published and subsequent action is "save changes"
+  kelasIsDraft: boolean;
   isLoading: boolean;
   error: string | null;
   isDirty: boolean;
@@ -166,11 +169,13 @@ export interface KelasBuilderState {
   removeOpsi: (koleksiIndex: number, soalIndex: number, opsiIndex: number) => void;
   saveOpsi: (koleksiIndex: number, soalIndex: number, opsiIndex: number) => Promise<void>;
   saveAllAssessments: () => Promise<void>;
-
+ 
   // Global Actions
   createDraft: (initialMeta: KelasMetaData) => Promise<void>;
   loadDraft: (kelasId: number) => Promise<void>;
   publishDraft: () => Promise<void>;
+  // Unpublish a previously published kelas (sets it back to draft state)
+  unpublishDraft: () => Promise<void>;
   deleteDraft: () => Promise<void>;
   reset: () => void;
   setError: (error: string | null) => void;

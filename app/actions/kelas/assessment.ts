@@ -60,15 +60,23 @@ export async function saveKoleksiSoal(kelasId: number | null, koleksiData: z.inf
       });
     }
 
-    // If kelasId is provided, create the many-to-many relationship
-    if (kelasId && !koleksiId) {
-      await prisma.kelasKoleksiSoal.create({
-        data: {
-          kelasId: kelasId,
-          koleksiSoalId: koleksiSoal.id,
-        },
-      });
-    }
+        // If kelasId is provided, create the many-to-many relationship (need required title field)
+        if (kelasId && !koleksiId) {
+          // Determine next order position
+          const existingCount = await prisma.kelasKoleksiSoal.count({
+            where: { kelasId },
+          });
+    
+          await prisma.kelasKoleksiSoal.create({
+            data: {
+              kelasId: kelasId,
+              koleksiSoalId: koleksiSoal.id,
+              title: koleksiSoal.nama,            // Use collection name as link title
+              description: koleksiSoal.deskripsi, // Optional
+              order: existingCount,               // Append at end
+            },
+          });
+        }
 
     return { success: true, data: koleksiSoal };
   } catch (error) {

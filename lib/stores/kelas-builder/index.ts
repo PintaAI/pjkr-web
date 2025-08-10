@@ -12,6 +12,7 @@ import { createAssessment, type Assessment } from './assessment';
 import {
   createDraftKelas,
   publishKelas,
+  unpublishKelas,
   deleteDraftKelas,
   getKelasById,
 } from '@/app/actions/kelas';
@@ -33,6 +34,7 @@ export const useKelasBuilderStore = create<Store>()(
     subscribeWithSelector(
       immer((set, get, store) => ({
         draftId: null,
+        kelasIsDraft: true,
         isLoading: false,
         error: null,
         isDirty: false,
@@ -58,6 +60,7 @@ export const useKelasBuilderStore = create<Store>()(
             if (result.success && result.data) {
               set({
                 draftId: result.data.id,
+                kelasIsDraft: true,
                 meta: initialMeta,
                 isDirty: false,
                 isLoading: false,
@@ -80,6 +83,7 @@ export const useKelasBuilderStore = create<Store>()(
               const kelas = result.data;
               set({
                 draftId: kelas.id,
+                kelasIsDraft: kelas.isDraft ?? true,
                 meta: {
                   title: kelas.title,
                   description: kelas.description || '',
@@ -155,8 +159,13 @@ export const useKelasBuilderStore = create<Store>()(
           }
         },
         publishDraft: async () => {
-          const { draftId, materis, saveMateris } = get();
+          const { draftId, materis, saveMateris, kelasIsDraft } = get();
           if (!draftId) return;
+          // Prevent double publish
+            if (!kelasIsDraft) {
+              toast.message('Class already published');
+              return;
+            }
 
           set({ isLoading: true, error: null });
 
@@ -168,7 +177,7 @@ export const useKelasBuilderStore = create<Store>()(
 
             const result = await publishKelas(draftId);
             if (result.success) {
-              set({ isLoading: false });
+              set({ isLoading: false, kelasIsDraft: false });
               toast.success('Class published successfully');
             } else {
               throw new Error(result.error || 'Failed to publish class');
@@ -177,6 +186,31 @@ export const useKelasBuilderStore = create<Store>()(
             const errorMessage = error instanceof Error ? error.message : 'Failed to publish class';
             set({ isLoading: false, error: errorMessage });
             toast.error('Failed to publish class');
+          }
+        },
+        unpublishDraft: async () => {
+          const { draftId, kelasIsDraft } = get();
+          if (!draftId) return;
+          // Only unpublish if currently published
+          if (kelasIsDraft) {
+            toast.message('Class already in draft state');
+            return;
+          }
+
+          set({ isLoading: true, error: null });
+
+          try {
+            const result = await unpublishKelas(draftId);
+            if (result.success) {
+              set({ isLoading: false, kelasIsDraft: true });
+              toast.success('Class reverted to draft');
+            } else {
+              throw new Error(result.error || 'Failed to unpublish class');
+            }
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to unpublish class';
+            set({ isLoading: false, error: errorMessage });
+            toast.error('Failed to unpublish class');
           }
         },
         deleteDraft: async () => {
@@ -202,6 +236,7 @@ export const useKelasBuilderStore = create<Store>()(
         reset: () => {
           set({
             draftId: null,
+            kelasIsDraft: true,
             currentStep: 'meta',
             isLoading: false,
             error: null,

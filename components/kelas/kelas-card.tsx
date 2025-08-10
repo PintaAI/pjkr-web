@@ -166,7 +166,11 @@ export function KelasCard({
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={(e) => {
                     e.stopPropagation();
-                    handleView(e);
+                    if (onView) {
+                      onView(data.id);
+                    } else {
+                      window.location.href = `/kelas/${data.id}`;
+                    }
                   }}>
                     <Eye className="h-4 w-4 mr-2" />
                     View Class

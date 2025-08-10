@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import KelasDetailPage from "@/components/kelas/kelas-detail-page";
 import { useSession } from "@/lib/hooks/use-session";
+import { toast } from "sonner";
 
 export function StepReview() {
   const router = useRouter();
@@ -33,7 +34,16 @@ export function StepReview() {
     soalSets,
     draftId,
     publishDraft,
-    reset
+    unpublishDraft,
+    reset,
+    kelasIsDraft,
+    isDirty,
+    stepDirtyFlags,
+    saveMeta,
+    saveMateris,
+    saveAllAssessments,
+    dirtyVocabSets,
+    saveVocabularySet
   } = useKelasBuilderStore();
 
   const { session } = useSession();
@@ -45,6 +55,8 @@ export function StepReview() {
 
   const isReadyToPublish = hasTitle && hasDescription && hasContent && hasValidPricing;
 
+  // Determine if the loaded kelas is already published on the server
+  const isPublishedServer = !!draftId && !kelasIsDraft;
   // Create mock kelas data from the store for preview
   const mockKelasData = {
     id: 999,
@@ -97,19 +109,61 @@ export function StepReview() {
   };
 
   const handlePublish = async () => {
-    if (!isReadyToPublish || !draftId) return;
+    if (!draftId) return;
+
+    // Unpublish path (already published and no local changes)
+    if (!kelasIsDraft && !isDirty) {
+      setIsPublishing(true);
+      try {
+        await unpublishDraft();
+        toast.success('Course reverted to draft');
+      } catch (error) {
+        console.error('Error unpublishing course:', error);
+        toast.error('Failed to unpublish');
+      } finally {
+        setIsPublishing(false);
+      }
+      return;
+    }
+
+    if (kelasIsDraft && !isReadyToPublish) return;
 
     setIsPublishing(true);
     try {
-      await publishDraft();
-      setIsPublished(true);
-      
-      // Navigate to dashboard after successful publish
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 2000); // Wait 2 seconds to show success message
+      if (kelasIsDraft) {
+        await publishDraft();
+        setIsPublished(true);
+        toast.success('Course published successfully');
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 2000);
+      } else {
+        // Save changes to existing published course
+        if (stepDirtyFlags.meta) {
+          await saveMeta();
+        }
+        if (stepDirtyFlags.content) {
+          await saveMateris();
+        }
+        if (stepDirtyFlags.vocabulary) {
+          vocabSets.forEach((vs, idx) => {
+            if (vs.tempId || (vs.id && dirtyVocabSets.has(vs.id))) {
+              void saveVocabularySet(idx);
+            }
+          });
+        }
+        if (stepDirtyFlags.assessment) {
+          await saveAllAssessments();
+        }
+        toast.success('Changes saved');
+      }
     } catch (error) {
-      console.error('Error publishing course:', error);
+      console.error('Error publishing/saving course:', error);
+      toast.error(
+        kelasIsDraft
+          ? 'Failed to publish'
+          : (isDirty ? 'Failed to save changes' : 'Failed to unpublish')
+      );
     } finally {
       setIsPublishing(false);
     }
@@ -240,7 +294,7 @@ export function StepReview() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-300">
               <Rocket className="h-5 w-5" />
-              Ready to Publish
+              {isPublishedServer ? 'Ready to Save Changes' : 'Ready to Publish'}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -275,26 +329,38 @@ export function StepReview() {
             <div className="text-center space-y-4">
               <Button
                 onClick={handlePublish}
-                disabled={isPublishing || !draftId}
+                disabled={
+                  isPublishing ||
+                  !draftId ||
+                  (kelasIsDraft && !isReadyToPublish)
+                }
                 className="w-full max-w-md mx-auto h-14 text-lg font-semibold bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                 size="lg"
               >
                 {isPublishing ? (
                   <>
                     <Loader2 className="h-6 w-6 animate-spin mr-3" />
-                    Publishing Your Course...
+                    {kelasIsDraft
+                      ? 'Publishing...'
+                      : (isDirty ? 'Saving Changes...' : 'Unpublishing...')}
                   </>
                 ) : (
                   <>
                     <Rocket className="h-6 w-6 mr-3" />
-                    Publish Course Now
+                    {kelasIsDraft
+                      ? 'Publish Course Now'
+                      : (isDirty ? 'Save Changes' : 'Unpublish Course')}
                     {!draftId && " (No Draft ID)"}
                   </>
                 )}
               </Button>
               
               <p className="text-sm text-muted-foreground">
-                This will make your course live and available to students
+                {kelasIsDraft
+                  ? 'This will make your course live and available to students'
+                  : (isDirty
+                      ? 'This will save your changes to the published course'
+                      : 'This will revert the course back to draft (students will lose access)')}
               </p>
             </div>
             

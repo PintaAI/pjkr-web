@@ -445,12 +445,19 @@ model KelasKoleksiSoal {
   id         Int      @id @default(autoincrement())
   kelasId    Int
   koleksiSoalId Int
+  // New metadata fields for soal set linking
+  title      String
+  description String?
+  order      Int      @default(0)
   createdAt  DateTime @default(now())
   
   kelas      Kelas    @relation(fields: [kelasId], references: [id], onDelete: Cascade)
   koleksiSoal KoleksiSoal @relation(fields: [koleksiSoalId], references: [id], onDelete: Cascade)
   
   @@unique([kelasId, koleksiSoalId])
+  @@index([kelasId])
+  @@index([koleksiSoalId])
+  @@index([order])
 }
 
 model Soal {
