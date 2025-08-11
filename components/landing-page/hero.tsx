@@ -10,6 +10,7 @@ export const Hero = () => {
         <div className="mb-8 flex justify-center">
           <div className="w-32 h-32 bg-primary-foreground/20 rounded-3xl flex items-center justify-center">
             <Image
+              priority={true}
               src="/logo/hakgyo-light.png"
               alt="Hakgyo Logo"
               width={80}
@@ -17,6 +18,7 @@ export const Hero = () => {
               className="dark:hidden"
             />
             <Image
+              priority={true}
               src="/logo/hakgyo-dark.png"
               alt="Hakgyo Logo"
               width={80}

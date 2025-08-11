@@ -34,9 +34,11 @@ export function StepAssessment() {
     setIsDirty(true);
   };
 
-  const handleCancel = () => {
+  const handleFormSave = () => {
+    // Always close dialog on manual save (submit button)
     setShowCreateForm(false);
     setEditingIndex(undefined);
+    ;
   };
 
   const handleManageQuestions = (index: number) => {
@@ -209,8 +211,7 @@ export function StepAssessment() {
           </DialogHeader>
           <KoleksiSoalForm
             koleksiIndex={editingIndex}
-            onCancel={handleCancel}
-            onSave={() => setIsDirty(true)}
+            onSave={handleFormSave}
           />
         </DialogContent>
       </Dialog>

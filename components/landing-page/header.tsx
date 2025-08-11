@@ -23,6 +23,7 @@ export const Header = () => {
             <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-all duration-200">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg">
                 <Image
+                  priority={true}
                   src="/logo/hakgyo-light.png"
                   alt="Hakgyo Logo"
                   width={40}
@@ -30,6 +31,7 @@ export const Header = () => {
                   className="dark:hidden p-1"
                 />
                 <Image
+                  priority={true}
                   src="/logo/hakgyo-dark.png"
                   alt="Hakgyo Logo"
                   width={40}

@@ -1,17 +1,32 @@
 import type { StateCreator } from 'zustand';
 import { toast } from 'sonner';
-import type { KelasBuilderState, SoalSetData, KoleksiSoalData, SoalData, SoalOpsiData } from './types';
+import type {
+  KelasBuilderState,
+  SoalSetData,
+  KoleksiSoalData,
+  SoalData,
+  SoalOpsiData,
+  ActionResult,
+} from './types';
 import {
   deleteKoleksiSoal,
   deleteSoal,
   deleteOpsi,
-  reorderSoals,
+  reorderSoals as reorderSoalsAction,
   saveKoleksiSoal as saveKoleksiSoalAction,
   saveSoal as saveSoalAction,
   saveOpsi as saveOpsiAction,
 } from '@/app/actions/kelas';
 import { saveSoalSetLink } from '@/app/actions/kelas/soal-set';
 import { Difficulty } from '@prisma/client';
+import {
+  generateTempId,
+  reindexOrder,
+  validateText,
+  findKoleksiById,
+  findSoalById,
+  findOpsiById,
+} from './helpers';
 
 export interface Assessment {
   soalSets: SoalSetData[];
@@ -20,28 +35,60 @@ export interface Assessment {
   deletedSoals: number[];
   deletedOpsi: number[];
   dirtyKoleksiSoals: Set<number>;
-  addSoalSet: (soalSet: Omit<SoalSetData, 'id'>) => void;
-  removeSoalSet: (index: number) => void;
-  saveSoalSet: (index: number) => Promise<void>;
-  addKoleksiSoal: (koleksiSoal: Omit<KoleksiSoalData, 'id' | 'soals'> & { soals?: Omit<SoalData, 'opsis'>[] }) => void;
-  updateKoleksiSoal: (index: number, koleksiSoal: Partial<KoleksiSoalData>) => void;
-  removeKoleksiSoal: (index: number) => void;
-  saveKoleksiSoal: (index: number) => Promise<void>;
-  addSoal: (koleksiIndex: number, soal: Omit<SoalData, 'id' | 'opsis'> & { opsis?: Omit<SoalOpsiData, 'id'>[] }) => void;
-  updateSoal: (koleksiIndex: number, soalIndex: number, soal: Partial<SoalData>) => void;
-  removeSoal: (koleksiIndex: number, soalIndex: number) => void;
-  reorderSoals: (koleksiIndex: number, fromIndex: number, toIndex: number) => void;
-  saveSoal: (koleksiIndex: number, soalIndex: number) => Promise<void>;
-  addOpsi: (koleksiIndex: number, soalIndex: number, opsi: Omit<SoalOpsiData, 'id'>) => void;
-  updateOpsi: (koleksiIndex: number, soalIndex: number, opsiIndex: number, opsi: Partial<SoalOpsiData>) => void;
-  removeOpsi: (koleksiIndex: number, soalIndex: number, opsiIndex: number) => void;
-  saveOpsi: (koleksiIndex: number, soalIndex: number, opsiIndex: number) => Promise<void>;
+  dirtySoals: Set<number>;
+  dirtyOpsis: Set<number>;
+  addSoalSet: (soalSet: Omit<SoalSetData, 'id' | 'tempId'>) => void;
+  removeSoalSet: (id: string) => void;
+  saveSoalSet: (id: string) => Promise<void>;
+  addKoleksiSoal: (
+    koleksiSoal: Omit<KoleksiSoalData, 'id' | 'soals' | 'tempId'> & {
+      soals?: Omit<SoalData, 'id' | 'opsis' | 'tempId'>[];
+    }
+  ) => void;
+  updateKoleksiSoal: (
+    id: number | string,
+    koleksiSoal: Partial<KoleksiSoalData>
+  ) => void;
+  removeKoleksiSoal: (id: number | string) => void;
+  addSoal: (
+    koleksiId: number | string,
+    soal: Omit<SoalData, 'id' | 'opsis' | 'tempId'> & {
+      opsis?: Omit<SoalOpsiData, 'id' | 'tempId'>[];
+    }
+  ) => void;
+  updateSoal: (
+    koleksiId: number | string,
+    soalId: number | string,
+    soal: Partial<SoalData>
+  ) => void;
+  removeSoal: (koleksiId: number | string, soalId: number | string) => void;
+  reorderSoals: (
+    koleksiId: number | string,
+    fromIndex: number,
+    toIndex: number
+  ) => void;
+  addOpsi: (
+    koleksiId: number | string,
+    soalId: number | string,
+    opsi: Omit<SoalOpsiData, 'id' | 'tempId'>
+  ) => void;
+  updateOpsi: (
+    koleksiId: number | string,
+    soalId: number | string,
+    opsiId: number | string,
+    opsi: Partial<SoalOpsiData>
+  ) => void;
+  removeOpsi: (
+    koleksiId: number | string,
+    soalId: number | string,
+    opsiId: number | string
+  ) => void;
   saveAllAssessments: () => Promise<void>;
 }
 
 export const createAssessment: StateCreator<
   KelasBuilderState,
-  [],
+  [['zustand/immer', never]],
   [],
   Assessment
 > = (set, get) => ({
@@ -51,46 +98,42 @@ export const createAssessment: StateCreator<
   deletedSoals: [],
   deletedOpsi: [],
   dirtyKoleksiSoals: new Set(),
+  dirtySoals: new Set(),
+  dirtyOpsis: new Set(),
+
   addSoalSet: (soalSet) => {
     set((state) => {
-      const tempId = `temp-soal-${Date.now()}`;
+      const tempId = generateTempId('soalSet');
       const newSoalSet: SoalSetData = {
         ...soalSet,
         tempId,
       };
-      return {
-        soalSets: [...state.soalSets, newSoalSet],
-        isDirty: true,
-        stepDirtyFlags: { ...state.stepDirtyFlags, assessment: true },
-        optimisticUpdates: new Set(state.optimisticUpdates).add(tempId),
-      };
+      state.soalSets.push(newSoalSet);
+      state.optimisticUpdates.soalSet.add(tempId);
+      state.editVersion += 1;
     });
   },
-  removeSoalSet: (index) => {
+
+  removeSoalSet: (id) => {
     set((state) => {
-      const soalSet = state.soalSets[index];
-      if (!soalSet) return state;
+      const index = state.soalSets.findIndex((s) => s.tempId === id);
+      if (index === -1) return;
 
-      const newOptimisticUpdates = new Set(state.optimisticUpdates);
+      const soalSet = state.soalSets[index];
       if (soalSet.tempId) {
-        newOptimisticUpdates.delete(soalSet.tempId);
+        state.optimisticUpdates.soalSet.delete(soalSet.tempId);
       }
-      const newSoalSets = state.soalSets.filter((_, i) => i !== index);
-      return {
-        soalSets: newSoalSets,
-        isDirty: true,
-        stepDirtyFlags: { ...state.stepDirtyFlags, assessment: true },
-        optimisticUpdates: newOptimisticUpdates,
-      };
+      state.soalSets.splice(index, 1);
+      state.editVersion += 1;
     });
   },
-  saveSoalSet: async (index) => {
-    const { soalSets, draftId } = get();
-    if (!soalSets[index] || !draftId) return;
 
-    const soalSet = soalSets[index];
+  saveSoalSet: async (id) => {
+    const soalSet = get().soalSets.find((s) => s.tempId === id || s.id?.toString() === id);
+    const draftId = get().draftId;
+    if (!soalSet || !draftId) return;
+
     const tempId = soalSet.tempId;
-
     set({ isLoading: true, error: null });
 
     try {
@@ -100,720 +143,435 @@ export const createAssessment: StateCreator<
           koleksiSoalId: soalSet.koleksiSoalId,
           title: soalSet.title,
           description: soalSet.description,
-          order: index,
+          order: get().soalSets.indexOf(soalSet),
         },
         soalSet.id
       );
 
       if (result.success && result.data) {
         set((state) => {
-          const newSoalSets = [...state.soalSets];
-          newSoalSets[index] = { ...newSoalSets[index], id: result.data.id, tempId: undefined };
-          const newOptimistic = new Set(state.optimisticUpdates);
-          if (tempId) newOptimistic.delete(tempId);
-          return {
-            soalSets: newSoalSets,
-            isLoading: false,
-            isDirty: false,
-            stepDirtyFlags: { ...state.stepDirtyFlags, assessment: false },
-            optimisticUpdates: newOptimistic,
-          };
+          const savedSoalSet = state.soalSets.find(
+            (s) => s.tempId === tempId
+          );
+          if (savedSoalSet) {
+            savedSoalSet.id = result.data.id;
+            delete savedSoalSet.tempId;
+          }
+          if (tempId) {
+            state.optimisticUpdates.soalSet.delete(tempId);
+          }
+          
         });
         toast.success(tempId ? 'Question set linked' : 'Question set updated');
       } else {
         throw new Error(result.error || 'Failed to save question set');
       }
     } catch (error) {
-      set({
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to save question set',
-      });
-      toast.error('Failed to save question set');
+      const message =
+        error instanceof Error ? error.message : 'Failed to save question set';
+      set({ error: message });
+      toast.error(message);
+    } finally {
+      set({ isLoading: false });
     }
   },
+
   addKoleksiSoal: (koleksiSoal) => {
     set((state) => {
-      const tempId = `temp-koleksi-${Date.now()}`;
+      const tempId = generateTempId('koleksi');
       const newKoleksiSoal: KoleksiSoalData = {
         ...koleksiSoal,
-        soals: koleksiSoal.soals?.map((soal, index) => ({
-          ...soal,
-          opsis: [],
-          tempId: `temp-soal-${Date.now()}-${index}`,
-        })) || [],
+        id: undefined,
+        soals:
+          koleksiSoal.soals?.map((soal, index) => ({
+            ...soal,
+            id: undefined,
+            opsis: [],
+            order: index,
+            tempId: generateTempId('soal'),
+          })) || [],
         tempId,
       };
-      return {
-        koleksiSoals: [...state.koleksiSoals, newKoleksiSoal],
-        isDirty: true,
-        stepDirtyFlags: { ...state.stepDirtyFlags, assessment: true },
-        optimisticUpdates: new Set(state.optimisticUpdates).add(tempId),
-      };
+      state.koleksiSoals.push(newKoleksiSoal);
+      state.optimisticUpdates.koleksi.add(tempId);
+      state.editVersion += 1;
     });
   },
-  updateKoleksiSoal: (index, koleksiSoal) => {
+
+  updateKoleksiSoal: (id, koleksiSoal) => {
     set((state) => {
-      if (state.koleksiSoals[index]) {
-        const newKoleksiSoals = [...state.koleksiSoals];
-        newKoleksiSoals[index] = { ...newKoleksiSoals[index], ...koleksiSoal };
-        
-        const newDirtyKoleksiSoals = new Set(state.dirtyKoleksiSoals);
-        if (newKoleksiSoals[index].id) {
-          newDirtyKoleksiSoals.add(newKoleksiSoals[index].id!);
+      const koleksi = findKoleksiById(id, state);
+      if (koleksi) {
+        Object.assign(koleksi, koleksiSoal);
+        if (koleksi.id) {
+          state.dirtyKoleksiSoals.add(koleksi.id);
         }
-        
-        return {
-          ...state,
-          koleksiSoals: newKoleksiSoals,
-          dirtyKoleksiSoals: newDirtyKoleksiSoals,
-          isDirty: true,
-          stepDirtyFlags: { ...state.stepDirtyFlags, assessment: true },
-        };
+        state.editVersion += 1;
       }
-      return state;
     });
   },
-  removeKoleksiSoal: (index) => {
-    const { koleksiSoals } = get();
-    if (!koleksiSoals[index]) return;
 
-    const koleksiSoal = koleksiSoals[index];
+  removeKoleksiSoal: (id) => {
+    set((state) => {
+      const index = state.koleksiSoals.findIndex(
+        (k) => k.id === id || k.tempId === id
+      );
+      if (index === -1) return;
 
-    if (koleksiSoal.tempId) {
-      // Remove unsaved koleksi soal (only from local state)
-      set((state) => {
-        const newOptimisticUpdates = new Set(state.optimisticUpdates);
-        if (koleksiSoal.tempId) {
-          newOptimisticUpdates.delete(koleksiSoal.tempId);
-        }
-        const newKoleksiSoals = state.koleksiSoals.filter((_, i) => i !== index);
-        return {
-          koleksiSoals: newKoleksiSoals,
-          isDirty: true,
-          stepDirtyFlags: { ...state.stepDirtyFlags, assessment: true },
-          optimisticUpdates: newOptimisticUpdates,
-        };
-      });
-    } else {
-      // Mark saved koleksi soal for deletion (will be deleted on save)
-      set((state) => ({
-        deletedKoleksiSoals: [...state.deletedKoleksiSoals, koleksiSoal.id!],
-        koleksiSoals: state.koleksiSoals.filter((_, i) => i !== index),
-        isDirty: true,
-        stepDirtyFlags: { ...state.stepDirtyFlags, assessment: true },
-      }));
-    }
-  },
-  saveKoleksiSoal: async (index) => {
-    const { koleksiSoals, draftId } = get();
-    if (!koleksiSoals[index] || !draftId) return;
-
-    const koleksiSoal = koleksiSoals[index];
-
-    set({ isLoading: true, error: null });
-
-    try {
-      let result: any;
+      const koleksiSoal = state.koleksiSoals[index];
       if (koleksiSoal.tempId) {
-        // New koleksi - create it
-        result = await saveKoleksiSoalAction(
-          draftId, // kelasId
-          {
-            nama: koleksiSoal.nama,
-            deskripsi: koleksiSoal.deskripsi,
-            isPrivate: false,
-            isDraft: true,
-          },
-          undefined // No ID for new items
-        );
-
-        if (result.success && result.data) {
-          // Update the koleksi with the real ID
-          set((state) => {
-            const newKoleksiSoals = [...state.koleksiSoals];
-            const newOptimisticUpdates = new Set(state.optimisticUpdates);
-            if (koleksiSoal.tempId) {
-              newOptimisticUpdates.delete(koleksiSoal.tempId);
-            }
-            newKoleksiSoals[index] = {
-              ...koleksiSoal,
-              id: result.data.id,
-              tempId: undefined, // Clear temp ID as it's now saved
-            };
-            return {
-              koleksiSoals: newKoleksiSoals,
-              optimisticUpdates: newOptimisticUpdates,
-            };
-          });
-        }
-      } else {
-        // Existing koleksi - update it
-        result = await saveKoleksiSoalAction(
-          draftId, // kelasId
-          {
-            nama: koleksiSoal.nama,
-            deskripsi: koleksiSoal.deskripsi,
-            isPrivate: false,
-            isDraft: true,
-          },
-          koleksiSoal.id // Existing ID
-        );
+        state.optimisticUpdates.koleksi.delete(koleksiSoal.tempId);
+      } else if (koleksiSoal.id) {
+        state.deletedKoleksiSoals.push(koleksiSoal.id);
       }
 
-      if (result.success) {
-        set((state) => ({
-          isDirty: false,
-          stepDirtyFlags: { ...state.stepDirtyFlags, assessment: false },
-          isLoading: false,
-        }));
-        toast.success(koleksiSoal.tempId ? 'Question collection created successfully' : 'Question collection updated successfully');
-      } else {
-        throw new Error(result.error || 'Failed to save question collection');
-      }
-    } catch (error) {
-      set({
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to save question collection',
-      });
-      toast.error('Failed to save question collection');
-    }
+      state.koleksiSoals.splice(index, 1);
+      state.editVersion += 1;
+    });
   },
-  addSoal: (koleksiIndex, soal) => {
+
+  addSoal: (koleksiId, soal) => {
     set((state) => {
-      const newKoleksiSoals = [...state.koleksiSoals];
-      if (newKoleksiSoals[koleksiIndex]) {
-        const tempId = `temp-soal-${Date.now()}`;
+      const koleksi = findKoleksiById(koleksiId, state);
+      if (koleksi) {
+        const tempId = generateTempId('soal');
         const newSoal: SoalData = {
           ...soal,
-          order: newKoleksiSoals[koleksiIndex].soals.length, // Set order to current length (will be reindexed if needed)
-          opsis: soal.opsis?.map((opsi, index) => ({
-            ...opsi,
-            order: index,
-            tempId: `temp-opsi-${Date.now()}-${index}`,
-          })) || [],
+          id: undefined,
+          order: koleksi.soals.length,
+          opsis:
+            soal.opsis?.map((opsi, index) => ({
+              ...opsi,
+              id: undefined,
+              order: index,
+              tempId: generateTempId('opsi'),
+            })) || [],
           tempId,
         };
-        newKoleksiSoals[koleksiIndex] = {
-          ...newKoleksiSoals[koleksiIndex],
-          soals: [...newKoleksiSoals[koleksiIndex].soals, newSoal],
-        };
-        return {
-          koleksiSoals: newKoleksiSoals,
-          isDirty: true,
-          stepDirtyFlags: { ...state.stepDirtyFlags, assessment: true },
-          optimisticUpdates: new Set(state.optimisticUpdates).add(tempId),
-        };
-      }
-      return state;
-    });
-  },
-  updateSoal: (koleksiIndex, soalIndex, soal) => {
-    set((state) => {
-      if (state.koleksiSoals[koleksiIndex] && state.koleksiSoals[koleksiIndex].soals[soalIndex]) {
-        const newKoleksiSoals = [...state.koleksiSoals];
-        newKoleksiSoals[koleksiIndex] = {
-          ...newKoleksiSoals[koleksiIndex],
-          soals: [...newKoleksiSoals[koleksiIndex].soals],
-        };
-        newKoleksiSoals[koleksiIndex].soals[soalIndex] = {
-          ...newKoleksiSoals[koleksiIndex].soals[soalIndex],
-          ...soal,
-        };
-        
-        const newDirtyKoleksiSoals = new Set(state.dirtyKoleksiSoals);
-        if (newKoleksiSoals[koleksiIndex].id) {
-          newDirtyKoleksiSoals.add(newKoleksiSoals[koleksiIndex].id!);
+        koleksi.soals.push(newSoal);
+        state.optimisticUpdates.soal.add(tempId);
+        if (koleksi.id) {
+          state.dirtyKoleksiSoals.add(koleksi.id);
         }
-        
-        return {
-          ...state,
-          koleksiSoals: newKoleksiSoals,
-          dirtyKoleksiSoals: newDirtyKoleksiSoals,
-          isDirty: true,
-          stepDirtyFlags: { ...state.stepDirtyFlags, assessment: true },
-        };
+        state.editVersion += 1;
       }
-      return state;
     });
   },
-  removeSoal: (koleksiIndex, soalIndex) => {
-    const { koleksiSoals } = get();
-    if (!koleksiSoals[koleksiIndex] || !koleksiSoals[koleksiIndex].soals[soalIndex]) return;
 
-    const koleksiSoal = koleksiSoals[koleksiIndex];
-    const soal = koleksiSoal.soals[soalIndex];
-
-    if (soal.tempId) {
-      // Remove unsaved soal (only from local state)
-      set((state) => {
-        const newKoleksiSoals = [...state.koleksiSoals];
-        const newOptimisticUpdates = new Set(state.optimisticUpdates);
-        if (soal.tempId) {
-          newOptimisticUpdates.delete(soal.tempId);
+  updateSoal: (koleksiId, soalId, soal) => {
+    set((state) => {
+      const foundSoal = findSoalById(koleksiId, soalId, state);
+      if (foundSoal) {
+        Object.assign(foundSoal, soal);
+        if (foundSoal.id) {
+          state.dirtySoals.add(foundSoal.id);
         }
-        const newSoals = newKoleksiSoals[koleksiIndex].soals.filter((_, i) => i !== soalIndex);
-        const reorderedSoals = newSoals.map((s, i) => ({ ...s, order: i }));
-        newKoleksiSoals[koleksiIndex] = { ...newKoleksiSoals[koleksiIndex], soals: reorderedSoals };
-        return {
-          koleksiSoals: newKoleksiSoals,
-          isDirty: true,
-          stepDirtyFlags: { ...state.stepDirtyFlags, assessment: true },
-          optimisticUpdates: newOptimisticUpdates,
-        };
-      });
-    } else {
-      // Mark saved soal for deletion (will be deleted on save)
-      set((state) => {
-        const newKoleksiSoals = [...state.koleksiSoals];
-        const newSoals = newKoleksiSoals[koleksiIndex].soals.filter((_, i) => i !== soalIndex);
-        const reorderedSoals = newSoals.map((s, i) => ({ ...s, order: i }));
-        newKoleksiSoals[koleksiIndex] = { ...newKoleksiSoals[koleksiIndex], soals: reorderedSoals };
-        return {
-          deletedSoals: [...state.deletedSoals, soal.id!],
-          koleksiSoals: newKoleksiSoals,
-          isDirty: true,
-          stepDirtyFlags: { ...state.stepDirtyFlags, assessment: true },
-        };
-      });
-    }
-  },
-  reorderSoals: (koleksiIndex, fromIndex, toIndex) => {
-    set((state) => {
-      const newKoleksiSoals = [...state.koleksiSoals];
-      const koleksiSoal = newKoleksiSoals[koleksiIndex];
-      if (!koleksiSoal || !koleksiSoal.soals[fromIndex] || !koleksiSoal.soals[toIndex]) return state;
-
-      const soals = [...koleksiSoal.soals];
-      const [movedSoal] = soals.splice(fromIndex, 1);
-      soals.splice(toIndex, 0, movedSoal);
-
-      // Update order for all soals in this koleksi
-      const reorderedSoals = soals.map((soal, index) => ({
-        ...soal,
-        order: index,
-      }));
-      newKoleksiSoals[koleksiIndex] = { ...koleksiSoal, soals: reorderedSoals };
-
-      return {
-        koleksiSoals: newKoleksiSoals,
-        isDirty: true,
-        stepDirtyFlags: { ...state.stepDirtyFlags, assessment: true },
-      };
+        state.editVersion += 1;
+      }
     });
   },
-  addOpsi: (koleksiIndex, soalIndex, opsi) => {
+
+  removeSoal: (koleksiId, soalId) => {
     set((state) => {
-      const newKoleksiSoals = [...state.koleksiSoals];
-      if (newKoleksiSoals[koleksiIndex] && newKoleksiSoals[koleksiIndex].soals[soalIndex]) {
-        const tempId = `temp-opsi-${Date.now()}`;
-        const currentOpsis = newKoleksiSoals[koleksiIndex].soals[soalIndex].opsis;
+      const koleksi = findKoleksiById(koleksiId, state);
+      if (!koleksi) return;
+
+      const soalIndex = koleksi.soals.findIndex(
+        (s) => s.id === soalId || s.tempId === soalId
+      );
+      if (soalIndex === -1) return;
+
+      const soal = koleksi.soals[soalIndex];
+      if (soal.tempId) {
+        state.optimisticUpdates.soal.delete(soal.tempId);
+      } else if (soal.id) {
+        state.deletedSoals.push(soal.id);
+      }
+
+      koleksi.soals.splice(soalIndex, 1);
+      koleksi.soals = reindexOrder(koleksi.soals);
+      if (koleksi.id) {
+        state.dirtyKoleksiSoals.add(koleksi.id);
+      }
+      state.editVersion += 1;
+    });
+  },
+
+  reorderSoals: (koleksiId, fromIndex, toIndex) => {
+    set((state) => {
+      const koleksi = findKoleksiById(koleksiId, state);
+      if (koleksi && koleksi.soals[fromIndex] && koleksi.soals[toIndex]) {
+        const [movedSoal] = koleksi.soals.splice(fromIndex, 1);
+        koleksi.soals.splice(toIndex, 0, movedSoal);
+        koleksi.soals = reindexOrder(koleksi.soals);
+        if (koleksi.id) {
+          state.dirtyKoleksiSoals.add(koleksi.id);
+        }
+        state.editVersion += 1;
+      }
+    });
+  },
+
+  addOpsi: (koleksiId, soalId, opsi) => {
+    set((state) => {
+      const soal = findSoalById(koleksiId, soalId, state);
+      if (soal) {
+        const tempId = generateTempId('opsi');
         const newOpsi: SoalOpsiData = {
           ...opsi,
-          order: currentOpsis.length,
+          id: undefined,
+          order: soal.opsis.length,
           tempId,
         };
-        
-        // Create proper nested copies to avoid direct draft modification
-        newKoleksiSoals[koleksiIndex] = {
-          ...newKoleksiSoals[koleksiIndex],
-          soals: [...newKoleksiSoals[koleksiIndex].soals],
-        };
-        newKoleksiSoals[koleksiIndex].soals[soalIndex] = {
-          ...newKoleksiSoals[koleksiIndex].soals[soalIndex],
-          opsis: [...currentOpsis, newOpsi],
-        };
-        
-        return {
-          koleksiSoals: newKoleksiSoals,
-          isDirty: true,
-          stepDirtyFlags: { ...state.stepDirtyFlags, assessment: true },
-          optimisticUpdates: new Set(state.optimisticUpdates).add(tempId),
-        };
+        soal.opsis.push(newOpsi);
+        state.optimisticUpdates.opsi.add(tempId);
+        if (soal.id) {
+          state.dirtySoals.add(soal.id);
+        }
+        state.editVersion += 1;
       }
-      return state;
     });
   },
-  updateOpsi: (koleksiIndex, soalIndex, opsiIndex, opsi) => {
+
+  updateOpsi: (koleksiId, soalId, opsiId, opsi) => {
     set((state) => {
-      const newKoleksiSoals = [...state.koleksiSoals];
-      if (
-        newKoleksiSoals[koleksiIndex] &&
-        newKoleksiSoals[koleksiIndex].soals[soalIndex] &&
-        newKoleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex]
-      ) {
-        // Create new arrays to avoid direct draft modification
-        newKoleksiSoals[koleksiIndex] = {
-          ...newKoleksiSoals[koleksiIndex],
-          soals: [...newKoleksiSoals[koleksiIndex].soals],
-        };
-        newKoleksiSoals[koleksiIndex].soals[soalIndex] = {
-          ...newKoleksiSoals[koleksiIndex].soals[soalIndex],
-          opsis: [...newKoleksiSoals[koleksiIndex].soals[soalIndex].opsis],
-        };
-        newKoleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex] = {
-          ...newKoleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex],
-          ...opsi,
-        };
-        
-        return {
-          ...state,
-          koleksiSoals: newKoleksiSoals,
-          isDirty: true,
-          stepDirtyFlags: { ...state.stepDirtyFlags, assessment: true },
-        };
+      const foundOpsi = findOpsiById(koleksiId, soalId, opsiId, state);
+      if (foundOpsi) {
+        Object.assign(foundOpsi, opsi);
+        if (foundOpsi.id) {
+          state.dirtyOpsis.add(foundOpsi.id);
+        }
+        const soal = findSoalById(koleksiId, soalId, state);
+        if (soal?.id) {
+          state.dirtySoals.add(soal.id);
+        }
+        state.editVersion += 1;
       }
-      return state;
     });
   },
-  removeOpsi: (koleksiIndex, soalIndex, opsiIndex) => {
-    const { koleksiSoals } = get();
-    if (
-      !koleksiSoals[koleksiIndex] ||
-      !koleksiSoals[koleksiIndex].soals[soalIndex] ||
-      !koleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex]
-    )
-      return;
 
-    const soal = koleksiSoals[koleksiIndex].soals[soalIndex];
-    const opsi = soal.opsis[opsiIndex];
+  removeOpsi: (koleksiId, soalId, opsiId) => {
+    set((state) => {
+      const soal = findSoalById(koleksiId, soalId, state);
+      if (!soal) return;
 
-    if (opsi.tempId) {
-      // Remove unsaved opsi (only from local state)
-      set((state) => {
-        const newKoleksiSoals = [...state.koleksiSoals];
-        const newOptimisticUpdates = new Set(state.optimisticUpdates);
-        if (opsi.tempId) {
-          newOptimisticUpdates.delete(opsi.tempId);
-        }
-        const newOpsis = newKoleksiSoals[koleksiIndex].soals[soalIndex].opsis.filter((_, i) => i !== opsiIndex);
-        const reorderedOpsis = newOpsis.map((o, i) => ({ ...o, order: i }));
-        newKoleksiSoals[koleksiIndex].soals[soalIndex] = {
-          ...newKoleksiSoals[koleksiIndex].soals[soalIndex],
-          opsis: reorderedOpsis,
-        };
-        return {
-          koleksiSoals: newKoleksiSoals,
-          isDirty: true,
-          stepDirtyFlags: { ...state.stepDirtyFlags, assessment: true },
-          optimisticUpdates: newOptimisticUpdates,
-        };
-      });
-    } else {
-      // Mark saved opsi for deletion (will be deleted on save)
-      set((state) => {
-        const newKoleksiSoals = [...state.koleksiSoals];
-        const newOpsis = newKoleksiSoals[koleksiIndex].soals[soalIndex].opsis.filter((_, i) => i !== opsiIndex);
-        const reorderedOpsis = newOpsis.map((o, i) => ({ ...o, order: i }));
-        newKoleksiSoals[koleksiIndex].soals[soalIndex] = {
-          ...newKoleksiSoals[koleksiIndex].soals[soalIndex],
-          opsis: reorderedOpsis,
-        };
-        return {
-          deletedOpsi: [...state.deletedOpsi, opsi.id!],
-          koleksiSoals: newKoleksiSoals,
-          isDirty: true,
-          stepDirtyFlags: { ...state.stepDirtyFlags, assessment: true },
-        };
-      });
-    }
-  },
-  saveSoal: async (koleksiIndex, soalIndex) => {
-    const { koleksiSoals } = get();
-    if (!koleksiSoals[koleksiIndex] || !koleksiSoals[koleksiIndex].soals[soalIndex]) return;
-
-    const koleksiSoal = koleksiSoals[koleksiIndex];
-    const soal = koleksiSoal.soals[soalIndex];
-
-    // Only save if koleksiSoal has a real ID (is saved)
-    if (!koleksiSoal.id) return;
-
-    // Validate the soal data before saving
-    if (!soal.pertanyaan || soal.pertanyaan.trim() === '') {
-      toast.error('Question is required');
-      return;
-    }
-
-    set({ isLoading: true, error: null });
-
-    try {
-      const result = await saveSoalAction(
-        koleksiSoal.id,
-        {
-          pertanyaan: soal.pertanyaan,
-          difficulty: soal.difficulty || Difficulty.BEGINNER,
-          explanation: soal.explanation,
-          isActive: soal.isActive,
-        },
-        soal.id || undefined // Pass undefined for new items, existing ID for updates
+      const opsiIndex = soal.opsis.findIndex(
+        (o) => o.id === opsiId || o.tempId === opsiId
       );
+      if (opsiIndex === -1) return;
 
-      if (result.success && result.data) {
-        // Update the soal with the real ID and save all opsis
-        set((state) => {
-          const newKoleksiSoals = [...state.koleksiSoals];
-          const updatedSoal = { ...newKoleksiSoals[koleksiIndex].soals[soalIndex] };
-          updatedSoal.id = result.data.id;
-          const newOptimisticUpdates = new Set(state.optimisticUpdates);
-          if (updatedSoal.tempId) {
-            newOptimisticUpdates.delete(updatedSoal.tempId);
-            delete updatedSoal.tempId;
-          }
-          newKoleksiSoals[koleksiIndex].soals[soalIndex] = updatedSoal;
-          return {
-            koleksiSoals: newKoleksiSoals,
-            isLoading: false,
-            stepDirtyFlags: { ...state.stepDirtyFlags, assessment: false },
-            optimisticUpdates: newOptimisticUpdates,
-          };
-        });
-
-        // Save all opsis for this soal
-        const opsisToSave = soal.opsis.filter(opsi => opsi.tempId);
-        for (let opsiIndex = 0; opsiIndex < opsisToSave.length; opsiIndex++) {
-          await get().saveOpsi(koleksiIndex, soalIndex, opsiIndex);
-        }
-
-        toast.success(soal.tempId ? 'Question created successfully' : 'Question updated successfully');
-      } else {
-        throw new Error(result.error || 'Failed to save question');
+      const opsi = soal.opsis[opsiIndex];
+      if (opsi.tempId) {
+        state.optimisticUpdates.opsi.delete(opsi.tempId);
+      } else if (opsi.id) {
+        state.deletedOpsi.push(opsi.id);
       }
-    } catch (error) {
-      set({
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to save question',
-      });
-      toast.error('Failed to save question');
-    }
+
+      soal.opsis.splice(opsiIndex, 1);
+      soal.opsis = reindexOrder(soal.opsis);
+      if (soal.id) {
+        state.dirtySoals.add(soal.id);
+      }
+      state.editVersion += 1;
+    });
   },
-  saveOpsi: async (koleksiIndex, soalIndex, opsiIndex) => {
-    const { koleksiSoals } = get();
-    if (
-      !koleksiSoals[koleksiIndex] ||
-      !koleksiSoals[koleksiIndex].soals[soalIndex] ||
-      !koleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex]
-    )
-      return;
 
-    const soal = koleksiSoals[koleksiIndex].soals[soalIndex];
-    const opsi = soal.opsis[opsiIndex];
-
-    // Only save if soal has a real ID (is saved) and opsi has tempId (is unsaved)
-    if (!soal.id || !opsi.tempId) return;
-
-    try {
-      // Validate the opsi data before saving
-      if (!opsi.opsiText || opsi.opsiText.trim() === '') {
-        console.warn('Skipping save for empty option text');
-        return;
-      }
-
-      const result = await saveOpsiAction(
-        soal.id,
-        {
-          opsiText: opsi.opsiText,
-          isCorrect: opsi.isCorrect,
-          order: opsi.order,
-        },
-        opsi.id
-      );
-
-      if (result.success && result.data) {
-        // Update the opsi with the real ID
-        set((state) => {
-          const newKoleksiSoals = [...state.koleksiSoals];
-          const updatedOpsi = { ...newKoleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex] };
-          updatedOpsi.id = result.data.id;
-          const newOptimisticUpdates = new Set(state.optimisticUpdates);
-          if (updatedOpsi.tempId) {
-            newOptimisticUpdates.delete(updatedOpsi.tempId);
-            delete updatedOpsi.tempId;
-          }
-          newKoleksiSoals[koleksiIndex].soals[soalIndex].opsis[opsiIndex] = updatedOpsi;
-          return {
-            koleksiSoals: newKoleksiSoals,
-            optimisticUpdates: newOptimisticUpdates,
-          };
-        });
-      } else {
-        throw new Error(result.error || 'Failed to save option');
-      }
-    } catch (error) {
-      console.error('Save opsi error:', error);
-      // Don't show toast for individual opsi errors as they happen in batch
-    }
-  },
   saveAllAssessments: async () => {
-    const { koleksiSoals, draftId, deletedKoleksiSoals, deletedSoals, deletedOpsi } = get();
+    const {
+      draftId,
+      koleksiSoals,
+      deletedKoleksiSoals,
+      deletedSoals,
+      deletedOpsi,
+      dirtyKoleksiSoals,
+      dirtySoals,
+      dirtyOpsis,
+    } = get();
     if (!draftId) return;
 
-    console.log('💾 [AUTO-SAVE TRIGGER] saveAllAssessments called:', {
-      draftId,
-      totalCollections: koleksiSoals.length,
-      unsavedCollections: koleksiSoals.filter(k => k.tempId).length,
-      totalQuestions: koleksiSoals.reduce((total, k) => total + k.soals.length, 0),
-      unsavedQuestions: koleksiSoals.reduce((total, k) => total + k.soals.filter(s => s.tempId).length, 0),
-      deletedCollections: deletedKoleksiSoals.length,
-      deletedQuestions: deletedSoals.length,
-      deletedOptions: deletedOpsi.length
-    });
+    set({  error: null });
 
-    set({ isLoading: true, error: null });
+    const upsert = async <T>(
+      action: (...args: any[]) => Promise<ActionResult<T>>,
+      ...args: any[]
+    ): Promise<ActionResult<T>> => {
+      try {
+        const result = await action(...args);
+        if (!result.success) {
+          console.error(`Action failed with args ${JSON.stringify(args)}:`, result.error);
+        }
+        return result;
+      } catch (e) {
+        const error = e instanceof Error ? e.message : 'Unknown error';
+        console.error(`Exception in action with args ${JSON.stringify(args)}:`, error);
+        return { success: false, error };
+      }
+    };
 
     try {
-      console.log('📝 [AUTO-SAVE] Starting batch save of assessments...');
+      // 1. Handle Deletions
+      const deletionPromises = [
+        ...deletedKoleksiSoals.map((id) => deleteKoleksiSoal(id)),
+        ...deletedSoals.map((id) => deleteSoal(id)),
+        ...deletedOpsi.map((id) => deleteOpsi(id)),
+      ];
+      await Promise.all(deletionPromises);
 
-      // Handle deletions first
-      if (deletedKoleksiSoals.length > 0) {
-        console.log('🗑️ [AUTO-SAVE] Deleting koleksi soals:', deletedKoleksiSoals);
-        for (const koleksiId of deletedKoleksiSoals) {
-          const deleteResult = await deleteKoleksiSoal(koleksiId);
-          if (!deleteResult.success) {
-            throw new Error(`Failed to delete koleksi soal ${koleksiId}: ${deleteResult.error}`);
-          }
-        }
-      }
-
-      if (deletedSoals.length > 0) {
-        console.log('🗑️ [AUTO-SAVE] Deleting soals:', deletedSoals);
-        for (const soalId of deletedSoals) {
-          const deleteResult = await deleteSoal(soalId);
-          if (!deleteResult.success) {
-            throw new Error(`Failed to delete soal ${soalId}: ${deleteResult.error}`);
-          }
-        }
-      }
-
-      if (deletedOpsi.length > 0) {
-        console.log('🗑️ [AUTO-SAVE] Deleting opsi:', deletedOpsi);
-        for (const opsiId of deletedOpsi) {
-          const deleteResult = await deleteOpsi(opsiId);
-          if (!deleteResult.success) {
-            throw new Error(`Failed to delete opsi ${opsiId}: ${deleteResult.error}`);
-          }
-        }
-      }
-
-      // Get the current state to check dirty flags
-      const currentState = get();
-
-      // First, save all koleksi soals (both new and existing)
-      for (let koleksiIndex = 0; koleksiIndex < koleksiSoals.length; koleksiIndex++) {
-        const koleksiSoal = koleksiSoals[koleksiIndex];
-
-        // Save koleksi soal if it has tempId (new) OR if it has changes (existing)
-        if (koleksiSoal.tempId || currentState.stepDirtyFlags.assessment) {
-          console.log(`📝 [AUTO-SAVE] Saving koleksi soal ${koleksiIndex}: ${koleksiSoal.nama}`);
-          await saveKoleksiSoalAction(
-            draftId,
-            {
-              nama: koleksiSoal.nama,
-              deskripsi: koleksiSoal.deskripsi,
+      // 2. Upsert Koleksi Soal
+      for (const koleksi of koleksiSoals) {
+        if (koleksi.tempId || dirtyKoleksiSoals.has(koleksi.id!)) {
+          const payload = {
+            kelasId: draftId,
+            data: {
+              nama: koleksi.nama,
+              deskripsi: koleksi.deskripsi,
               isPrivate: false,
               isDraft: true,
             },
-            koleksiSoal.id
+          };
+          const result = await upsert(
+            saveKoleksiSoalAction as any,
+            draftId,
+            payload.data,
+            koleksi.id
           );
+          if (result.success && result.data && koleksi.tempId) {
+            set((state) => {
+              const k = findKoleksiById(koleksi.tempId!, state);
+              if (k) {
+                k.id = (result.data as { id: number }).id;
+                state.optimisticUpdates.koleksi.delete(koleksi.tempId!);
+                delete k.tempId;
+              }
+            });
+          }
         }
       }
 
-      // Then, save all soals and their opsis
-      for (let koleksiIndex = 0; koleksiIndex < koleksiSoals.length; koleksiIndex++) {
-        const koleksiSoal = koleksiSoals[koleksiIndex];
+      // 3. Upsert Soal and Opsi
+      for (const koleksi of get().koleksiSoals) {
+        if (!koleksi.id) continue; // Should have an ID now
 
-        // Only proceed if koleksiSoal is saved (has real ID)
-        if (koleksiSoal.id) {
-          for (let soalIndex = 0; soalIndex < koleksiSoal.soals.length; soalIndex++) {
-            const soal = koleksiSoal.soals[soalIndex];
+        for (const soal of koleksi.soals) {
+          const hasNewOpsis = soal.opsis.some((o) => o.tempId);
+          if (
+            soal.tempId ||
+            dirtySoals.has(soal.id!) ||
+            (soal.id && hasNewOpsis)
+          ) {
+            if (!validateText(soal.pertanyaan)) continue;
 
-            // Save soal if it has tempId (new) OR if it has changes (existing) and has valid data
-            if (soal.tempId || currentState.stepDirtyFlags.assessment) {
-              // Only save if the question has content
-              if (soal.pertanyaan && soal.pertanyaan.trim() !== '') {
-                console.log(`📝 [AUTO-SAVE] Saving soal ${soalIndex} in koleksi ${koleksiIndex}: ${soal.pertanyaan.substring(0, 50)}...`);
-                const result = await saveSoalAction(
-                  koleksiSoal.id,
-                  {
-                    pertanyaan: soal.pertanyaan,
-                    difficulty: soal.difficulty || Difficulty.BEGINNER,
-                    explanation: soal.explanation,
-                    isActive: soal.isActive,
-                  },
-                  soal.id
-                );
+            const payload = {
+              koleksiSoalId: koleksi.id,
+              data: {
+                pertanyaan: soal.pertanyaan,
+                difficulty: soal.difficulty || Difficulty.BEGINNER,
+                explanation: soal.explanation,
+                isActive: soal.isActive,
+              },
+            };
+            const result = await upsert(
+              saveSoalAction as any,
+              payload.koleksiSoalId,
+              payload.data,
+              soal.id
+            );
 
-                // If soal is new and saved successfully, save its opsis
-                if (result.success && result.data && soal.tempId) {
-                  console.log(`📝 [AUTO-SAVE] Saving opsis for soal ${soalIndex} in koleksi ${koleksiIndex}`);
-                  const opsisToSave = soal.opsis.filter(opsi => opsi.tempId);
-                  for (let opsiIndex = 0; opsiIndex < opsisToSave.length; opsiIndex++) {
-                    await saveOpsiAction(
-                      result.data.id, // Use the newly created soal ID
-                      {
-                        opsiText: opsisToSave[opsiIndex].opsiText,
-                        isCorrect: opsisToSave[opsiIndex].isCorrect,
-                        order: opsisToSave[opsiIndex].order,
-                      },
-                      undefined // No ID for new opsi
-                    );
+            if (result.success && result.data) {
+              const savedSoalId = (result.data as { id: number }).id;
+              const tempSoalId = soal.tempId;
+
+              // Update Soal ID if it was new
+              if (tempSoalId) {
+                set((state) => {
+                  const s = findSoalById(koleksi.id!, tempSoalId, state);
+                  if (s) {
+                    s.id = savedSoalId;
+                    state.optimisticUpdates.soal.delete(s.tempId!);
+                    delete s.tempId;
+                  }
+                });
+              }
+
+              // Now save its opsis
+              const currentSoal = findSoalById(koleksi.id, savedSoalId, get());
+              if (!currentSoal) continue;
+
+              for (const opsi of currentSoal.opsis) {
+                if (
+                  (opsi.tempId || dirtyOpsis.has(opsi.id!)) &&
+                  validateText(opsi.opsiText)
+                ) {
+                  const opsiPayload = {
+                    soalId: savedSoalId,
+                    data: {
+                      opsiText: opsi.opsiText,
+                      isCorrect: opsi.isCorrect,
+                      order: opsi.order,
+                    },
+                  };
+                  const opsiResult = await upsert(
+                    saveOpsiAction as any,
+                    opsiPayload.soalId,
+                    opsiPayload.data,
+                    opsi.id
+                  );
+                  if (opsiResult.success && opsiResult.data && opsi.tempId) {
+                    set((state) => {
+                      const o = findOpsiById(
+                        koleksi.id!,
+                        savedSoalId,
+                        opsi.tempId!,
+                        state
+                      );
+                      if (o) {
+                        o.id = (opsiResult.data as { id: number }).id;
+                        state.optimisticUpdates.opsi.delete(o.tempId!);
+                        delete o.tempId;
+                      }
+                    });
                   }
                 }
-              } else {
-                console.warn(`⚠️ [AUTO-SAVE] Skipping save for empty question in koleksi ${koleksiIndex}, soal ${soalIndex}`);
               }
             }
           }
         }
       }
 
-      // Handle reordering for saved soals
-      const reorderBatches: { koleksiSoalId: number, soalOrders: { id: number, order: number }[] }[] = [];
+      // 4. Handle Reordering
+      const reorderBatches = get()
+        .koleksiSoals.filter((k) => k.id && dirtyKoleksiSoals.has(k.id))
+        .map((k) => ({
+          koleksiSoalId: k.id!,
+          soalOrders: k.soals
+            .filter((s) => s.id)
+            .map((s) => ({ id: s.id!, order: s.order ?? 0 })),
+        }));
 
-      for (let koleksiIndex = 0; koleksiIndex < koleksiSoals.length; koleksiIndex++) {
-        const koleksiSoal = koleksiSoals[koleksiIndex];
-
-        // Only proceed if koleksiSoal is saved (has real ID)
-        if (koleksiSoal.id) {
-          const soalOrders = koleksiSoal.soals
-            .filter(soal => soal.id) // Only include saved soals
-            .map(soal => ({
-              id: soal.id!,
-              order: soal.order ?? 0
-            }));
-
-          if (soalOrders.length > 0) {
-            reorderBatches.push({
-              koleksiSoalId: koleksiSoal.id,
-              soalOrders
-            });
-          }
+      for (const batch of reorderBatches) {
+        if (batch.soalOrders.length > 0) {
+          await reorderSoalsAction(batch.koleksiSoalId, batch.soalOrders);
         }
       }
 
-      // Execute reordering for each koleksi
-      for (const batch of reorderBatches) {
-        console.log(`🔄 [AUTO-SAVE] Reordering soals for koleksi ${batch.koleksiSoalId}:`, batch.soalOrders);
-        await reorderSoals(batch.koleksiSoalId, batch.soalOrders);
-      }
+      // 5. Final State Cleanup
+      set((state) => {
+        state.deletedKoleksiSoals = [];
+        state.deletedSoals = [];
+        state.deletedOpsi = [];
+        state.dirtyKoleksiSoals.clear();
+        state.dirtySoals.clear();
+        state.dirtyOpsis.clear();
+      });
 
-      // Clear deletion tracking and update state
-      set((state) => ({
-        deletedKoleksiSoals: [],
-        deletedSoals: [],
-        deletedOpsi: [],
-        isDirty: false,
-        stepDirtyFlags: { ...state.stepDirtyFlags, assessment: false },
-        isLoading: false,
-      }));
-
-      console.log('✅ [AUTO-SAVE] Batch save of assessments completed successfully');
       toast.success('All assessments saved successfully');
     } catch (error) {
-      console.error('❌ [AUTO-SAVE] Batch save of assessments failed:', error);
-      set({
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to save assessments',
-      });
-      toast.error('Failed to save assessments');
+      const message =
+        error instanceof Error ? error.message : 'Failed to save assessments';
+      set({ error: message });
+      toast.error(message);
+    } finally {
+      set({ isLoading: false });
     }
   },
 });

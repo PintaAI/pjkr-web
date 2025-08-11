@@ -222,7 +222,6 @@ export async function deleteSoal(soalId: number) {
   }
 }
 
-// Reorder soals within a koleksiSoal
 export async function reorderSoals(koleksiSoalId: number, soalOrders: { id: number; order: number }[]) {
   try {
     const session = await assertAuthenticated();

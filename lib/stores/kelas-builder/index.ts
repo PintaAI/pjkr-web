@@ -38,7 +38,14 @@ export const useKelasBuilderStore = create<Store>()(
         isLoading: false,
         error: null,
         isDirty: false,
-        optimisticUpdates: new Set(),
+        editVersion: 0,
+        incrementEditVersion: () => set((s) => { s.editVersion += 1; }),
+        optimisticUpdates: {
+          soalSet: new Set(),
+          koleksi: new Set(),
+          soal: new Set(),
+          opsi: new Set(),
+        },
         ...createProgress(set, get, store),
         ...createNavigation(set, get, store),
         ...createMeta(set, get, store),
@@ -120,6 +127,7 @@ export const useKelasBuilderStore = create<Store>()(
                     difficulty: soal.difficulty,
                     explanation: soal.explanation,
                     isActive: soal.isActive,
+                    order: soal.order,
                     opsis: (soal.opsis || []).map((opsi: any) => ({
                       id: opsi.id,
                       opsiText: opsi.opsiText,
@@ -253,7 +261,12 @@ export const useKelasBuilderStore = create<Store>()(
               assessment: false,
               review: false,
             },
-            optimisticUpdates: new Set(),
+            optimisticUpdates: {
+              soalSet: new Set(),
+              koleksi: new Set(),
+              soal: new Set(),
+              opsi: new Set(),
+            },
             deletedMateris: [],
             deletedKoleksiSoals: [],
             deletedSoals: [],
@@ -278,4 +291,37 @@ export const useKelasBuilderStore = create<Store>()(
       name: 'kelas-builder-store',
     }
   )
+);
+
+// Autosave logic
+const debounce = <F extends (...args: any[]) => any>(
+  func: F,
+  waitFor: number
+) => {
+  let timeout: NodeJS.Timeout;
+  return (...args: Parameters<F>): Promise<ReturnType<F>> => {
+    console.log('Debounce called');
+    return new Promise((resolve) => {
+      clearTimeout(timeout);
+      console.log('Previous timeout cleared');
+      timeout = setTimeout(() => {
+        console.log('Executing debounced function');
+        resolve(func(...args));
+      }, waitFor);
+      console.log('New timeout set');
+    });
+  }
+};
+
+const debouncedSave = debounce(
+  () => useKelasBuilderStore.getState().saveAllAssessments(),
+  5000 // 5 seconds
+);
+
+useKelasBuilderStore.subscribe(
+  (state) => state.editVersion,
+  (editVersion) => {
+    console.log('editVersion changed, scheduling autosave...', editVersion);
+    debouncedSave();
+  }
 );

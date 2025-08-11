@@ -24,6 +24,7 @@ export function AppSidebarHeader() {
               <Link href="/" className="flex items-center gap-2">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg border-2 border-border p-0.5">
                   <Image
+                    priority={true}
                     src="/logo/hakgyo-light.png"
                     alt="Hakgyo Logo"
                     width={32}
@@ -31,6 +32,7 @@ export function AppSidebarHeader() {
                     className="dark:hidden"
                   />
                   <Image
+                    priority={true}
                     src="/logo/hakgyo-dark.png"
                     alt="Hakgyo Logo"
                     width={32}

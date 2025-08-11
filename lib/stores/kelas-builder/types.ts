@@ -90,6 +90,10 @@ export interface SoalSetData {
 // The steps in the builder UI
 export type BuilderStep = 'meta' | 'content' | 'vocabulary' | 'assessment' | 'review';
 
+export type ActionResult<T> =
+  | { success: true; data: T }
+  | { success: false; error: string };
+
 // The complete state of the Zustand store, combining all slices
 export interface KelasBuilderState {
   // Core state
@@ -100,7 +104,14 @@ export interface KelasBuilderState {
   isLoading: boolean;
   error: string | null;
   isDirty: boolean;
-  optimisticUpdates: Set<string>;
+  editVersion: number;
+  incrementEditVersion: () => void;
+  optimisticUpdates: {
+    soalSet: Set<string>;
+    koleksi: Set<string>;
+    soal: Set<string>;
+    opsi: Set<string>;
+  };
 
   // Deletion tracking
   deletedMateris: number[];
@@ -110,6 +121,8 @@ export interface KelasBuilderState {
   dirtyMateris: Set<number>;
   dirtyVocabSets: Set<number>;
   dirtyKoleksiSoals: Set<number>;
+  dirtySoals: Set<number>;
+  dirtyOpsis: Set<number>;
 
   // Slices
   meta: KelasMetaData;
@@ -153,21 +166,18 @@ export interface KelasBuilderState {
 
   // Assessment
   addSoalSet: (soalSet: Omit<SoalSetData, 'id'>) => void;
-  removeSoalSet: (index: number) => void;
-  saveSoalSet: (index: number) => Promise<void>;
-  addKoleksiSoal: (koleksiSoal: Omit<KoleksiSoalData, 'id' | 'soals'> & { soals?: Omit<SoalData, 'opsis'>[] }) => void;
-  updateKoleksiSoal: (index: number, koleksiSoal: Partial<KoleksiSoalData>) => void;
-  removeKoleksiSoal: (index: number) => void;
-  saveKoleksiSoal: (index: number) => Promise<void>;
-  addSoal: (koleksiIndex: number, soal: Omit<SoalData, 'id' | 'opsis'> & { opsis?: Omit<SoalOpsiData, 'id'>[] }) => void;
-  updateSoal: (koleksiIndex: number, soalIndex: number, soal: Partial<SoalData>) => void;
-  removeSoal: (koleksiIndex: number, soalIndex: number) => void;
-  reorderSoals: (koleksiIndex: number, fromIndex: number, toIndex: number) => void;
-  saveSoal: (koleksiIndex: number, soalIndex: number) => Promise<void>;
-  addOpsi: (koleksiIndex: number, soalIndex: number, opsi: Omit<SoalOpsiData, 'id'>) => void;
-  updateOpsi: (koleksiIndex: number, soalIndex: number, opsiIndex: number, opsi: Partial<SoalOpsiData>) => void;
-  removeOpsi: (koleksiIndex: number, soalIndex: number, opsiIndex: number) => void;
-  saveOpsi: (koleksiIndex: number, soalIndex: number, opsiIndex: number) => Promise<void>;
+  removeSoalSet: (id: string) => void;
+  saveSoalSet: (id: string) => Promise<void>;
+  addKoleksiSoal: (koleksiSoal: Omit<KoleksiSoalData, 'id' | 'soals' | 'tempId'> & { soals?: Omit<SoalData, 'id' | 'opsis' | 'tempId'>[] }) => void;
+  updateKoleksiSoal: (id: number | string, koleksiSoal: Partial<KoleksiSoalData>) => void;
+  removeKoleksiSoal: (id: number | string) => void;
+  addSoal: (koleksiId: number | string, soal: Omit<SoalData, 'id' | 'opsis' | 'tempId'> & { opsis?: Omit<SoalOpsiData, 'id' | 'tempId'>[] }) => void;
+  updateSoal: (koleksiId: number | string, soalId: number | string, soal: Partial<SoalData>) => void;
+  removeSoal: (koleksiId: number | string, soalId: number | string) => void;
+  reorderSoals: (koleksiId: number | string, fromIndex: number, toIndex: number) => void;
+  addOpsi: (koleksiId: number | string, soalId: number | string, opsi: Omit<SoalOpsiData, 'id' | 'tempId'>) => void;
+  updateOpsi: (koleksiId: number | string, soalId: number | string, opsiId: number | string, opsi: Partial<SoalOpsiData>) => void;
+  removeOpsi: (koleksiId: number | string, soalId: number | string, opsiId: number | string) => void;
   saveAllAssessments: () => Promise<void>;
  
   // Global Actions

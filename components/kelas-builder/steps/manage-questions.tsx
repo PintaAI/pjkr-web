@@ -76,17 +76,15 @@ interface ManageQuestionsProps {
 
 interface SortableSoalItemProps {
   soal: any;
-  soalIndex: number;
-  onEditSoal: (soalIndex: number) => void;
-  onToggleExpand: (soalIndex: number) => void;
-  onRemoveSoal: (soalIndex: number) => void;
+  onEditSoal: (id: number | string) => void;
+  onToggleExpand: (id: number | string) => void;
+  onRemoveSoal: (id: number | string) => void;
   isExpanded: boolean;
   hasValidationErrors?: boolean;
 }
 
 function SortableSoalItem({
   soal,
-  soalIndex,
   onEditSoal,
   onToggleExpand,
   onRemoveSoal,
@@ -100,7 +98,7 @@ function SortableSoalItem({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: `soal-${soalIndex}` });
+  } = useSortable({ id: soal.tempId || soal.id! });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -126,10 +124,10 @@ function SortableSoalItem({
               >
                 <GripVertical className="h-4 w-4 text-muted-foreground hover:text-foreground" />
               </div>
-              <Badge variant="outline" className="text-xs shrink-0">No. {soalIndex + 1}</Badge>
+              <Badge variant="outline" className="text-xs shrink-0">No. {(soal.order ?? 0) + 1}</Badge>
               <p
                 className="font-medium text-sm flex-1 line-clamp-1 cursor-pointer"
-                onClick={() => onEditSoal(soalIndex)}
+                onClick={() => onEditSoal(soal.tempId || soal.id)}
               >
                 {soal.pertanyaan ? soal.pertanyaan.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim() || "Untitled Question" : "Untitled Question"}
               </p>
@@ -160,7 +158,7 @@ function SortableSoalItem({
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onToggleExpand(soalIndex);
+                  onToggleExpand(soal.tempId || soal.id);
                 }}
                 className="h-8 w-8 p-0"
               >
@@ -175,7 +173,7 @@ function SortableSoalItem({
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onRemoveSoal(soalIndex);
+                  onRemoveSoal(soal.tempId || soal.id);
                 }}
                 className="h-8 w-8 p-0 text-destructive hover:text-destructive"
               >
@@ -225,8 +223,8 @@ function SortableSoalItem({
 
 export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingSoalIndex, setEditingSoalIndex] = useState<number | undefined>();
-  const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set());
+  const [editingSoalId, setEditingSoalId] = useState<number | string | undefined>();
+  const [expandedSoals, setExpandedSoals] = useState<Set<number | string>>(new Set());
   const { koleksiSoals, addSoal, removeSoal, reorderSoals } = useKelasBuilderStore();
   const koleksiSoal = koleksiSoals[koleksiIndex];
 
@@ -242,21 +240,24 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
 
     if (active.id !== over?.id && over) {
       // Extract the index from the sortable ID
-      const activeId = active.id.toString();
-      const overId = over.id.toString();
-      
-      const activeIndex = parseInt(activeId.replace('soal-', ''));
-      const overIndex = parseInt(overId.replace('soal-', ''));
+      const soals = koleksiSoal.soals;
+      const activeIndex = soals.findIndex(s => (s.tempId || s.id) === active.id);
+      const overIndex = soals.findIndex(s => (s.tempId || s.id) === over.id);
 
       if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
-        console.log('Reordering questions from', activeIndex, 'to', overIndex);
-        reorderSoals(koleksiIndex, activeIndex, overIndex);
+        const koleksiId = koleksiSoal.id || koleksiSoal.tempId;
+        if (koleksiId) {
+          reorderSoals(koleksiId, activeIndex, overIndex);
+        }
       }
     }
   };
 
   const handleAddSoal = () => {
-    addSoal(koleksiIndex, {
+    const koleksiId = koleksiSoal.id || koleksiSoal.tempId;
+    if (!koleksiId) return;
+
+    addSoal(koleksiId, {
       pertanyaan: "",
       difficulty: Difficulty.BEGINNER,
       explanation: "",
@@ -266,34 +267,39 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
         { opsiText: "", isCorrect: false, order: 1 },
       ],
     });
-    setEditingSoalIndex(koleksiSoal.soals.length);
+    // The new soal will have a tempId. We'll open the form without a specific soalId,
+    // and the form will be responsible for identifying it's a new soal.
+    setEditingSoalId(undefined);
     setShowCreateDialog(true);
   };
 
-  const handleEditSoal = (soalIndex: number) => {
-    setEditingSoalIndex(soalIndex);
+  const handleEditSoal = (soalId: number | string) => {
+    setEditingSoalId(soalId);
     setShowCreateDialog(true);
   };
 
   const handleCloseDialog = () => {
     setShowCreateDialog(false);
-    setEditingSoalIndex(undefined);
+    setEditingSoalId(undefined);
   };
 
-  const handleRemoveSoal = (soalIndex: number) => {
+  const handleRemoveSoal = (soalId: number | string) => {
     if (confirm("Are you sure you want to delete this question?")) {
-      removeSoal(koleksiIndex, soalIndex);
+      const koleksiId = koleksiSoal.id || koleksiSoal.tempId;
+      if (koleksiId) {
+        removeSoal(koleksiId, soalId);
+      }
     }
   };
 
-  const toggleExpand = (soalIndex: number) => {
-    const newExpanded = new Set(expandedQuestions);
-    if (newExpanded.has(soalIndex)) {
-      newExpanded.delete(soalIndex);
+  const toggleExpand = (soalId: number | string) => {
+    const newExpanded = new Set(expandedSoals);
+    if (newExpanded.has(soalId)) {
+      newExpanded.delete(soalId);
     } else {
-      newExpanded.add(soalIndex);
+      newExpanded.add(soalId);
     }
-    setExpandedQuestions(newExpanded);
+    setExpandedSoals(newExpanded);
   };
 
   if (!koleksiSoal) {
@@ -375,23 +381,23 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={koleksiSoal.soals.map((_, index) => `soal-${index}`)}
+            items={koleksiSoal.soals.map((s) => s.tempId || s.id).filter((id): id is string | number => id !== undefined)}
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-2">
               {koleksiSoal.soals
-                .slice()
+                .slice() // Create a shallow copy for sorting
                 .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-                .map((soal, ) => {
-                  const soalIndex = koleksiSoal.soals.findIndex(s => s === soal);
-                  const isExpanded = expandedQuestions.has(soalIndex);
+                .map((soal) => {
+                  const soalId = soal.tempId || soal.id;
+                  if (!soalId) return null; // Should not happen if filtered correctly
+                  const isExpanded = expandedSoals.has(soalId);
                   const validation = validateSoal(soal);
                   const hasValidationErrors = !validation.isValid;
                   return (
                     <SortableSoalItem
-                      key={soal.tempId || soal.id || soalIndex}
+                      key={soalId}
                       soal={soal}
-                      soalIndex={soalIndex}
                       onEditSoal={handleEditSoal}
                       onToggleExpand={toggleExpand}
                       onRemoveSoal={handleRemoveSoal}
@@ -410,15 +416,14 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
         <DialogContent className="max-w-7xl min-w-[700px]">
           <DialogHeader>
             <DialogTitle>
-              {editingSoalIndex !== undefined && editingSoalIndex < koleksiSoal.soals.length 
-                ? `Edit Question ${editingSoalIndex + 1}` 
-                : "Create New Question"}
+              {editingSoalId !== undefined ? "Edit Question" : "Create New Question"}
             </DialogTitle>
           </DialogHeader>
-          {editingSoalIndex !== undefined && (
+          {showCreateDialog && koleksiSoal && (
             <SoalForm
-              koleksiIndex={koleksiIndex}
-              soalIndex={editingSoalIndex}
+              koleksiId={koleksiSoal.id || koleksiSoal.tempId!}
+              soalId={editingSoalId}
+              onClose={handleCloseDialog}
             />
           )}
         </DialogContent>

@@ -15,6 +15,8 @@ import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { Difficulty } from "@prisma/client";
 import NovelEditor from "@/components/novel/novel-editor";
 import React from "react";
+import { findSoalById } from "@/lib/stores/kelas-builder/helpers";
+import { SoalOpsiData } from "@/lib/stores/kelas-builder/types";
 
 // Validation schema for soal form
 const soalFormSchema = z.object({
@@ -39,20 +41,23 @@ type SoalFormData = z.infer<typeof soalFormSchema>;
 
 
 interface SoalFormProps {
-  koleksiIndex: number;
-  soalIndex: number;
+  koleksiId: number | string;
+  soalId?: number | string;
+  onClose: () => void;
 }
 
-export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
+export function SoalForm({ koleksiId, soalId, onClose }: SoalFormProps) {
+  const store = useKelasBuilderStore();
   const {
-    koleksiSoals,
     updateSoal,
     addOpsi,
     updateOpsi,
     removeOpsi,
-  } = useKelasBuilderStore();
+    isLoading,
+    editVersion,
+  } = store;
 
-  const soal = koleksiSoals[koleksiIndex]?.soals[soalIndex];
+  const soal = soalId ? findSoalById(koleksiId, soalId, store) : undefined;
 
   const methods = useForm<SoalFormData>({
     resolver: zodResolver(soalFormSchema),
@@ -70,7 +75,6 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
   });
 
   const {
-    handleSubmit,
     setValue,
     watch,
     formState: { errors, isValid },
@@ -81,32 +85,34 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
   const handleQuestionUpdate = (content: { json: any; html: string }) => {
     setValue("pertanyaan", content.html, { shouldValidate: true });
     // Update the store directly to ensure local state is saved
-    if (soal) {
-      updateSoal(koleksiIndex, soalIndex, { pertanyaan: content.html });
+    if (soal && (soal.id || soal.tempId)) {
+      updateSoal(koleksiId, soal.id || soal.tempId!, { pertanyaan: content.html });
     }
   };
 
   const handleExplanationUpdate = (content: { json: any; html: string }) => {
     setValue("explanation", content.html, { shouldValidate: true });
     // Update the store directly to ensure local state is saved
-    if (soal) {
-      updateSoal(koleksiIndex, soalIndex, { explanation: content.html });
+    if (soal && (soal.id || soal.tempId)) {
+      updateSoal(koleksiId, soal.id || soal.tempId!, { explanation: content.html });
     }
   };
 
   const handleDifficultyChange = (value: string) => {
     setValue("difficulty", value as Difficulty, { shouldValidate: true });
-    updateSoal(koleksiIndex, soalIndex, {
-      difficulty: value as Difficulty
-    });
+    if (soal && (soal.id || soal.tempId)) {
+      updateSoal(koleksiId, soal.id || soal.tempId!, {
+        difficulty: value as Difficulty,
+      });
+    }
   };
 
   const handleActiveChange = (checked: boolean) => {
     setValue("isActive", checked, { shouldValidate: true });
-    updateSoal(koleksiIndex, soalIndex, { isActive: checked });
+    if (soal && (soal.id || soal.tempId)) {
+      updateSoal(koleksiId, soal.id || soal.tempId!, { isActive: checked });
+    }
   };
-
-
 
   const handleAddOpsi = () => {
     const currentOpsis = watchedOpsis || soal?.opsis || [];
@@ -117,7 +123,9 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
     };
     const updatedOpsis = [...currentOpsis, newOpsi];
     setValue("opsis", updatedOpsis, { shouldValidate: true });
-    addOpsi(koleksiIndex, soalIndex, newOpsi);
+    if (soal && (soal.id || soal.tempId)) {
+      addOpsi(koleksiId, soal.id || soal.tempId!, newOpsi);
+    }
   };
 
   const handleRemoveOpsi = (opsiIndex: number) => {
@@ -125,7 +133,12 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
     const updatedOpsis = currentOpsis.filter((_, i) => i !== opsiIndex)
       .map((opsi, index) => ({ ...opsi, order: index }));
     setValue("opsis", updatedOpsis, { shouldValidate: true });
-    removeOpsi(koleksiIndex, soalIndex, opsiIndex);
+    if (soal && (soal.id || soal.tempId)) {
+      const opsi = soal.opsis[opsiIndex];
+      if (opsi && (opsi.id || opsi.tempId)) {
+        removeOpsi(koleksiId, soal.id || soal.tempId!, opsi.id || opsi.tempId!);
+      }
+    }
   };
 
   const handleOpsiTextChange = (opsiIndex: number, value: string) => {
@@ -134,7 +147,12 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
       index === opsiIndex ? { ...opsi, opsiText: value } : opsi
     );
     setValue("opsis", updatedOpsis, { shouldValidate: true });
-    updateOpsi(koleksiIndex, soalIndex, opsiIndex, { opsiText: value });
+    if (soal && (soal.id || soal.tempId)) {
+      const opsi = soal.opsis[opsiIndex];
+      if (opsi && (opsi.id || opsi.tempId)) {
+        updateOpsi(koleksiId, soal.id || soal.tempId!, opsi.id || opsi.tempId!, { opsiText: value });
+      }
+    }
   };
 
   const handleOpsiCorrectChange = (opsiIndex: number, isCorrect: boolean) => {
@@ -147,10 +165,14 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
     
     setValue("opsis", updatedOpsis, { shouldValidate: true });
     // Update the store with all options at once
-    updateSoal(koleksiIndex, soalIndex, { opsis: updatedOpsis });
+    if (soal && (soal.id || soal.tempId)) {
+      updateSoal(koleksiId, soal.id || soal.tempId!, { opsis: updatedOpsis });
+    }
   };
 
   const correctOpsiCount = (watchedOpsis || soal?.opsis || []).filter(opsi => opsi.isCorrect).length;
+
+  const saveStatus = isLoading ? "Saving..." : "Saved";
 
   return (
     <FormProvider {...methods}>
@@ -161,9 +183,7 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
           <NovelEditor
             initialContent={soal?.pertanyaan || null}
             onUpdate={handleQuestionUpdate}
-           
-            
-  
+            saveStatus={saveStatus}
           />
         </div>
         {errors.pertanyaan && (
@@ -226,7 +246,7 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
 
         {soal?.opsis && soal.opsis.length > 0 ? (
           <div className="space-y-2">
-            {soal.opsis.map((opsi, opsiIndex) => (
+            {soal.opsis.map((opsi: SoalOpsiData, opsiIndex: number) => (
               <Card key={opsi.tempId || opsi.id || opsiIndex} className="p-3">
                 <div className="flex items-center gap-3">
                   <Badge variant="outline" className="text-xs min-w-8">
@@ -297,7 +317,7 @@ export function SoalForm({ koleksiIndex, soalIndex }: SoalFormProps) {
           <NovelEditor
             initialContent={soal?.explanation || null}
             onUpdate={handleExplanationUpdate}
-            
+            saveStatus={saveStatus}
           />
         </div>
         {errors.explanation && (

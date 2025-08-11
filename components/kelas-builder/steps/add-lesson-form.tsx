@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +35,7 @@ export function LessonForm({
   trigger 
 }: LessonFormProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { isLoading } = useKelasBuilderStore();
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
     description: initialData?.description || '',
@@ -154,7 +156,7 @@ export function LessonForm({
               initialContent={formData.jsonDescription}
               onUpdate={handleContentUpdate}
               className="min-h-[300px]"
-            
+              saveStatus={isLoading ? "Saving..." : "Saved"}
             />
           </div>
           

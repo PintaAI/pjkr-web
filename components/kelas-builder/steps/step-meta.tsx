@@ -72,7 +72,8 @@ export function StepMeta() {
     createDraft,
     saveMeta,
     setError,
-    clearError
+    clearError,
+    isLoading,
   } = useKelasBuilderStore();
 
   const form = useForm({
@@ -311,6 +312,7 @@ export function StepMeta() {
                           form.setValue("jsonDescription", data.json, { shouldTouch: true, shouldDirty: true });
                           form.setValue("htmlDescription", data.html, { shouldTouch: true, shouldDirty: true });
                         }}
+                        saveStatus={isLoading ? "Saving..." : "Saved"}
                       />
                     </FormControl>
                     <FormDescription>

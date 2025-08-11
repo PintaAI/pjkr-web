@@ -41,6 +41,7 @@ interface NovelEditorProps {
   onUpdate?: (data: { json: any; html: string }) => void;
   onSave?: (data: { json: any; html: string }) => void;
   className?: string;
+  saveStatus?: "Saved" | "Unsaved" | "Saving...";
 }
 
 /* Defaults preserve original sizing when props not supplied */
@@ -48,10 +49,9 @@ const NovelEditor = ({
   onUpdate,
   onSave,
   initialContent: propInitialContent,
-  
+  saveStatus = "Saved",
 }: NovelEditorProps) => {
   const [initialContent, setInitialContent] = useState<null | JSONContent>(null);
-  const [saveStatus, setSaveStatus] = useState("Saved");
   const [openNode, setOpenNode] = useState(false);
   const [openColor, setOpenColor] = useState(false);
   const [openLink, setOpenLink] = useState(false);
@@ -71,7 +71,6 @@ const NovelEditor = ({
     const html = highlightCodeblocks(editor.getHTML());
    
     console.log("Editor content saved to database");
-    setSaveStatus("Saved");
     
     // TODO: Implement save to database functionality
     // Call onSave prop if provided for database saving
@@ -100,6 +99,7 @@ const NovelEditor = ({
       <EditorRoot>
         <EditorContent
           initialContent={initialContent}
+          immediatelyRender={false}
           extensions={extensions}
           className={`relative w-full border-muted bg-background sm:rounded-lg sm:border sm:shadow-lg`}
           editorProps={{
@@ -115,7 +115,6 @@ const NovelEditor = ({
           }}
           onUpdate={({ editor }) => {
             debouncedUpdates(editor);
-            setSaveStatus("Unsaved");
             
             // Call the onUpdate prop if provided
             if (onUpdate) {
