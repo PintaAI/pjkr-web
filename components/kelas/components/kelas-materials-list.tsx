@@ -54,7 +54,7 @@ export default function KelasMaterialsList({
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="overflow-hidden"
           >
-            <ScrollArea className="mt-3 h-64">
+            <ScrollArea className="mt-3 h-64 border rounded-lg p-2">
               <div className="space-y-2 ">
                 {materis.map((materi, index) => (
                   <motion.div

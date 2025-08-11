@@ -61,7 +61,7 @@ export default function CommentItem({
       setReplyContent("");
       setShowReplyForm(false);
       toast.success("Reply posted successfully!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to post reply");
     } finally {
       setIsSubmittingReply(false);
@@ -76,7 +76,7 @@ export default function CommentItem({
       await onLike(comment.id);
       setLiked(!liked);
       setLocalLikeCount(prev => liked ? prev - 1 : prev + 1);
-    } catch (error) {
+    } catch {
       toast.error("Failed to like comment");
     } finally {
       setIsLiking(false);

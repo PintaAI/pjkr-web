@@ -11,7 +11,7 @@ interface DetailTabProps {
 
 export default function DetailTab({ htmlDescription, jsonDescription }: DetailTabProps) {
   return (
-    <Card>
+    <Card className="w-full h-full bg-background border-none">
       <CardContent >
         {(htmlDescription || jsonDescription) ? (
           <>

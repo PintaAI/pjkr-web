@@ -146,7 +146,7 @@ export default function KelasPricingCard({
       } else {
         setPromoError("Invalid promo code");
       }
-    } catch (error) {
+    } catch {
       setPromoError("Failed to apply promo code");
     } finally {
       setIsApplyingPromo(false);
@@ -172,11 +172,11 @@ export default function KelasPricingCard({
         await navigator.clipboard.writeText(window.location.href);
         toast.success("Link berhasil disalin ke clipboard!");
       }
-    } catch (error) {
+    } catch {
       try {
         await navigator.clipboard.writeText(window.location.href);
         toast.success("Link berhasil disalin ke clipboard!");
-      } catch (clipboardError) {
+      } catch {
         toast.error("Gagal membagikan atau menyalin link");
       }
     }

@@ -77,7 +77,7 @@ export default function PostThread({ post, currentUserId }: PostThreadProps) {
       } else {
         toast.error("Failed to load comments");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to load comments");
     } finally {
       setIsLoadingComments(false);
@@ -114,7 +114,7 @@ export default function PostThread({ post, currentUserId }: PostThreadProps) {
       } else {
         toast.error("Failed to post comment");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to post comment");
     } finally {
       setIsSubmittingComment(false);
@@ -173,7 +173,7 @@ export default function PostThread({ post, currentUserId }: PostThreadProps) {
       } else {
         toast.error("Failed to like post");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to like post");
     } finally {
       setIsLiking(false);
