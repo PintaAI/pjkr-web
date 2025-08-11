@@ -36,7 +36,10 @@ export const createContent: StateCreator<
         materis: [...state.materis, newMateri],
         isDirty: true,
         stepDirtyFlags: { ...state.stepDirtyFlags, content: true },
-        optimisticUpdates: new Set(state.optimisticUpdates).add(tempId),
+        optimisticUpdates: {
+          ...state.optimisticUpdates,
+          koleksi: new Set(state.optimisticUpdates.koleksi).add(tempId),
+        },
       };
     });
   },
@@ -67,9 +70,12 @@ export const createContent: StateCreator<
     if (materi.tempId) {
       // Remove unsaved materi (only from local state)
       set((state) => {
-        const newOptimisticUpdates = new Set(state.optimisticUpdates);
+        const newOptimisticUpdates = {
+          ...state.optimisticUpdates,
+          koleksi: new Set(state.optimisticUpdates.koleksi),
+        };
         if (materi.tempId) {
-          newOptimisticUpdates.delete(materi.tempId);
+          newOptimisticUpdates.koleksi.delete(materi.tempId);
         }
         const newMateris = state.materis.filter((_, i) => i !== index);
         // Reorder remaining materis
@@ -215,10 +221,13 @@ export const createContent: StateCreator<
         const result = await addMateris(draftId, serializedMateris);
         if (result.success) {
           set((state) => {
-            const newOptimisticUpdates = new Set(state.optimisticUpdates);
+            const newOptimisticUpdates = {
+              ...state.optimisticUpdates,
+              koleksi: new Set(state.optimisticUpdates.koleksi),
+            };
             const updatedMateris = state.materis.map((m) => {
               if (m.tempId) {
-                newOptimisticUpdates.delete(m.tempId);
+                newOptimisticUpdates.koleksi.delete(m.tempId);
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const { tempId, ...rest } = m;
                 return rest;

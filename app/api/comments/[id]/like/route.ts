@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
@@ -12,7 +12,8 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const commentId = parseInt(params.id);
+    const resolvedParams = await params;
+    const commentId = parseInt(resolvedParams.id);
     if (isNaN(commentId)) {
       return NextResponse.json({ error: 'Invalid comment ID' }, { status: 400 });
     }

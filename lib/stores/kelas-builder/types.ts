@@ -171,6 +171,7 @@ export interface KelasBuilderState {
   addKoleksiSoal: (koleksiSoal: Omit<KoleksiSoalData, 'id' | 'soals' | 'tempId'> & { soals?: Omit<SoalData, 'id' | 'opsis' | 'tempId'>[] }) => void;
   updateKoleksiSoal: (id: number | string, koleksiSoal: Partial<KoleksiSoalData>) => void;
   removeKoleksiSoal: (id: number | string) => void;
+  saveKoleksiSoal: (index: number) => Promise<void>;
   addSoal: (koleksiId: number | string, soal: Omit<SoalData, 'id' | 'opsis' | 'tempId'> & { opsis?: Omit<SoalOpsiData, 'id' | 'tempId'>[] }) => void;
   updateSoal: (koleksiId: number | string, soalId: number | string, soal: Partial<SoalData>) => void;
   removeSoal: (koleksiId: number | string, soalId: number | string) => void;

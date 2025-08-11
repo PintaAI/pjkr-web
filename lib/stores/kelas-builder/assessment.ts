@@ -50,6 +50,7 @@ export interface Assessment {
     koleksiSoal: Partial<KoleksiSoalData>
   ) => void;
   removeKoleksiSoal: (id: number | string) => void;
+  saveKoleksiSoal: (index: number) => Promise<void>;
   addSoal: (
     koleksiId: number | string,
     soal: Omit<SoalData, 'id' | 'opsis' | 'tempId'> & {
@@ -228,6 +229,51 @@ export const createAssessment: StateCreator<
       state.koleksiSoals.splice(index, 1);
       state.editVersion += 1;
     });
+  },
+
+  saveKoleksiSoal: async (index) => {
+    const { koleksiSoals, draftId } = get();
+    if (!koleksiSoals[index] || !draftId) return;
+
+    const koleksiSoal = koleksiSoals[index];
+    set({ isLoading: true, error: null });
+
+    try {
+      const result = await saveKoleksiSoalAction(
+        draftId,
+        {
+          nama: koleksiSoal.nama,
+          deskripsi: koleksiSoal.deskripsi,
+          isPrivate: koleksiSoal.isPrivate,
+          isDraft: koleksiSoal.isDraft,
+        },
+        koleksiSoal.id
+      );
+
+      if (result.success && result.data?.id) {
+        set((state) => {
+          const updatedKoleksiSoal = { ...state.koleksiSoals[index], id: result.data!.id };
+          if (updatedKoleksiSoal.tempId) {
+            state.optimisticUpdates.koleksi.delete(updatedKoleksiSoal.tempId);
+            delete updatedKoleksiSoal.tempId;
+          }
+          state.koleksiSoals[index] = updatedKoleksiSoal;
+          if (result.data!.id) {
+            state.dirtyKoleksiSoals.delete(result.data!.id);
+          }
+          state.isLoading = false;
+        });
+        toast.success('Question collection saved successfully');
+      } else {
+        throw new Error(result.error || 'Failed to save question collection');
+      }
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to save question collection',
+      });
+      toast.error('Failed to save question collection');
+    }
   },
 
   addSoal: (koleksiId, soal) => {

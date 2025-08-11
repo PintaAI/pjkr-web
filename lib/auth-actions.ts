@@ -55,7 +55,7 @@ export async function withRole<T extends unknown[], R>(
       redirect("/auth");
     }
     
-    const userRole = (session.user as AuthUser).role;
+    const userRole = session.user.role as UserRole;
     if (userRole !== requiredRole) {
       throw new Error(`Access denied. Required role: ${requiredRole}`);
     }
@@ -79,7 +79,7 @@ export async function withPlan<T extends unknown[], R>(
       redirect("/auth");
     }
     
-    const userPlan = (session.user as AuthUser).accessTier;
+    const userPlan = (session.user as any).accessTier as UserTier;
     if (userPlan !== requiredPlan && userPlan !== "CUSTOM") {
       throw new Error(`Access denied. Required plan: ${requiredPlan}`);
     }
@@ -164,8 +164,8 @@ export async function assertAuthenticated() {
 }
 
 export async function assertRole(requiredRole: string) {
-  const session = await assertAuthenticated() as AuthSession;
-  const userRole = (session.user as AuthUser).role;
+  const session = await assertAuthenticated();
+  const userRole = session.user.role as UserRole;
   
   if (userRole !== requiredRole) {
     throw new Error(`Access denied. Required role: ${requiredRole}`);
@@ -175,8 +175,8 @@ export async function assertRole(requiredRole: string) {
 }
 
 export async function assertPlan(requiredPlan: string) {
-  const session = await assertAuthenticated() as AuthSession;
-  const userPlan = (session.user as AuthUser).accessTier;
+  const session = await assertAuthenticated();
+  const userPlan = (session.user as any).accessTier as UserTier;
   
   if (userPlan !== requiredPlan && userPlan !== "CUSTOM") {
     throw new Error(`Access denied. Required plan: ${requiredPlan}`);
