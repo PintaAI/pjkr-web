@@ -9,8 +9,8 @@ const ExcalidrawEditor = dynamic(
 
 export default function GuruTeachWhiteBoardPage() {
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-      <div style={{ flexGrow: 1 }}>
+    <div className="h-full flex flex-col">
+      <div className="flex-1 rounded-lg border shadow-sm">
         <ExcalidrawEditor />
       </div>
     </div>

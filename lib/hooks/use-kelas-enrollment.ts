@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useSession } from "./use-session";
-import { enrollInKelas, unenrollFromKelas, checkEnrollmentStatus, redirectToPayment } from "@/app/actions/kelas/enrollment";
+import { enrollInKelas, unenrollFromKelas, checkEnrollmentStatus } from "@/app/actions/kelas/enrollment";
 
 interface EnrollmentState {
   isEnrolled: boolean;
@@ -56,7 +56,7 @@ export function useKelasEnrollment(kelasId: number) {
           isLoading: false,
         }));
       }
-    } catch (error) {
+    } catch {
       setState(prev => ({
         ...prev,
         error: "Failed to check enrollment status",
@@ -107,7 +107,7 @@ export function useKelasEnrollment(kelasId: number) {
           isLoading: false,
         }));
       }
-    } catch (error) {
+    } catch {
       setState(prev => ({
         ...prev,
         error: "Failed to enroll in class",
@@ -144,7 +144,7 @@ export function useKelasEnrollment(kelasId: number) {
           isLoading: false,
         }));
       }
-    } catch (error) {
+    } catch {
       setState(prev => ({
         ...prev,
         error: "Failed to unenroll from class",

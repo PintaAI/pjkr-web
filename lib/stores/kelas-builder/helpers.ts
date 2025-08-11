@@ -1,12 +1,9 @@
-import { Difficulty } from '@prisma/client';
+
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { nanoid } from 'nanoid';
 import type {
-  KoleksiSoalData,
-  SoalData,
-  SoalOpsiData,
-  SoalSetData,
+
   KelasBuilderState,
 } from './types';
 

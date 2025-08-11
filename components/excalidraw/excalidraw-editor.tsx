@@ -3,19 +3,31 @@
 import { Excalidraw } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
 import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 
 export default function ExcalidrawEditor() {
-  // The Excalidraw component needs to be rendered on the client side.
-  // We use a state to ensure it's only rendered after the component has mounted.
   const [isClient, setIsClient] = useState(false);
+  const { theme } = useTheme();
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   return (
-    <div style={{ height: "100%", width: "100%" }}>
-      {isClient ? <Excalidraw /> : <p className="text-center">Loading Excalidraw...</p>}
+    <div className="h-full flex flex-col rounded-lg overflow-hidden">
+      {isClient ? (
+        <Excalidraw
+          theme={theme === "dark" ? "dark" : "light"}
+          initialData={{
+            appState: {
+              theme: theme === "dark" ? "dark" : "light",
+            },
+          }}
+        />
+      ) : (
+        <p className="text-center">Loading Excalidraw...</p>
+      )}
     </div>
   );
 }
+

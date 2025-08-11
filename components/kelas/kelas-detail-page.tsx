@@ -110,7 +110,7 @@ interface KelasDetailPageProps {
 
 export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading } = useSession();
+  const { user, isLoading } = useSession();
   
   // Use the enrollment hook
   const enrollment = useKelasEnrollment(kelas.id);
@@ -175,7 +175,7 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
   }, [hasTeasedMaterials, kelas.materis.length, isClient]);
   
   // Check if current user is the author of this kelas
-  const isAuthor = isClient && isAuthenticated && user && user.id === kelas.authorId;
+
 
   const handleBack = () => {
     router.back();

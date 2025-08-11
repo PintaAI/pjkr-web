@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BookOpen } from "lucide-react";
-import { motion, useAnimation } from "framer-motion";
+import { motion} from "framer-motion";
 import Image from "next/image";
 import React from "react";
 import { KelasType, Difficulty } from "@prisma/client";

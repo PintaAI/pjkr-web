@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Plus, RefreshCw } from "lucide-react";
@@ -48,13 +48,7 @@ export default function DiscussionTab({ kelasId, initialPosts = [], initialPosts
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  useEffect(() => {
-    if (initialPosts.length === 0) {
-      fetchPosts(1, true);
-    }
-  }, [kelasId]);
-
-  const fetchPosts = async (pageNum: number = 1, replace: boolean = false) => {
+  const fetchPosts = useCallback(async (pageNum: number = 1, replace: boolean = false) => {
     setIsLoading(true);
     try {
       const response = await fetch(`/api/posts?kelasId=${kelasId}&page=${pageNum}&limit=10`);
@@ -70,12 +64,18 @@ export default function DiscussionTab({ kelasId, initialPosts = [], initialPosts
       } else {
         toast.error("Failed to load posts");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to load posts");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [kelasId]);
+
+  useEffect(() => {
+    if (initialPosts.length === 0) {
+      fetchPosts(1, true);
+    }
+  }, [kelasId, initialPosts.length, fetchPosts]);
 
   const handleNewPost = (newPost: Post) => {
     setPosts([newPost, ...posts]);

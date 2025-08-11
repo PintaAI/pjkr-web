@@ -21,6 +21,7 @@ import {
   Percent,
   Edit3
 } from "lucide-react";
+import Image from "next/image";
 
 // Format number with thousand separators for better readability
 function formatPrice(price: number): string {
@@ -46,9 +47,11 @@ function CircularIconUpload({ value, onChange }: { value?: string; onChange: (ur
         onClick={handleClick}
       >
         {value ? (
-          <img
+          <Image
             src={value}
             alt="Course icon"
+            width={64}
+            height={64}
             className="w-full h-full object-cover rounded-full"
           />
         ) : (
@@ -67,11 +70,8 @@ function CircularIconUpload({ value, onChange }: { value?: string; onChange: (ur
 export function StepMeta() {
   const {
     meta,
-    draftId,
     updateMeta,
-    createDraft,
-    saveMeta,
-    setError,
+
     clearError,
     isLoading,
   } = useKelasBuilderStore();
@@ -82,7 +82,7 @@ export function StepMeta() {
     mode: "onChange", // Validate on change
   });
 
-  const { watch, formState: { errors, isValid, } } = form;
+  const { watch, formState: { errors,  } } = form;
   const watchedValues = watch();
   
   useEffect(() => {

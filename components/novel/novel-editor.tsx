@@ -29,8 +29,7 @@ import { TextButtons } from "./selectors/text-buttons";
 import { slashCommand, suggestionItems } from "./slash-command";
 import { uploadFn } from "./image-upload";
 import { LinkSelector } from "./selectors/link-selector";
-
-const hljs = require("highlight.js");
+import hljs from "highlight.js";
 
 const extensions = [...defaultExtensions, slashCommand];
 
@@ -59,9 +58,9 @@ const NovelEditor = ({
   const highlightCodeblocks = (content: string) => {
     const doc = new DOMParser().parseFromString(content, "text/html");
     doc.querySelectorAll("pre code").forEach((el) => {
-      // @ts-ignore
+    
       // https://highlightjs.readthedocs.io/en/latest/api.html?highlight=highlightElement#highlightelement
-      hljs.highlightElement(el);
+      hljs.highlightElement(el as HTMLElement);
     });
     return new XMLSerializer().serializeToString(doc);
   };

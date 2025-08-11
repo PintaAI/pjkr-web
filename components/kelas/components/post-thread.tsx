@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -67,13 +67,7 @@ export default function PostThread({ post, currentUserId }: PostThreadProps) {
   const [localLikeCount, setLocalLikeCount] = useState(post._count.likes);
   const [showComments, setShowComments] = useState(false);
 
-  useEffect(() => {
-    if (showComments && comments.length === 0) {
-      fetchComments();
-    }
-  }, [showComments]);
-
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     setIsLoadingComments(true);
     try {
       const response = await fetch(`/api/posts/${post.id}/comments`);
@@ -88,7 +82,13 @@ export default function PostThread({ post, currentUserId }: PostThreadProps) {
     } finally {
       setIsLoadingComments(false);
     }
-  };
+  }, [post.id]);
+
+  useEffect(() => {
+    if (showComments && comments.length === 0) {
+      fetchComments();
+    }
+  }, [showComments, comments.length, fetchComments]);
 
   const handleCommentSubmit = async () => {
     if (!newComment.trim()) return;

@@ -84,7 +84,8 @@ export default function NewPostForm({ kelasId, onPostCreated, onCancel }: NewPos
         setNewTag("");
       } else {
         const error = await response.json();
-        toast.error(error.error || "Failed to create post");
+        const errorData = await response.json();
+        toast.error(errorData.error || "Failed to create post");
       }
     } catch (error) {
       toast.error("Failed to create post");

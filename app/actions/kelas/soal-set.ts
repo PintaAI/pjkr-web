@@ -28,9 +28,9 @@ export async function saveSoalSetLink(kelasId: number, data: z.infer<typeof soal
         where: { id: soalSetId },
         data: {
           order: valid.order,
-          // @ts-ignore optional fields (after migration)
+        
           title: (valid as any).title,
-          // @ts-ignore
+         
           description: (valid as any).description,
           koleksiSoalId: valid.koleksiSoalId,
         },

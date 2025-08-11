@@ -129,12 +129,13 @@ export const ColorSelector = ({ open, onOpenChange }: ColorSelectorProps) => {
               key={name}
               onSelect={() => {
                 editor.commands.unsetColor();
-                name !== "Default" &&
+                if (name !== "Default") {
                   editor
                     .chain()
                     .focus()
                     .setColor(color || "")
                     .run();
+                }
                 onOpenChange(false);
               }}
               className="flex cursor-pointer items-center justify-between px-2 py-1 text-sm hover:bg-accent"
@@ -155,7 +156,9 @@ export const ColorSelector = ({ open, onOpenChange }: ColorSelectorProps) => {
               key={name}
               onSelect={() => {
                 editor.commands.unsetHighlight();
-                name !== "Default" && editor.chain().focus().setHighlight({ color }).run();
+                if (name !== "Default") {
+                  editor.chain().focus().setHighlight({ color }).run();
+                }
                 onOpenChange(false);
               }}
               className="flex cursor-pointer items-center justify-between px-2 py-1 text-sm hover:bg-accent"

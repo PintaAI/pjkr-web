@@ -17,7 +17,6 @@ import {
   TiptapLink,
   TiptapUnderline,
   Twitter,
-  UpdatedImage,
   UploadImagesPlugin,
   Youtube,
 } from "novel";
@@ -64,11 +63,6 @@ const tiptapImage = TiptapImage.extend({
   },
 });
 
-const updatedImage = UpdatedImage.configure({
-  HTMLAttributes: {
-    class: cx("rounded-lg border border-muted"),
-  },
-});
 
 const taskList = TaskList.configure({
   HTMLAttributes: {

@@ -46,7 +46,7 @@ interface SoalFormProps {
   onClose: () => void;
 }
 
-export function SoalForm({ koleksiId, soalId, onClose }: SoalFormProps) {
+export function SoalForm({ koleksiId, soalId, }: SoalFormProps) {
   const store = useKelasBuilderStore();
   const {
     updateSoal,
@@ -54,7 +54,6 @@ export function SoalForm({ koleksiId, soalId, onClose }: SoalFormProps) {
     updateOpsi,
     removeOpsi,
     isLoading,
-    editVersion,
   } = store;
 
   const soal = soalId ? findSoalById(koleksiId, soalId, store) : undefined;
@@ -77,7 +76,7 @@ export function SoalForm({ koleksiId, soalId, onClose }: SoalFormProps) {
   const {
     setValue,
     watch,
-    formState: { errors, isValid },
+    formState: { errors },
   } = methods;
 
   const watchedOpsis = watch("opsis");
