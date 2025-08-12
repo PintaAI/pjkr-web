@@ -5,18 +5,7 @@ import { redirect } from "next/navigation";
 type UserRole = "MURID" | "GURU" | "ADMIN";
 type UserTier = "FREE" | "PREMIUM" | "CUSTOM";
 
-interface AuthUser {
-  id: string;
-  email: string;
-  name?: string;
-  role: UserRole;
-  accessTier: UserTier;
-  currentStreak: number;
-  maxStreak: number;
-  xp: number;
-  level: number;
-  isCertificateEligible: boolean;
-}
+
 
 
 
