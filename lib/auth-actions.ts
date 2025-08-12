@@ -18,10 +18,7 @@ interface AuthUser {
   isCertificateEligible: boolean;
 }
 
-interface AuthSession {
-  user: AuthUser;
-  [key: string]: unknown;
-}
+
 
 /**
  * Wrapper for server actions that require authentication
