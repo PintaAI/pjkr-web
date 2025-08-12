@@ -5,6 +5,7 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
 import { StatsCard } from "./ui/stats-card";
+import DailyVocab from "./home/daily-vocab";
 import {
   BookOpen,
   Users,
@@ -26,8 +27,11 @@ import { AuthButton } from "./auth/auth-button";
 interface User {
   id: string;
   email: string;
-  name?: string;
+  name: string | null;
   role?: string;
+  currentStreak?: number;
+  xp?: number;
+  level?: number;
 }
 
 interface HomescreenProps {
@@ -149,21 +153,21 @@ export default function Homescreen({ user }: HomescreenProps) {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <StatsCard
           title="Current Level"
-          value={mockData.level}
-          description={`${mockData.progressToNextLevel}% to next level`}
+          value={user.level || 1}
+          description="Keep learning to level up!"
           icon={<Trophy className="h-4 w-4" />}
         />
 
         <StatsCard
           title="Experience Points"
-          value={mockData.totalXP.toLocaleString()}
+          value={(user.xp || 0).toLocaleString()}
           description="Total earned"
           icon={<Zap className="h-4 w-4" />}
         />
 
         <StatsCard
           title="Study Streak"
-          value={`${mockData.weeklyStreak} days`}
+          value={`${user.currentStreak || 0} days`}
           description="Keep it going!"
           icon={<Flame className="h-4 w-4" />}
         />
@@ -176,28 +180,7 @@ export default function Homescreen({ user }: HomescreenProps) {
         />
       </div>
 
-      {/* Daily Vocabulary */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Daily Vocabulary (일일 어휘)</CardTitle>
-          <CardDescription>
-            Learn a new Korean word every day
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <div className="text-3xl font-bold text-primary">{mockData.dailyVocabulary.word}</div>
-              <div className="text-lg text-muted-foreground">/{mockData.dailyVocabulary.pronunciation}/</div>
-              <div className="text-lg font-medium">{mockData.dailyVocabulary.meaning}</div>
-            </div>
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-2">Example:</p>
-              <p className="text-lg">{mockData.dailyVocabulary.example}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Daily Vocabulary moved into sidebar (compact) */}
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
         {/* Learning Activities */}
@@ -292,8 +275,10 @@ export default function Homescreen({ user }: HomescreenProps) {
           </Card>
         </div>
 
-        {/* Upcoming Activities */}
-        <div>
+        {/* Sidebar: Daily Vocabulary + Upcoming Activities */}
+        <div className="space-y-6">
+          <DailyVocab user={user} take={5} compact />
+
           <Card>
             <CardHeader>
               <CardTitle>Upcoming Activities</CardTitle>
@@ -313,8 +298,14 @@ export default function Homescreen({ user }: HomescreenProps) {
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center justify-between">
                         <p className="font-medium text-sm">{activity.title}</p>
-                        <Badge 
-                          variant={activity.priority === "high" ? "destructive" : activity.priority === "medium" ? "default" : "secondary"}
+                        <Badge
+                          variant={
+                            activity.priority === "high"
+                              ? "destructive"
+                              : activity.priority === "medium"
+                              ? "default"
+                              : "secondary"
+                          }
                           className="text-xs"
                         >
                           {activity.type}

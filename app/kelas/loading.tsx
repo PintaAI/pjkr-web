@@ -17,10 +17,10 @@ export default function Loading() {
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i}>
+          <Card key={i} className="py-[26px]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-4" />
+              <Skeleton className="h-4 w-8" />
             </CardHeader>
             <CardContent>
               <Skeleton className="h-8 w-14 mb-1" />
@@ -47,7 +47,7 @@ export default function Loading() {
 
       {/* Class Cards Grid */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 7 }).map((_, i) => (
+        {Array.from({ length: 6 }).map((_, i) => (
           <Card key={i} className="group overflow-hidden py-0">
             {/* Media skeleton with 16:9 aspect to match real card */}
             <div className="relative">

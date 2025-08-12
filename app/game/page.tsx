@@ -345,42 +345,7 @@ export default function GamePage() {
         </Card>
       )}
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Gamepad2 className="h-5 w-5 text-blue-500" />
-            Quick Actions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Button variant="outline" className="w-full h-auto p-4 flex flex-col gap-2">
-              <Play className="h-6 w-6" />
-              <span>Random Game</span>
-              <span className="text-xs text-muted-foreground">Start any game</span>
-            </Button>
-            
-            <Button variant="outline" className="w-full h-auto p-4 flex flex-col gap-2">
-              <Users className="h-6 w-6" />
-              <span>Join Multiplayer</span>
-              <span className="text-xs text-muted-foreground">Find a room</span>
-            </Button>
-            
-            <Button variant="outline" className="w-full h-auto p-4 flex flex-col gap-2">
-              <Trophy className="h-6 w-6" />
-              <span>Daily Challenge</span>
-              <span className="text-xs text-muted-foreground">Extra rewards</span>
-            </Button>
-            
-            <Button variant="outline" className="w-full h-auto p-4 flex flex-col gap-2">
-              <Target className="h-6 w-6" />
-              <span>Practice Mode</span>
-              <span className="text-xs text-muted-foreground">No pressure</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+
     </div>
   )
 }
