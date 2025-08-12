@@ -2,6 +2,7 @@
 
 import { ChevronUp } from "lucide-react"
 import { usePathname } from "next/navigation"
+import Link from "next/link"
 import {
   Collapsible,
   CollapsibleContent,
@@ -45,10 +46,10 @@ export function SidebarNav({ items, title }: SidebarNavProps) {
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild tooltip={item.title} isActive={isActive}>
-                  <a href={item.url}>
+                  <Link href={item.url}>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )
@@ -77,9 +78,9 @@ export function SidebarNav({ items, title }: SidebarNavProps) {
                     {item.items.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton asChild isActive={pathname === subItem.url}>
-                          <a href={subItem.url}>
+                          <Link href={subItem.url}>
                             <span>{subItem.title}</span>
-                          </a>
+                          </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}
