@@ -293,35 +293,3 @@ export const useKelasBuilderStore = create<Store>()(
   )
 );
 
-// Autosave logic
-const debounce = <F extends (...args: any[]) => any>(
-  func: F,
-  waitFor: number
-) => {
-  let timeout: NodeJS.Timeout;
-  return (...args: Parameters<F>): Promise<ReturnType<F>> => {
-    console.log('Debounce called');
-    return new Promise((resolve) => {
-      clearTimeout(timeout);
-      console.log('Previous timeout cleared');
-      timeout = setTimeout(() => {
-        console.log('Executing debounced function');
-        resolve(func(...args));
-      }, waitFor);
-      console.log('New timeout set');
-    });
-  }
-};
-
-const debouncedSave = debounce(
-  () => useKelasBuilderStore.getState().saveAllAssessments(),
-  5000 // 5 seconds
-);
-
-useKelasBuilderStore.subscribe(
-  (state) => state.editVersion,
-  (editVersion) => {
-    console.log('editVersion changed, scheduling autosave...', editVersion);
-    debouncedSave();
-  }
-);

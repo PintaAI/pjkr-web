@@ -9,6 +9,7 @@ import { BookOpen, Users, Search, Filter, Star, Clock } from "lucide-react";
 import { KelasType, Difficulty } from "@prisma/client";
 import { filterKelas } from "@/app/actions/kelas-public";
 import { KelasCard } from "@/components/kelas/kelas-card";
+import Link from "next/link";
 
 interface KelasItem {
   id: number;
@@ -136,10 +137,10 @@ export default function KelasListPage({ initialKelas, initialStats, initialMeta 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Explore Classes
+            My Kelas
           </h1>
           <p className="text-muted-foreground">
-            Discover Korean language classes tailored to your learning journey
+            list kelas yang kamu ikuti
           </p>
         </div>
       </div>
@@ -244,9 +245,15 @@ export default function KelasListPage({ initialKelas, initialStats, initialMeta 
         <div className="text-center py-12 mb-8">
           <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">No classes found</h3>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mb-4">
             Try adjusting your search criteria or check back later for new classes.
           </p>
+          <Link
+            href="/explore"
+            className="inline-block px-6 py-2 rounded bg-primary text-white font-semibold hover:bg-primary/90 transition"
+          >
+            Jelajahi Kelas Lainnya
+          </Link>
         </div>
       )}
     </div>

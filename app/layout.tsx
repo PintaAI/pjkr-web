@@ -3,6 +3,7 @@ import { Architects_Daughter, Geist_Mono } from "next/font/google"; // Replaced 
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LayoutWrapper } from "@/components/layout-wrapper";
+import { Toaster } from "sonner";
 
 // Instantiate Architects Daughter for --font-sans
 const architectsDaughter = Architects_Daughter({
@@ -42,6 +43,7 @@ export default function RootLayout({
             {children}
           </LayoutWrapper>
         </ThemeProvider>
+        <Toaster />
       </body>
     </html>
   );

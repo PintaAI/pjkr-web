@@ -22,7 +22,6 @@ import { Difficulty } from '@prisma/client';
 import {
   generateTempId,
   reindexOrder,
-  validateText,
   findKoleksiById,
   findSoalById,
   findOpsiById,
@@ -56,7 +55,7 @@ export interface Assessment {
     soal: Omit<SoalData, 'id' | 'opsis' | 'tempId'> & {
       opsis?: Omit<SoalOpsiData, 'id' | 'tempId'>[];
     }
-  ) => void;
+  ) => string;
   updateSoal: (
     koleksiId: number | string,
     soalId: number | string,
@@ -196,6 +195,7 @@ export const createAssessment: StateCreator<
       state.koleksiSoals.push(newKoleksiSoal);
       state.optimisticUpdates.koleksi.add(tempId);
       state.editVersion += 1;
+      state.stepDirtyFlags.assessment = true;
     });
   },
 
@@ -208,6 +208,7 @@ export const createAssessment: StateCreator<
           state.dirtyKoleksiSoals.add(koleksi.id);
         }
         state.editVersion += 1;
+        state.stepDirtyFlags.assessment = true;
       }
     });
   },
@@ -228,6 +229,7 @@ export const createAssessment: StateCreator<
 
       state.koleksiSoals.splice(index, 1);
       state.editVersion += 1;
+      state.stepDirtyFlags.assessment = true;
     });
   },
 
@@ -277,10 +279,12 @@ export const createAssessment: StateCreator<
   },
 
   addSoal: (koleksiId, soal) => {
+    let newTempId = '';
     set((state) => {
       const koleksi = findKoleksiById(koleksiId, state);
       if (koleksi) {
         const tempId = generateTempId('soal');
+        newTempId = tempId;
         const newSoal: SoalData = {
           ...soal,
           id: undefined,
@@ -300,8 +304,10 @@ export const createAssessment: StateCreator<
           state.dirtyKoleksiSoals.add(koleksi.id);
         }
         state.editVersion += 1;
+        state.stepDirtyFlags.assessment = true;
       }
     });
+    return newTempId;
   },
 
   updateSoal: (koleksiId, soalId, soal) => {
@@ -500,12 +506,13 @@ export const createAssessment: StateCreator<
 
         for (const soal of koleksi.soals) {
           const hasNewOpsis = soal.opsis.some((o) => o.tempId);
-          if (
-            soal.tempId ||
-            dirtySoals.has(soal.id!) ||
-            (soal.id && hasNewOpsis)
-          ) {
-            if (!validateText(soal.pertanyaan)) continue;
+          const shouldSaveSoal = soal.tempId || (soal.id && dirtySoals.has(soal.id)) || (soal.id && hasNewOpsis);
+          
+          if (shouldSaveSoal) {
+            // Skip soals with completely empty questions, but allow saving soals with just HTML tags
+            if (!soal.pertanyaan || soal.pertanyaan.replace(/<[^>]*>/g, "").trim().length === 0) {
+              continue;
+            }
 
             const payload = {
               koleksiSoalId: koleksi.id,
@@ -545,9 +552,10 @@ export const createAssessment: StateCreator<
 
               for (const opsi of currentSoal.opsis) {
                 if (
-                  (opsi.tempId || dirtyOpsis.has(opsi.id!)) &&
-                  validateText(opsi.opsiText)
+                  opsi.tempId || dirtyOpsis.has(opsi.id!)
                 ) {
+                  // Always save opsis that have tempId (new ones) or are marked as dirty
+                  // Allow empty opsiText for new opsis
                   const opsiPayload = {
                     soalId: savedSoalId,
                     data: {

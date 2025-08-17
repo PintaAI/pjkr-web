@@ -65,7 +65,11 @@ export function SoalForm({ koleksiId, soalId, }: SoalFormProps) {
       difficulty: soal?.difficulty || Difficulty.BEGINNER,
       explanation: soal?.explanation || "",
       isActive: soal?.isActive ?? true,
-      opsis: soal?.opsis || [
+      opsis: soal?.opsis?.map((opsi: SoalOpsiData) => ({
+        opsiText: opsi.opsiText,
+        isCorrect: opsi.isCorrect,
+        order: opsi.order,
+      })) || [
         { opsiText: "", isCorrect: false, order: 0 },
         { opsiText: "", isCorrect: false, order: 1 },
       ],
@@ -129,13 +133,15 @@ export function SoalForm({ koleksiId, soalId, }: SoalFormProps) {
 
   const handleRemoveOpsi = (opsiIndex: number) => {
     const currentOpsis = watchedOpsis || soal?.opsis || [];
+    const opsiToRemove = currentOpsis[opsiIndex];
     const updatedOpsis = currentOpsis.filter((_, i) => i !== opsiIndex)
       .map((opsi, index) => ({ ...opsi, order: index }));
     setValue("opsis", updatedOpsis, { shouldValidate: true });
-    if (soal && (soal.id || soal.tempId)) {
-      const opsi = soal.opsis[opsiIndex];
-      if (opsi && (opsi.id || opsi.tempId)) {
-        removeOpsi(koleksiId, soal.id || soal.tempId!, opsi.id || opsi.tempId!);
+    if (soal && (soal.id || soal.tempId) && opsiToRemove) {
+      // Find the actual opsi from the store to get the proper ID
+      const storeOpsi = soal.opsis.find(o => o.opsiText === opsiToRemove.opsiText && o.isCorrect === opsiToRemove.isCorrect && o.order === opsiToRemove.order);
+      if (storeOpsi && (storeOpsi.id || storeOpsi.tempId)) {
+        removeOpsi(koleksiId, soal.id || soal.tempId!, storeOpsi.id || storeOpsi.tempId!);
       }
     }
   };
@@ -147,9 +153,11 @@ export function SoalForm({ koleksiId, soalId, }: SoalFormProps) {
     );
     setValue("opsis", updatedOpsis, { shouldValidate: true });
     if (soal && (soal.id || soal.tempId)) {
-      const opsi = soal.opsis[opsiIndex];
-      if (opsi && (opsi.id || opsi.tempId)) {
-        updateOpsi(koleksiId, soal.id || soal.tempId!, opsi.id || opsi.tempId!, { opsiText: value });
+      const opsi = currentOpsis[opsiIndex];
+      // Find the actual opsi from the store to get the proper ID
+      const storeOpsi = soal.opsis.find(o => o.opsiText === opsi.opsiText && o.isCorrect === opsi.isCorrect && o.order === opsi.order);
+      if (storeOpsi && (storeOpsi.id || storeOpsi.tempId)) {
+        updateOpsi(koleksiId, soal.id || soal.tempId!, storeOpsi.id || storeOpsi.tempId!, { opsiText: value });
       }
     }
   };
@@ -245,49 +253,52 @@ export function SoalForm({ koleksiId, soalId, }: SoalFormProps) {
 
         {soal?.opsis && soal.opsis.length > 0 ? (
           <div className="space-y-2">
-            {soal.opsis.map((opsi: SoalOpsiData, opsiIndex: number) => (
-              <Card key={opsi.tempId || opsi.id || opsiIndex} className="p-3">
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline" className="text-xs min-w-8">
-                    {String.fromCharCode(65 + opsiIndex)}
-                  </Badge>
-                  
-                  <div className="flex-1">
-                    <Input
-                      placeholder={`Option ${String.fromCharCode(65 + opsiIndex)}`}
-                      value={opsi.opsiText}
-                      onChange={(e) => handleOpsiTextChange(opsiIndex, e.target.value)}
-                      className="text-sm"
-                    />
+            {soal.opsis.map((opsi: SoalOpsiData, opsiIndex: number) => {
+              const opsiId = opsi.tempId || opsi.id;
+              return (
+                <Card key={opsiId || opsiIndex} className="p-3">
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline" className="text-xs min-w-8">
+                      {String.fromCharCode(65 + (opsi.order ?? opsiIndex))}
+                    </Badge>
+                    
+                    <div className="flex-1">
+                      <Input
+                        placeholder={`Option ${String.fromCharCode(65 + (opsi.order ?? opsiIndex))}`}
+                        value={opsi.opsiText}
+                        onChange={(e) => handleOpsiTextChange(opsiIndex, e.target.value)}
+                        className="text-sm"
+                      />
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleOpsiCorrectChange(opsiIndex, !opsi.isCorrect)}
+                      className={opsi.isCorrect ? "text-green-600" : "text-muted-foreground"}
+                    >
+                      {opsi.isCorrect ? (
+                        <CheckCircle className="h-4 w-4" />
+                      ) : (
+                        <Circle className="h-4 w-4" />
+                      )}
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveOpsi(opsiIndex)}
+                      disabled={soal.opsis.length <= 2}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
-
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleOpsiCorrectChange(opsiIndex, !opsi.isCorrect)}
-                    className={opsi.isCorrect ? "text-green-600" : "text-muted-foreground"}
-                  >
-                    {opsi.isCorrect ? (
-                      <CheckCircle className="h-4 w-4" />
-                    ) : (
-                      <Circle className="h-4 w-4" />
-                    )}
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveOpsi(opsiIndex)}
-                    disabled={soal.opsis.length <= 2}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-4 text-muted-foreground text-sm">

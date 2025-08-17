@@ -172,7 +172,7 @@ export interface KelasBuilderState {
   updateKoleksiSoal: (id: number | string, koleksiSoal: Partial<KoleksiSoalData>) => void;
   removeKoleksiSoal: (id: number | string) => void;
   saveKoleksiSoal: (index: number) => Promise<void>;
-  addSoal: (koleksiId: number | string, soal: Omit<SoalData, 'id' | 'opsis' | 'tempId'> & { opsis?: Omit<SoalOpsiData, 'id' | 'tempId'>[] }) => void;
+  addSoal: (koleksiId: number | string, soal: Omit<SoalData, 'id' | 'opsis' | 'tempId'> & { opsis?: Omit<SoalOpsiData, 'id' | 'tempId'>[] }) => string;
   updateSoal: (koleksiId: number | string, soalId: number | string, soal: Partial<SoalData>) => void;
   removeSoal: (koleksiId: number | string, soalId: number | string) => void;
   reorderSoals: (koleksiId: number | string, fromIndex: number, toIndex: number) => void;

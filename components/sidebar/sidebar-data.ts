@@ -48,42 +48,16 @@ export function getSidebarData(userRole?: UserRole) {
       icon: GraduationCap,
       items: [
         {
-          title: "Semua Kelas",
+          title: "My Kelas",
           url: "/kelas",
         },
         {
-          title: "Materi",
-          url: "/kelas/materi",
-        },
-      ],
-    },
-    {
-      title: "Vocabulary",
-      url: "/vocabulary",
-      icon: BookOpen,
-      items: [
-        {
-          title: "Practice",
-          url: "/vocabulary/practice",
+          title: "Vocabulary",
+          url: "/vocabulary",
         },
         {
-          title: "Categories",
-          url: "/vocabulary/categories",
-        },
-      ],
-    },
-    {
-      title: "Soal & Latihan",
-      url: "/soal",
-      icon: FileText,
-      items: [
-        {
-          title: "Latihan",
-          url: "/soal/latihan",
-        },
-        {
-          title: "Tryout",
-          url: "/soal/tryout",
+          title: "Paket Soal & Tryout",
+          url: "/soal",
         },
       ],
     },
@@ -93,20 +67,16 @@ export function getSidebarData(userRole?: UserRole) {
       icon: Gamepad2,
       items: [
         {
-          title: "Word Puzzle",
-          url: "/game/word-puzzle",
+          title: "All Game",
+          url: "/game",
         },
         {
-          title: "Grammar Quest",
-          url: "/game/grammar-quest",
+          title: "Leaderboard",
+          url: "/game/leaderboard",
         },
         {
-          title: "Speed Reading",
-          url: "/game/speed-reading",
-        },
-        {
-          title: "Multiplayer",
-          url: "/game/multiplayer",
+          title: "My Stats",
+          url: "/game/my-stats",
         },
       ],
     },
@@ -138,20 +108,6 @@ export function getSidebarData(userRole?: UserRole) {
     title: "Explore",
     url: "/explore",
     icon: Compass,
-    items: [
-      {
-        title: "All Content",
-        url: "/explore",
-      },
-      {
-        title: "Quizzes",
-        url: "/explore/quizzes",
-      },
-      {
-        title: "Teachers",
-        url: "/explore/teachers",
-      },
-    ],
   });
 
   // Add base navigation items for all users

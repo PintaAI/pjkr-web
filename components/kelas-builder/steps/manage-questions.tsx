@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { z } from "zod";
 import { Card, CardContent,} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +12,6 @@ import { SoalForm } from "./soal-form";
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
@@ -21,75 +19,28 @@ import {
 } from "@dnd-kit/core";
 import {
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-
-// Reuse the same validation schema from soal-form
-const soalValidationSchema = z.object({
-  pertanyaan: z.string().min(1, "Question is required"),
-  difficulty: z.nativeEnum(Difficulty, {
-    errorMap: () => ({ message: "Please select a difficulty level" })
-  }),
-  explanation: z.string().optional(),
-  isActive: z.boolean(),
-  opsis: z.array(z.object({
-    opsiText: z.string().min(1, "Option text is required"),
-    isCorrect: z.boolean(),
-    order: z.number(),
-  })).min(2, "At least 2 options are required").max(5, "Maximum 5 options allowed")
-    .refine(
-      (opsis) => opsis.filter(opsi => opsi.isCorrect).length === 1,
-      { message: "Exactly one option must be marked as correct" }
-    ),
-});
-
-// Validation function using Zod
-function validateSoal(soal: any): { isValid: boolean; errors: string[] } {
-  try {
-    // Clean the question text for validation
-    const cleanedSoal = {
-      ...soal,
-      pertanyaan: soal.pertanyaan?.replace(/<[^>]*>/g, "").trim() || "",
-    };
-    
-    soalValidationSchema.parse(cleanedSoal);
-    return { isValid: true, errors: [] };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return {
-        isValid: false,
-        errors: error.errors.map(err => err.message)
-      };
-    }
-    return { isValid: false, errors: ["Unknown validation error"] };
-  }
-}
-
 interface ManageQuestionsProps {
-  koleksiIndex: number;
+  koleksiId: string | number;
 }
-
 interface SortableSoalItemProps {
   soal: any;
   onEditSoal: (id: number | string) => void;
   onToggleExpand: (id: number | string) => void;
   onRemoveSoal: (id: number | string) => void;
   isExpanded: boolean;
-  hasValidationErrors?: boolean;
 }
-
 function SortableSoalItem({
   soal,
   onEditSoal,
   onToggleExpand,
   onRemoveSoal,
   isExpanded,
-  hasValidationErrors = false,
 }: SortableSoalItemProps) {
   const {
     attributes,
@@ -109,9 +60,7 @@ function SortableSoalItem({
     <Card
       ref={setNodeRef}
       style={style}
-      className={`relative ${isDragging ? "opacity-50" : "py-2"} ${
-        hasValidationErrors ? "border-destructive/50 bg-destructive/5" : ""
-      }`}
+      className={`relative ${isDragging ? "opacity-50" : "py-2"}`}
     >
       <CardContent>
         <div className="space-y-3">
@@ -195,21 +144,24 @@ function SortableSoalItem({
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-2">Answer Options:</p>
                   <div className="space-y-2">
-                    {soal.opsis.map((opsi: any, opsiIndex: number) => (
-                      <div key={opsiIndex} className="flex items-center gap-2 text-sm">
-                        {opsi.isCorrect ? (
-                          <CheckCircle className="h-4 w-4 text-green-600 shrink-0" />
-                        ) : (
-                          <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
-                        )}
-                        <span className="text-muted-foreground font-medium">
-                          {String.fromCharCode(65 + opsiIndex)}.
-                        </span>
-                        <span className={opsi.isCorrect ? "font-medium" : ""}>
-                          {opsi.opsiText || "Empty option"}
-                        </span>
-                      </div>
-                    ))}
+                    {soal.opsis.map((opsi: any) => {
+                      const opsiId = opsi.tempId || opsi.id;
+                      return (
+                        <div key={opsiId} className="flex items-center gap-2 text-sm">
+                          {opsi.isCorrect ? (
+                            <CheckCircle className="h-4 w-4 text-green-600 shrink-0" />
+                          ) : (
+                            <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
+                          )}
+                          <span className="text-muted-foreground font-medium">
+                            {String.fromCharCode(65 + (opsi.order ?? 0))}.
+                          </span>
+                          <span className={opsi.isCorrect ? "font-medium" : ""}>
+                            {opsi.opsiText || "Empty option"}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -221,43 +173,36 @@ function SortableSoalItem({
   );
 }
 
-export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
+export function ManageQuestions({ koleksiId }: ManageQuestionsProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingSoalId, setEditingSoalId] = useState<number | string | undefined>();
   const [expandedSoals, setExpandedSoals] = useState<Set<number | string>>(new Set());
   const { koleksiSoals, addSoal, removeSoal, reorderSoals } = useKelasBuilderStore();
-  const koleksiSoal = koleksiSoals[koleksiIndex];
+  const koleksiSoal = koleksiSoals.find(k => k.id === koleksiId || k.tempId === koleksiId);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(PointerSensor)
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
-    if (active.id !== over?.id && over) {
+    if (active.id !== over?.id && over && koleksiSoal) {
       // Extract the index from the sortable ID
       const soals = koleksiSoal.soals;
       const activeIndex = soals.findIndex(s => (s.tempId || s.id) === active.id);
       const overIndex = soals.findIndex(s => (s.tempId || s.id) === over.id);
 
-      if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
-        const koleksiId = koleksiSoal.id || koleksiSoal.tempId;
-        if (koleksiId) {
-          reorderSoals(koleksiId, activeIndex, overIndex);
-        }
+      if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex && koleksiIndex !== -1) {
+        reorderSoals(koleksiId, activeIndex, overIndex);
       }
     }
   };
 
   const handleAddSoal = () => {
-    const koleksiId = koleksiSoal.id || koleksiSoal.tempId;
     if (!koleksiId) return;
 
-    addSoal(koleksiId, {
+    const newSoalTempId = addSoal(koleksiId, {
       pertanyaan: "",
       difficulty: Difficulty.BEGINNER,
       explanation: "",
@@ -267,9 +212,7 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
         { opsiText: "", isCorrect: false, order: 1 },
       ],
     });
-    // The new soal will have a tempId. We'll open the form without a specific soalId,
-    // and the form will be responsible for identifying it's a new soal.
-    setEditingSoalId(undefined);
+    setEditingSoalId(newSoalTempId);
     setShowCreateDialog(true);
   };
 
@@ -285,7 +228,6 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
 
   const handleRemoveSoal = (soalId: number | string) => {
     if (confirm("Are you sure you want to delete this question?")) {
-      const koleksiId = koleksiSoal.id || koleksiSoal.tempId;
       if (koleksiId) {
         removeSoal(koleksiId, soalId);
       }
@@ -306,16 +248,9 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
     return <div>Collection not found</div>;
   }
 
-  // Validate all soals and get summary
-  const validationSummary = koleksiSoal.soals.map((soal, index) => ({
-    index,
-    validation: validateSoal(soal)
-  }));
-  
-  const invalidSoals = validationSummary.filter(item => !item.validation.isValid);
-  const allErrors = invalidSoals.flatMap(item =>
-    item.validation.errors.map(error => `Question ${item.index + 1}: ${error}`)
-  );
+  // Find the actual index for reorder operations
+  const koleksiIndex = koleksiSoals.findIndex(k => k.id === koleksiId || k.tempId === koleksiId);
+
 
   return (
     <div className="space-y-7">
@@ -326,28 +261,6 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
             <p className="text-sm text-muted-foreground">
               Manage questions for this collection
             </p>
-            {invalidSoals.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-destructive" />
-                  <p className="text-sm text-destructive font-medium">
-                    {invalidSoals.length} question(s) need attention:
-                  </p>
-                </div>
-                <div className="ml-6 space-y-1">
-                  {allErrors.slice(0, 5).map((error, index) => (
-                    <p key={index} className="text-xs text-destructive">
-                      • {error}
-                    </p>
-                  ))}
-                  {allErrors.length > 5 && (
-                    <p className="text-xs text-destructive">
-                      • ... and {allErrors.length - 5} more issues
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </div>
         <Button onClick={handleAddSoal} size="sm">
@@ -390,10 +303,8 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
                 .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
                 .map((soal) => {
                   const soalId = soal.tempId || soal.id;
-                  if (!soalId) return null; // Should not happen if filtered correctly
+                  if (!soalId) return null;
                   const isExpanded = expandedSoals.has(soalId);
-                  const validation = validateSoal(soal);
-                  const hasValidationErrors = !validation.isValid;
                   return (
                     <SortableSoalItem
                       key={soalId}
@@ -402,7 +313,6 @@ export function ManageQuestions({ koleksiIndex }: ManageQuestionsProps) {
                       onToggleExpand={toggleExpand}
                       onRemoveSoal={handleRemoveSoal}
                       isExpanded={isExpanded}
-                      hasValidationErrors={hasValidationErrors}
                     />
                   );
                 })}

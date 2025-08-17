@@ -11,47 +11,43 @@ import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { KoleksiSoalForm } from "./koleksi-soal-form";
 import { ManageQuestions } from "./manage-questions";
 import { Difficulty } from "@prisma/client";
+import type { KoleksiSoalData } from "@/lib/stores/kelas-builder/types";
 
 export function StepAssessment() {
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [editingIndex, setEditingIndex] = useState<number | undefined>();
-  const [managingQuestionsIndex, setManagingQuestionsIndex] = useState<number | undefined>();
-  const {
-    koleksiSoals,
-    removeKoleksiSoal,
-    setIsDirty
-  } = useKelasBuilderStore();
+  const [editingId, setEditingId] = useState<string | number | undefined>();
+  const [managingQuestionsId, setManagingQuestionsId] = useState<string | number | undefined>();
+  const {koleksiSoals, removeKoleksiSoal } = useKelasBuilderStore();
 
   const handleCreateNew = () => {
-    setEditingIndex(undefined);
+    setEditingId(undefined);
     setShowCreateForm(true);
-    setIsDirty(true);
   };
 
-  const handleEdit = (index: number) => {
-    setEditingIndex(index);
+  const handleEdit = (koleksi: KoleksiSoalData) => {
+    setEditingId(koleksi.id || koleksi.tempId);
     setShowCreateForm(true);
-    setIsDirty(true);
   };
 
   const handleFormSave = () => {
-    // Always close dialog on manual save (submit button)
     setShowCreateForm(false);
-    setEditingIndex(undefined);
-    ;
+    setEditingId(undefined);
   };
 
-  const handleManageQuestions = (index: number) => {
-    setManagingQuestionsIndex(index);
+  const handleManageQuestions = (koleksi: KoleksiSoalData) => {
+    setManagingQuestionsId(koleksi.id || koleksi.tempId);
   };
 
   const handleCloseManageQuestions = () => {
-    setManagingQuestionsIndex(undefined);
+    setManagingQuestionsId(undefined);
   };
 
-  const handleDelete = (index: number) => {
+  const handleDelete = (koleksi: KoleksiSoalData) => {
     if (confirm("Are you sure you want to delete this question collection?")) {
-      removeKoleksiSoal(index);
+      const id = koleksi.id || koleksi.tempId;
+      if (id) {
+        removeKoleksiSoal(id);
+      }
     }
   };
 
@@ -115,11 +111,11 @@ export function StepAssessment() {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {koleksiSoals.map((koleksi, index) => (
+          {koleksiSoals.map((koleksi) => (
             <Card
-              key={koleksi.tempId || koleksi.id || index}
+              key={koleksi.tempId || koleksi.id}
               className="relative cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-200 group"
-              onClick={() => handleManageQuestions(index)}
+              onClick={() => handleManageQuestions(koleksi)}
             >
               {/* Overlay for click instruction */}
               <div className="absolute inset-0 bg-black/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
@@ -145,7 +141,7 @@ export function StepAssessment() {
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleEdit(index);
+                        handleEdit(koleksi);
                       }}
                     >
                       <Edit className="h-4 w-4" />
@@ -155,7 +151,7 @@ export function StepAssessment() {
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDelete(index);
+                        handleDelete(koleksi);
                       }}
                       className="text-destructive hover:text-destructive"
                     >
@@ -206,18 +202,18 @@ export function StepAssessment() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingIndex !== undefined ? "Edit Question Collection" : "Create New Question Collection"}
+              {editingId !== undefined ? "Edit Question Collection" : "Create New Question Collection"}
             </DialogTitle>
           </DialogHeader>
           <KoleksiSoalForm
-            koleksiIndex={editingIndex}
+            koleksiId={editingId}
             onSave={handleFormSave}
           />
         </DialogContent>
       </Dialog>
 
       {/* Manage Questions Sheet */}
-      <Sheet open={managingQuestionsIndex !== undefined} onOpenChange={handleCloseManageQuestions}>
+      <Sheet open={managingQuestionsId !== undefined} onOpenChange={handleCloseManageQuestions}>
         <SheetContent side="right" className="w-[800px] sm:max-w-[800px] overflow-y-auto">
           <SheetHeader className="px-6 py-4">
             <SheetTitle>
@@ -225,8 +221,8 @@ export function StepAssessment() {
             </SheetTitle>
           </SheetHeader>
           <div className="px-6 pb-6">
-            {managingQuestionsIndex !== undefined && (
-              <ManageQuestions koleksiIndex={managingQuestionsIndex} />
+            {managingQuestionsId !== undefined && (
+              <ManageQuestions koleksiId={managingQuestionsId} />
             )}
           </div>
         </SheetContent>

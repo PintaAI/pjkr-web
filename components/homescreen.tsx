@@ -3,7 +3,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { Progress } from "./ui/progress";
 import { StatsCard } from "./ui/stats-card";
 import DailyVocab from "./home/daily-vocab";
 import {
@@ -14,7 +13,6 @@ import {
   Star,
   Zap,
   Clock,
-  Calendar,
   ArrowRight,
   Target,
   Flame,
@@ -22,7 +20,7 @@ import {
   Headphones
 } from 'lucide-react';
 import Link from 'next/link';
-import { AuthButton } from "./auth/auth-button";
+import { SearchComponent } from "./ui/search";
 
 interface User {
   id: string;
@@ -130,22 +128,14 @@ export default function Homescreen({ user }: HomescreenProps) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Welcome back, {user.name || user.email}! 👋
+            안녕!👋 {user.name || user.email} 🇮🇩🇰🇷
           </h1>
           <p className="text-muted-foreground">
-            Ready to continue your Korean learning journey?
+            Udah siap belajar hari ini? Yuk terus tingkatkan kemampuan bahasa Koreamu!
           </p>
         </div>
-        <div className="flex gap-2">
-          {(user.role === "ADMIN" || user.role === "GURU") && (
-            <Link href="/dashboard">
-              <Button>
-                <Target className="h-4 w-4 mr-2" />
-                Dashboard
-              </Button>
-            </Link>
-          )}
-          <AuthButton />
+        <div className="flex-1 max-w-md">
+          <SearchComponent />
         </div>
       </div>
 
@@ -182,62 +172,11 @@ export default function Homescreen({ user }: HomescreenProps) {
 
       {/* Daily Vocabulary moved into sidebar (compact) */}
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 ">
         {/* Learning Activities */}
         <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Continue Learning</CardTitle>
-              <CardDescription>
-                Pick up where you left off
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold">{mockData.latestCourse.title}</h3>
-                    <Badge variant="secondary">{mockData.latestCourse.progress}%</Badge>
-                  </div>
-                  <Progress value={mockData.latestCourse.progress} className="h-2 mb-3" />
-                  <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
-                    <span>Next: {mockData.latestCourse.nextLesson}</span>
-                    <span>Due in {mockData.latestCourse.timeLeft}</span>
-                  </div>
-                  <Link href={mockData.latestCourse.link}>
-                    <Button className="w-full">
-                      <PlayCircle className="h-4 w-4 mr-2" />
-                      Continue Learning
-                    </Button>
-                  </Link>
-                </div>
-
-                <div className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold">{mockData.latestEvent.title}</h3>
-                    <Badge variant="outline">Live</Badge>
-                  </div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{mockData.latestEvent.date}</span>
-                  </div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{mockData.latestEvent.participants} participants</span>
-                  </div>
-                  <Link href={mockData.latestEvent.link}>
-                    <Button variant="outline" className="w-full">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Join Session
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Learning Apps */}
-          <Card className="mt-6">
+          <Card>
             <CardHeader>
               <CardTitle>Learning Tools</CardTitle>
               <CardDescription>
@@ -245,31 +184,8 @@ export default function Homescreen({ user }: HomescreenProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {mockData.apps.map((app) => {
-                  const IconComponent = app.icon;
-                  return (
-                    <Link key={app.id} href={app.link}>
-                      <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            <IconComponent className={`h-6 w-6 ${app.color}`} />
-                            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                          <CardTitle className="text-lg">{app.name}</CardTitle>
-                          <CardDescription>{app.description}</CardDescription>
-                        </CardHeader>
-                      </Card>
-                    </Link>
-                  );
-                })}
-              </div>
-              <div className="mt-4">
-                <Link href="/apps">
-                  <Button variant="outline" className="w-full">
-                    View All Apps <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </Link>
+              <div className="flex items-center justify-center min-h-[100px] text-muted-foreground text-lg font-semibold">
+                Coming soon
               </div>
             </CardContent>
           </Card>
@@ -277,13 +193,13 @@ export default function Homescreen({ user }: HomescreenProps) {
 
         {/* Sidebar: Daily Vocabulary + Upcoming Activities */}
         <div className="space-y-6">
-          <DailyVocab user={user} take={5} compact />
+          <DailyVocab user={user} take={5}/>
 
           <Card>
             <CardHeader>
-              <CardTitle>Upcoming Activities</CardTitle>
+              <CardTitle>Recent Activity</CardTitle>
               <CardDescription>
-                Your scheduled learning tasks
+                Your latest learning activity
               </CardDescription>
             </CardHeader>
             <CardContent>
