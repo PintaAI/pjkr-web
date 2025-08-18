@@ -8,16 +8,16 @@ export interface Content {
   deletedMateris: number[];
   dirtyMateris: Set<number>;
   addMateri: (materi: Omit<MateriData, 'order'>) => void;
-  updateMateri: (index: number, materi: Partial<MateriData>) => void;
-  removeMateri: (index: number) => void;
-  reorderMateris: (fromIndex: number, toIndex: number) => void;
-  toggleMateriDraft: (index: number) => Promise<void>;
+  updateMateri: (id: number | string, materi: Partial<MateriData>) => void;
+  removeMateri: (id: number | string) => void;
+  reorderMateris: (fromId: number | string, toId: number | string) => void;
+  toggleMateriDraft: (id: number | string) => Promise<void>;
   saveMateris: () => Promise<void>;
 }
 
 export const createContent: StateCreator<
   KelasBuilderState,
-  [],
+  [["zustand/immer", never]],
   [],
   Content
 > = (set, get) => ({
@@ -32,119 +32,121 @@ export const createContent: StateCreator<
         order: state.materis.length,
         tempId,
       };
-      return {
-        materis: [...state.materis, newMateri],
-        isDirty: true,
-        stepDirtyFlags: { ...state.stepDirtyFlags, content: true },
-        optimisticUpdates: {
-          ...state.optimisticUpdates,
-          koleksi: new Set(state.optimisticUpdates.koleksi).add(tempId),
-        },
-      };
+      state.materis.push(newMateri);
+      state.stepDirtyFlags.content = true;
     });
   },
-  updateMateri: (index, materi) => {
+  updateMateri: (id, materi) => {
     set((state) => {
-      const newMateris = [...state.materis];
-      const newDirtyMateris = new Set(state.dirtyMateris);
-      if (newMateris[index]) {
-        newMateris[index] = { ...newMateris[index], ...materi };
-        if (newMateris[index].id) {
-          newDirtyMateris.add(newMateris[index].id!);
+      const materiIndex = state.materis.findIndex(m => m.id === id || m.tempId === id);
+      
+      if (materiIndex !== -1) {
+        state.materis[materiIndex] = {
+          ...state.materis[materiIndex],
+          ...materi,
+        };
+        if (state.materis[materiIndex].id) {
+          state.dirtyMateris.add(state.materis[materiIndex].id!);
         }
       }
-      return {
-        materis: newMateris,
-        isDirty: true,
-        stepDirtyFlags: { ...state.stepDirtyFlags, content: true },
-        dirtyMateris: newDirtyMateris,
-      };
+      state.stepDirtyFlags.content = true;
     });
   },
-  removeMateri: (index) => {
+  removeMateri: (id) => {
     const { materis } = get();
-    if (!materis[index]) return;
+    const materiIndex = materis.findIndex(m => m.id === id || m.tempId === id);
+    
+    if (materiIndex === -1) return;
 
-    const materi = materis[index];
+    const materi = materis[materiIndex];
 
     if (materi.tempId) {
       // Remove unsaved materi (only from local state)
       set((state) => {
-        const newOptimisticUpdates = {
-          ...state.optimisticUpdates,
-          koleksi: new Set(state.optimisticUpdates.koleksi),
-        };
-        if (materi.tempId) {
-          newOptimisticUpdates.koleksi.delete(materi.tempId);
-        }
-        const newMateris = state.materis.filter((_, i) => i !== index);
+        state.materis.splice(materiIndex, 1);
         // Reorder remaining materis
-        const reorderedMateris = newMateris.map((m, i) => ({ ...m, order: i }));
-        return {
-          optimisticUpdates: newOptimisticUpdates,
-          materis: reorderedMateris,
-          isDirty: true,
-          stepDirtyFlags: { ...state.stepDirtyFlags, content: true },
-        };
+        state.materis.forEach((m, i) => {
+          m.order = i;
+        });
+        state.stepDirtyFlags.content = true;
       });
     } else {
       // Mark saved materi for deletion (will be deleted on save)
       set((state) => {
-        const newMateris = state.materis.filter((_, i) => i !== index);
+        state.deletedMateris.push(materi.id!);
+        state.materis.splice(materiIndex, 1);
         // Reorder remaining materis
-        const reorderedMateris = newMateris.map((m, i) => ({ ...m, order: i }));
-        return {
-          deletedMateris: [...state.deletedMateris, materi.id!],
-          materis: reorderedMateris,
-          isDirty: true,
-          stepDirtyFlags: { ...state.stepDirtyFlags, content: true },
-        };
+        state.materis.forEach((m, i) => {
+          m.order = i;
+        });
+        state.stepDirtyFlags.content = true;
       });
     }
   },
-  reorderMateris: (fromIndex, toIndex) => {
+  reorderMateris: (fromId, toId) => {
     set((state) => {
-      const newMateris = [...state.materis];
-      const [movedItem] = newMateris.splice(fromIndex, 1);
-      newMateris.splice(toIndex, 0, movedItem);
+      const fromItem = state.materis.find(m => m.id === fromId || m.tempId === fromId);
+      const toItem = state.materis.find(m => m.id === toId || m.tempId === toId);
+      
+      if (!fromItem || !toItem) return;
 
-      const newDirtyMateris = new Set(state.dirtyMateris);
-      // Update order for all materis and mark them as dirty
-      const reorderedMateris = newMateris.map((materi, index) => {
+      const fromOrder = fromItem.order;
+      const toOrder = toItem.order;
+      
+      if (fromOrder < toOrder) {
+        // Moving down: increase order of items between from and to
+        state.materis.forEach(materi => {
+          if (materi.id === fromId || materi.tempId === fromId) {
+            // Move the from item to the to position
+            materi.order = toOrder;
+          } else if (materi.order > fromOrder && materi.order <= toOrder) {
+            // Shift items down
+            if (materi.id) {
+              state.dirtyMateris.add(materi.id);
+            }
+            materi.order = materi.order - 1;
+          }
+        });
+      } else {
+        // Moving up: decrease order of items between to and from
+        state.materis.forEach(materi => {
+          if (materi.id === fromId || materi.tempId === fromId) {
+            // Move the from item to the to position
+            materi.order = toOrder;
+          } else if (materi.order >= toOrder && materi.order < fromOrder) {
+            // Shift items up
+            if (materi.id) {
+              state.dirtyMateris.add(materi.id);
+            }
+            materi.order = materi.order + 1;
+          }
+        });
+      }
+
+      // Mark all items with real IDs as dirty
+      state.materis.forEach(materi => {
         if (materi.id) {
-          newDirtyMateris.add(materi.id);
+          state.dirtyMateris.add(materi.id);
         }
-        return {
-          ...materi,
-          order: index,
-        };
       });
 
-      return {
-        materis: reorderedMateris,
-        isDirty: true,
-        stepDirtyFlags: { ...state.stepDirtyFlags, content: true },
-        dirtyMateris: newDirtyMateris,
-      };
+      state.stepDirtyFlags.content = true;
     });
   },
-  toggleMateriDraft: async (index) => {
+  toggleMateriDraft: async (id) => {
     const { draftId, materis } = get();
-    if (!draftId || !materis[index] || !materis[index].id) return;
+    const materiIndex = materis.findIndex(m => m.id === id || m.tempId === id);
+    
+    if (!draftId || materiIndex === -1 || !materis[materiIndex].id) return;
 
-    const materi = materis[index];
+    const materi = materis[materiIndex];
     const newDraftStatus = !materi.isDraft;
 
     set((state) => {
-      const newMateris = [...state.materis];
-      if (newMateris[index]) {
-        newMateris[index] = { ...newMateris[index], isDraft: newDraftStatus };
+      if (state.materis[materiIndex]) {
+        state.materis[materiIndex].isDraft = newDraftStatus;
       }
-      return {
-        materis: newMateris,
-        isDirty: true,
-        stepDirtyFlags: { ...state.stepDirtyFlags, content: true },
-      };
+      state.stepDirtyFlags.content = true;
     });
 
     try {
@@ -154,15 +156,10 @@ export const createContent: StateCreator<
 
       if (result.success) {
         set((state) => {
-          const newMateris = [...state.materis];
-          if (newMateris[index]) {
-            newMateris[index] = { ...newMateris[index], isDraft: newDraftStatus };
+          if (state.materis[materiIndex]) {
+            state.materis[materiIndex].isDraft = newDraftStatus;
           }
-          return {
-            materis: newMateris,
-            isDirty: false,
-            stepDirtyFlags: { ...state.stepDirtyFlags, content: false },
-          };
+          state.stepDirtyFlags.content = false;
         });
 
         const action = newDraftStatus ? 'marked as draft' : 'published';
@@ -173,14 +170,10 @@ export const createContent: StateCreator<
     } catch (error) {
       // Revert the local state if save fails
       set((state) => {
-        const newMateris = [...state.materis];
-        if (newMateris[index]) {
-          newMateris[index] = { ...newMateris[index], isDraft: !newDraftStatus };
+        if (state.materis[materiIndex]) {
+          state.materis[materiIndex].isDraft = !newDraftStatus;
         }
-        return {
-          materis: newMateris,
-          error: error instanceof Error ? error.message : 'Failed to update lesson status',
-        };
+        state.error = error instanceof Error ? error.message : 'Failed to update lesson status';
       });
 
       const action = newDraftStatus ? 'mark as draft' : 'publish';
@@ -196,7 +189,7 @@ export const createContent: StateCreator<
       return;
     }
 
-    set({ isLoading: true, error: null });
+    set({ error: null });
 
     try {
       // Handle deletions first
@@ -215,29 +208,34 @@ export const createContent: StateCreator<
         console.log('➕ [SAVE] Adding new materis:', newMateris.length);
         const serializedMateris = newMateris.map((materi) => ({
           ...materi,
+          tempId: materi.tempId, // Include tempId for mapping
           jsonDescription: JSON.parse(JSON.stringify(materi.jsonDescription || {})),
         }));
 
         const result = await addMateris(draftId, serializedMateris);
-        if (result.success) {
+        if (result.success && result.data && result.tempIdMapping) {
+          // Use safe tempId → real ID mapping from backend
           set((state) => {
-            const newOptimisticUpdates = {
-              ...state.optimisticUpdates,
-              koleksi: new Set(state.optimisticUpdates.koleksi),
-            };
-            const updatedMateris = state.materis.map((m) => {
-              if (m.tempId) {
-                newOptimisticUpdates.koleksi.delete(m.tempId);
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { tempId, ...rest } = m;
-                return rest;
+            state.materis.forEach((m) => {
+              // If this is a temp item, use the mapping to get real ID
+              if (m.tempId && result.tempIdMapping![m.tempId]) {
+                const realId = result.tempIdMapping![m.tempId];
+                const serverMateri = result.data!.find(sm => sm.id === realId);
+                
+                if (serverMateri) {
+                  // Replace temp item with server version that has real ID
+                  m.id = serverMateri.id;
+                  m.tempId = undefined;
+                  m.title = serverMateri.title;
+                  m.description = serverMateri.description;
+                  m.jsonDescription = serverMateri.jsonDescription;
+                  m.htmlDescription = serverMateri.htmlDescription;
+                  m.order = serverMateri.order;
+                  m.isDraft = serverMateri.isDraft;
+                  m.isDemo = serverMateri.isDemo;
+                }
               }
-              return m;
             });
-            return {
-              materis: updatedMateris as MateriData[],
-              optimisticUpdates: newOptimisticUpdates,
-            };
           });
         } else {
           throw new Error(result.error || 'Failed to save new materis');
@@ -262,18 +260,17 @@ export const createContent: StateCreator<
       }
 
       // Clear deletion and dirty tracking
-      set((state) => ({
-        deletedMateris: [],
-        dirtyMateris: new Set(),
-        isDirty: false,
-        stepDirtyFlags: { ...state.stepDirtyFlags, content: false },
-        isLoading: false,
-      }));
+      set((state) => {
+        state.deletedMateris = [];
+        state.dirtyMateris = new Set();
+        state.stepDirtyFlags.content = false;
+        state.isLoading = false;
+      });
       toast.success('Content saved successfully');
     } catch (error) {
-      set({
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Failed to save content',
+      set((state) => {
+        state.isLoading = false;
+        state.error = error instanceof Error ? error.message : 'Failed to save content';
       });
       toast.error('Failed to save content');
     }

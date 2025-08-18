@@ -7,24 +7,106 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ClipboardList, Plus, Edit, Trash2, FileText, MousePointerClick,} from "lucide-react";
-import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { KoleksiSoalForm } from "./koleksi-soal-form";
 import { ManageQuestions } from "./manage-questions";
 import { Difficulty } from "@prisma/client";
-import type { KoleksiSoalData } from "@/lib/stores/kelas-builder/types";
 
 export function StepAssessment() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingId, setEditingId] = useState<string | number | undefined>();
   const [managingQuestionsId, setManagingQuestionsId] = useState<string | number | undefined>();
-  const {koleksiSoals, removeKoleksiSoal } = useKelasBuilderStore();
+  // Mock data for development
+  const mockKoleksiSoals = [
+    {
+      id: 1,
+      tempId: undefined,
+      nama: "Basic Math Collection",
+      deskripsi: "Collection of basic mathematics questions",
+      isPrivate: false,
+      isDraft: false,
+      soals: [
+        {
+          pertanyaan: "What is 2 + 2?",
+          difficulty: Difficulty.BEGINNER,
+          isActive: true,
+          opsis: [
+            { opsiText: "3", isCorrect: false, order: 1 },
+            { opsiText: "4", isCorrect: true, order: 2 },
+            { opsiText: "5", isCorrect: false, order: 3 }
+          ]
+        },
+        {
+          pertanyaan: "What is 10 - 5?",
+          difficulty: Difficulty.BEGINNER,
+          isActive: true,
+          opsis: [
+            { opsiText: "4", isCorrect: false, order: 1 },
+            { opsiText: "5", isCorrect: true, order: 2 },
+            { opsiText: "6", isCorrect: false, order: 3 }
+          ]
+        },
+        {
+          pertanyaan: "What is 15 ÷ 3?",
+          difficulty: Difficulty.INTERMEDIATE,
+          isActive: true,
+          opsis: [
+            { opsiText: "3", isCorrect: false, order: 1 },
+            { opsiText: "5", isCorrect: true, order: 2 },
+            { opsiText: "7", isCorrect: false, order: 3 }
+          ]
+        }
+      ]
+    },
+    {
+      tempId: "temp-1",
+      nama: "English Grammar Test",
+      deskripsi: "Grammar and vocabulary assessment",
+      isPrivate: true,
+      isDraft: true,
+      soals: [
+        {
+          pertanyaan: "Choose the correct form: I ___ to school every day.",
+          difficulty: Difficulty.INTERMEDIATE,
+          isActive: true,
+          opsis: [
+            { opsiText: "go", isCorrect: true, order: 1 },
+            { opsiText: "goes", isCorrect: false, order: 2 },
+            { opsiText: "going", isCorrect: false, order: 3 }
+          ]
+        },
+        {
+          pertanyaan: "Identify the adjective in the sentence: The big dog barked loudly.",
+          difficulty: Difficulty.INTERMEDIATE,
+          isActive: true,
+          opsis: [
+            { opsiText: "big", isCorrect: true, order: 1 },
+            { opsiText: "dog", isCorrect: false, order: 2 },
+            { opsiText: "loudly", isCorrect: false, order: 3 }
+          ]
+        },
+        {
+          pertanyaan: "Which sentence uses the present perfect tense correctly?",
+          difficulty: Difficulty.ADVANCED,
+          isActive: true,
+          opsis: [
+            { opsiText: "I have finished my homework.", isCorrect: true, order: 1 },
+            { opsiText: "I have finish my homework.", isCorrect: false, order: 2 },
+            { opsiText: "I am finish my homework.", isCorrect: false, order: 3 }
+          ]
+        }
+      ]
+    }
+  ];
+
+  // Console log for debugging
+  console.log("StepAssessment: Mock koleksi soals loaded", mockKoleksiSoals);
 
   const handleCreateNew = () => {
     setEditingId(undefined);
     setShowCreateForm(true);
   };
 
-  const handleEdit = (koleksi: KoleksiSoalData) => {
+  const handleEdit = (koleksi: any) => {
     setEditingId(koleksi.id || koleksi.tempId);
     setShowCreateForm(true);
   };
@@ -34,7 +116,7 @@ export function StepAssessment() {
     setEditingId(undefined);
   };
 
-  const handleManageQuestions = (koleksi: KoleksiSoalData) => {
+  const handleManageQuestions = (koleksi: any) => {
     setManagingQuestionsId(koleksi.id || koleksi.tempId);
   };
 
@@ -42,12 +124,11 @@ export function StepAssessment() {
     setManagingQuestionsId(undefined);
   };
 
-  const handleDelete = (koleksi: KoleksiSoalData) => {
+  const handleDelete = (koleksi: any) => {
     if (confirm("Are you sure you want to delete this question collection?")) {
       const id = koleksi.id || koleksi.tempId;
-      if (id) {
-        removeKoleksiSoal(id);
-      }
+      console.log("StepAssessment: Deleting koleksi with id:", id);
+      // Mock deletion - in real app this would call removeKoleksiSoal(id)
     }
   };
 
@@ -65,18 +146,18 @@ export function StepAssessment() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{koleksiSoals.length}</div>
+              <div className="text-2xl font-bold text-primary">{mockKoleksiSoals.length}</div>
               <div className="text-sm text-muted-foreground">Collections</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                {koleksiSoals.reduce((total, koleksi) => total + koleksi.soals.length, 0)}
+                {mockKoleksiSoals.reduce((total, koleksi) => total + koleksi.soals.length, 0)}
               </div>
               <div className="text-sm text-muted-foreground">Total Questions</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600">
-                {koleksiSoals.filter(k => k.tempId).length}
+                {mockKoleksiSoals.filter(k => k.tempId).length}
               </div>
               <div className="text-sm text-muted-foreground">Unsaved Changes</div>
             </div>
@@ -87,7 +168,7 @@ export function StepAssessment() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ClipboardList className="h-5 w-5" />
-          <span className="font-semibold">Question Collections ({koleksiSoals.length})</span>
+          <span className="font-semibold">Question Collections ({mockKoleksiSoals.length})</span>
         </div>
         <Button onClick={handleCreateNew} className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
@@ -95,7 +176,7 @@ export function StepAssessment() {
         </Button>
       </div>
 
-      {koleksiSoals.length === 0 ? (
+      {mockKoleksiSoals.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
             <div className="space-y-4">
@@ -111,7 +192,7 @@ export function StepAssessment() {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {koleksiSoals.map((koleksi) => (
+          {mockKoleksiSoals.map((koleksi) => (
             <Card
               key={koleksi.tempId || koleksi.id}
               className="relative cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-200 group"

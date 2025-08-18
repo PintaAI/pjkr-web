@@ -50,45 +50,9 @@ export interface VocabularySetData {
   tempId?: string; // For optimistic UI updates
 }
 
-export interface SoalOpsiData {
-  id?: number;
-  opsiText: string;
-  isCorrect: boolean;
-  order: number;
-  tempId?: string; // For optimistic UI updates
-}
-
-export interface SoalData {
-  id?: number;
-  pertanyaan: string;
-  difficulty?: Difficulty;
-  explanation?: string;
-  isActive: boolean;
-  order?: number;
-  opsis: SoalOpsiData[];
-  tempId?: string; // For optimistic UI updates
-}
-
-export interface KoleksiSoalData {
-  id?: number;
-  nama: string;
-  deskripsi?: string;
-  isPrivate: boolean;
-  isDraft: boolean;
-  soals: SoalData[];
-  tempId?: string; // For optimistic UI updates
-}
-
-export interface SoalSetData {
-  id?: number;
-  koleksiSoalId: number;
-  title: string;
-  description?: string;
-  tempId?: string; // For optimistic UI updates
-}
 
 // The steps in the builder UI
-export type BuilderStep = 'meta' | 'content' | 'vocabulary' | 'assessment' | 'review';
+export type BuilderStep = 'meta' | 'content' | 'vocabulary' | 'review';
 
 export type ActionResult<T> =
   | { success: true; data: T }
@@ -103,33 +67,21 @@ export interface KelasBuilderState {
   kelasIsDraft: boolean;
   isLoading: boolean;
   error: string | null;
-  isDirty: boolean;
-  editVersion: number;
-  incrementEditVersion: () => void;
   optimisticUpdates: {
-    soalSet: Set<string>;
-    koleksi: Set<string>;
-    soal: Set<string>;
-    opsi: Set<string>;
+    // Removed assessment-related optimistic updates
   };
 
   // Deletion tracking
   deletedMateris: number[];
-  deletedKoleksiSoals: number[];
-  deletedSoals: number[];
-  deletedOpsi: number[];
   dirtyMateris: Set<number>;
   dirtyVocabSets: Set<number>;
-  dirtyKoleksiSoals: Set<number>;
-  dirtySoals: Set<number>;
-  dirtyOpsis: Set<number>;
+  // Removed assessment-related deletion tracking
 
   // Slices
   meta: KelasMetaData;
   materis: MateriData[];
   vocabSets: VocabularySetData[];
-  soalSets: SoalSetData[];
-  koleksiSoals: KoleksiSoalData[];
+  // Removed assessment-related slices
   currentStep: BuilderStep;
   stepDirtyFlags: Record<BuilderStep, boolean>;
 
@@ -149,10 +101,10 @@ export interface KelasBuilderState {
 
   // Content
   addMateri: (materi: Omit<MateriData, 'order'>) => void;
-  updateMateri: (index: number, materi: Partial<MateriData>) => void;
-  removeMateri: (index: number) => void;
-  reorderMateris: (fromIndex: number, toIndex: number) => void;
-  toggleMateriDraft: (index: number) => Promise<void>;
+  updateMateri: (id: number | string, materi: Partial<MateriData>) => void;
+  removeMateri: (id: number | string) => void;
+  reorderMateris: (fromId: number | string, toId: number | string) => void;
+  toggleMateriDraft: (id: number | string) => Promise<void>;
   saveMateris: () => Promise<void>;
 
   // Vocabulary
@@ -164,22 +116,7 @@ export interface KelasBuilderState {
   removeVocabularyItem: (vocabSetIndex: number, itemIndex: number) => Promise<void>;
   reorderVocabularyItems: (vocabSetId: number, itemOrders: { id: number; order: number }[]) => Promise<void>;
 
-  // Assessment
-  addSoalSet: (soalSet: Omit<SoalSetData, 'id'>) => void;
-  removeSoalSet: (id: string) => void;
-  saveSoalSet: (id: string) => Promise<void>;
-  addKoleksiSoal: (koleksiSoal: Omit<KoleksiSoalData, 'id' | 'soals' | 'tempId'> & { soals?: Omit<SoalData, 'id' | 'opsis' | 'tempId'>[] }) => void;
-  updateKoleksiSoal: (id: number | string, koleksiSoal: Partial<KoleksiSoalData>) => void;
-  removeKoleksiSoal: (id: number | string) => void;
-  saveKoleksiSoal: (index: number) => Promise<void>;
-  addSoal: (koleksiId: number | string, soal: Omit<SoalData, 'id' | 'opsis' | 'tempId'> & { opsis?: Omit<SoalOpsiData, 'id' | 'tempId'>[] }) => string;
-  updateSoal: (koleksiId: number | string, soalId: number | string, soal: Partial<SoalData>) => void;
-  removeSoal: (koleksiId: number | string, soalId: number | string) => void;
-  reorderSoals: (koleksiId: number | string, fromIndex: number, toIndex: number) => void;
-  addOpsi: (koleksiId: number | string, soalId: number | string, opsi: Omit<SoalOpsiData, 'id' | 'tempId'>) => void;
-  updateOpsi: (koleksiId: number | string, soalId: number | string, opsiId: number | string, opsi: Partial<SoalOpsiData>) => void;
-  removeOpsi: (koleksiId: number | string, soalId: number | string, opsiId: number | string) => void;
-  saveAllAssessments: () => Promise<void>;
+  // Assessment actions removed
  
   // Global Actions
   createDraft: (initialMeta: KelasMetaData) => Promise<void>;
@@ -191,5 +128,4 @@ export interface KelasBuilderState {
   reset: () => void;
   setError: (error: string | null) => void;
   clearError: () => void;
-  setIsDirty: (dirty: boolean) => void;
 }

@@ -22,17 +22,16 @@ export interface Meta {
 
 export const createMeta: StateCreator<
   KelasBuilderState,
-  [],
+  [["zustand/immer", never]],
   [],
   Meta
 > = (set, get) => ({
   meta: initialMeta,
   updateMeta: (meta: Partial<KelasMetaData>) => {
-    set((state) => ({
-      meta: { ...state.meta, ...meta },
-      isDirty: true,
-      stepDirtyFlags: { ...state.stepDirtyFlags, meta: true },
-    }));
+    set((state) => {
+      state.meta = { ...state.meta, ...meta };
+      state.stepDirtyFlags.meta = true;
+    });
   },
   saveMeta: async () => {
     const { draftId, meta } = get();
@@ -51,11 +50,10 @@ export const createMeta: StateCreator<
       
       const result = await updateKelas(draftId, serializedMeta);
       if (result.success) {
-        set((state) => ({
-          isDirty: false,
-          stepDirtyFlags: { ...state.stepDirtyFlags, meta: false },
-          isLoading: false,
-        }));
+        set((state) => {
+          state.stepDirtyFlags.meta = false;
+          state.isLoading = false;
+        });
         toast.success('Meta information updated successfully');
       } else {
         throw new Error(result.error || 'Failed to update meta');

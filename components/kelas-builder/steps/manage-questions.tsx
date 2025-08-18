@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Trash2, FileText, CheckCircle, Circle, ChevronDown, ChevronRight, GripVertical, AlertTriangle } from "lucide-react";
-import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { Difficulty } from "@prisma/client";
 import { SoalForm } from "./soal-form";
 import {
@@ -177,8 +176,118 @@ export function ManageQuestions({ koleksiId }: ManageQuestionsProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingSoalId, setEditingSoalId] = useState<number | string | undefined>();
   const [expandedSoals, setExpandedSoals] = useState<Set<number | string>>(new Set());
-  const { koleksiSoals, addSoal, removeSoal, reorderSoals } = useKelasBuilderStore();
-  const koleksiSoal = koleksiSoals.find(k => k.id === koleksiId || k.tempId === koleksiId);
+
+  // Mock data for development
+  const mockKoleksiSoals = [
+    {
+      id: 1,
+      tempId: undefined,
+      nama: "Basic Math Collection",
+      deskripsi: "Collection of basic mathematics questions",
+      isPrivate: false,
+      isDraft: false,
+      soals: [
+        {
+          id: 1,
+          tempId: undefined,
+          pertanyaan: "What is 2 + 2?",
+          difficulty: Difficulty.BEGINNER,
+          explanation: "Basic addition of two numbers",
+          isActive: true,
+          order: 0,
+          opsis: [
+            { id: 1, tempId: undefined, opsiText: "3", isCorrect: false, order: 0 },
+            { id: 2, tempId: undefined, opsiText: "4", isCorrect: true, order: 1 },
+            { id: 3, tempId: undefined, opsiText: "5", isCorrect: false, order: 2 }
+          ]
+        },
+        {
+          id: 2,
+          tempId: undefined,
+          pertanyaan: "What is 10 - 5?",
+          difficulty: Difficulty.BEGINNER,
+          explanation: "Basic subtraction of two numbers",
+          isActive: true,
+          order: 1,
+          opsis: [
+            { id: 4, tempId: undefined, opsiText: "4", isCorrect: false, order: 0 },
+            { id: 5, tempId: undefined, opsiText: "5", isCorrect: true, order: 1 },
+            { id: 6, tempId: undefined, opsiText: "6", isCorrect: false, order: 2 }
+          ]
+        },
+        {
+          id: 3,
+          tempId: undefined,
+          pertanyaan: "What is 15 ÷ 3?",
+          difficulty: Difficulty.INTERMEDIATE,
+          explanation: "Division of two numbers",
+          isActive: true,
+          order: 2,
+          opsis: [
+            { id: 7, tempId: undefined, opsiText: "3", isCorrect: false, order: 0 },
+            { id: 8, tempId: undefined, opsiText: "5", isCorrect: true, order: 1 },
+            { id: 9, tempId: undefined, opsiText: "7", isCorrect: false, order: 2 }
+          ]
+        }
+      ]
+    },
+    {
+      tempId: "temp-1",
+      nama: "English Grammar Test",
+      deskripsi: "Grammar and vocabulary assessment",
+      isPrivate: true,
+      isDraft: true,
+      soals: [
+        {
+          id: 4,
+          tempId: undefined,
+          pertanyaan: "Choose the correct form: I ___ to school every day.",
+          difficulty: Difficulty.INTERMEDIATE,
+          explanation: "Simple present tense for habitual actions",
+          isActive: true,
+          order: 0,
+          opsis: [
+            { id: 10, tempId: undefined, opsiText: "go", isCorrect: true, order: 0 },
+            { id: 11, tempId: undefined, opsiText: "goes", isCorrect: false, order: 1 },
+            { id: 12, tempId: undefined, opsiText: "going", isCorrect: false, order: 2 }
+          ]
+        },
+        {
+          id: 5,
+          tempId: undefined,
+          pertanyaan: "Identify the adjective in the sentence: The big dog barked loudly.",
+          difficulty: Difficulty.INTERMEDIATE,
+          explanation: "Adjectives describe nouns",
+          isActive: true,
+          order: 1,
+          opsis: [
+            { id: 13, tempId: undefined, opsiText: "big", isCorrect: true, order: 0 },
+            { id: 14, tempId: undefined, opsiText: "dog", isCorrect: false, order: 1 },
+            { id: 15, tempId: undefined, opsiText: "loudly", isCorrect: false, order: 2 }
+          ]
+        },
+        {
+          id: 6,
+          tempId: undefined,
+          pertanyaan: "Which sentence uses the present perfect tense correctly?",
+          difficulty: Difficulty.ADVANCED,
+          explanation: "Present perfect tense shows completed actions with present relevance",
+          isActive: true,
+          order: 2,
+          opsis: [
+            { id: 16, tempId: undefined, opsiText: "I have finished my homework.", isCorrect: true, order: 0 },
+            { id: 17, tempId: undefined, opsiText: "I have finish my homework.", isCorrect: false, order: 1 },
+            { id: 18, tempId: undefined, opsiText: "I am finish my homework.", isCorrect: false, order: 2 }
+          ]
+        }
+      ]
+    }
+  ];
+
+  // Console log for debugging
+  console.log("ManageQuestions: Mock koleksi soals loaded", mockKoleksiSoals);
+
+  const koleksiSoal = mockKoleksiSoals.find(k => k.id === koleksiId || k.tempId === koleksiId);
 
   const sensors = useSensors(
     useSensor(PointerSensor)
@@ -193,8 +302,15 @@ export function ManageQuestions({ koleksiId }: ManageQuestionsProps) {
       const activeIndex = soals.findIndex(s => (s.tempId || s.id) === active.id);
       const overIndex = soals.findIndex(s => (s.tempId || s.id) === over.id);
 
-      if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex && koleksiIndex !== -1) {
-        reorderSoals(koleksiId, activeIndex, overIndex);
+      if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+        console.log("ManageQuestions: Reordering questions", {
+          koleksiId,
+          activeIndex,
+          overIndex,
+          activeId: active.id,
+          overId: over.id
+        });
+        // Mock reordering - in real app this would call reorderSoals(koleksiId, activeIndex, overIndex)
       }
     }
   };
@@ -202,16 +318,9 @@ export function ManageQuestions({ koleksiId }: ManageQuestionsProps) {
   const handleAddSoal = () => {
     if (!koleksiId) return;
 
-    const newSoalTempId = addSoal(koleksiId, {
-      pertanyaan: "",
-      difficulty: Difficulty.BEGINNER,
-      explanation: "",
-      isActive: true,
-      opsis: [
-        { opsiText: "", isCorrect: false, order: 0 },
-        { opsiText: "", isCorrect: false, order: 1 },
-      ],
-    });
+    console.log("ManageQuestions: Adding new question to koleksi", koleksiId);
+    
+    const newSoalTempId = `temp-soal-${Date.now()}`;
     setEditingSoalId(newSoalTempId);
     setShowCreateDialog(true);
   };
@@ -228,9 +337,11 @@ export function ManageQuestions({ koleksiId }: ManageQuestionsProps) {
 
   const handleRemoveSoal = (soalId: number | string) => {
     if (confirm("Are you sure you want to delete this question?")) {
-      if (koleksiId) {
-        removeSoal(koleksiId, soalId);
-      }
+      console.log("ManageQuestions: Removing question", {
+        koleksiId,
+        soalId
+      });
+      // Mock deletion - in real app this would call removeSoal(koleksiId, soalId)
     }
   };
 
@@ -247,10 +358,6 @@ export function ManageQuestions({ koleksiId }: ManageQuestionsProps) {
   if (!koleksiSoal) {
     return <div>Collection not found</div>;
   }
-
-  // Find the actual index for reorder operations
-  const koleksiIndex = koleksiSoals.findIndex(k => k.id === koleksiId || k.tempId === koleksiId);
-
 
   return (
     <div className="space-y-7">
@@ -294,7 +401,7 @@ export function ManageQuestions({ koleksiId }: ManageQuestionsProps) {
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={koleksiSoal.soals.map((s) => s.tempId || s.id).filter((id): id is string | number => id !== undefined)}
+            items={koleksiSoal.soals.map((s) => s.tempId || s.id).filter((id) => id !== undefined) as (string | number)[]}
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-2">

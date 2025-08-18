@@ -8,7 +8,7 @@ export interface Progress {
 
 export const createProgress: StateCreator<
   KelasBuilderState,
-  [],
+  [["zustand/immer", never]],
   [],
   Progress
 > = (set, get) => ({
@@ -40,10 +40,6 @@ export const createProgress: StateCreator<
         // Optional step - any vocabulary sets added is progress
         return Math.min(100, (state.vocabSets.length / 3) * 100); // Assuming 3 sets is target
         
-      case 'assessment':
-        // Optional step - any question collections added is progress
-        return Math.min(100, (state.koleksiSoals.length / 2) * 100); // Assuming 2 collections is target
-        
       case 'review':
         // Review step progress based on completion of previous steps
         const metaComplete = state.meta.title.trim() !== '' && state.meta.description;
@@ -60,7 +56,7 @@ export const createProgress: StateCreator<
 
   calculateOverallProgress: (): number => {
     const state = get();
-    const steps: BuilderStep[] = ['meta', 'content', 'vocabulary', 'assessment', 'review'];
+    const steps: BuilderStep[] = ['meta', 'content', 'vocabulary', 'review'];
     
     const totalProgress = steps.reduce((sum, step) => {
       return sum + state.calculateStepProgress(step);

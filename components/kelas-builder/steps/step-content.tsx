@@ -33,15 +33,15 @@ import { CSS } from "@dnd-kit/utilities";
 
 interface SortableMateriItemProps {
   materi: any;
-  index: number;
-  onUpdateMateri: (index: number, data: Partial<any>) => void;
-  onRemoveMateri: (index: number) => void;
-  onToggleMateriDraft: (index: number) => Promise<void>;
+  sortableId: string;
+  onUpdateMateri: (id: number | string, data: Partial<any>) => void;
+  onRemoveMateri: (id: number | string) => void;
+  onToggleMateriDraft: (id: number | string) => Promise<void>;
 }
 
 function SortableMateriItem({
   materi,
-  index,
+  sortableId,
   onUpdateMateri,
   onRemoveMateri,
   onToggleMateriDraft,
@@ -53,15 +53,17 @@ function SortableMateriItem({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: `materi-${index}` });
+  } = useSortable({ id: sortableId });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition: isDragging ? 'none' : transition,
   };
 
+  const materiId = materi.tempId || materi.id;
+
   const handleEditSubmit = (updatedData: any) => {
-    onUpdateMateri(index, updatedData);
+    onUpdateMateri(materiId, updatedData);
   };
 
   return (
@@ -90,15 +92,15 @@ function SortableMateriItem({
             </div>
             <div className="flex items-center gap-2 ml-4">
               {materi.isDemo && (
-                <Badge key={`demo-${index}`} variant="secondary" className="text-xs">Demo</Badge>
+                <Badge key={`demo-${materiId}`} variant="secondary" className="text-xs">Demo</Badge>
               )}
               {materi.tempId && (
-                <Badge key={`unsaved-${index}`} variant="outline" className="text-xs">Unsaved</Badge>
+                <Badge key={`unsaved-${materiId}`} variant="outline" className="text-xs">Unsaved</Badge>
               )}
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onToggleMateriDraft(index)}
+                onClick={() => onToggleMateriDraft(materiId)}
                 className="h-8 w-8 p-0"
                 title={materi.isDraft ? "Publish lesson" : "Mark as draft"}
                 disabled={materi.tempId}
@@ -117,7 +119,7 @@ function SortableMateriItem({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onRemoveMateri(index)}
+                onClick={() => onRemoveMateri(materiId)}
                 className="h-8 w-8 p-0"
               >
                 <Trash2 className="h-4 w-4" />
@@ -152,16 +154,26 @@ export function StepContent() {
     const { active, over } = event;
 
     if (active.id !== over?.id && over) {
-      // Extract the index from the sortable ID
-      const activeId = active.id.toString();
-      const overId = over.id.toString();
+      // Get the sorted array to match visual order
+      const sortedMateris = [...materis].sort((a, b) => a.order - b.order);
       
-      const activeIndex = parseInt(activeId.replace('materi-', ''));
-      const overIndex = parseInt(overId.replace('materi-', ''));
+      // Extract indices from the sortable IDs
+      const activeIndex = parseInt(active.id.toString().replace('materi-index-', ''));
+      const overIndex = parseInt(over.id.toString().replace('materi-index-', ''));
 
-      if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
-        console.log('Reordering from', activeIndex, 'to', overIndex);
-        reorderMateris(activeIndex, overIndex);
+      if (!isNaN(activeIndex) && !isNaN(overIndex) && activeIndex !== overIndex) {
+        const activeMateri = sortedMateris[activeIndex];
+        const overMateri = sortedMateris[overIndex];
+        
+        if (activeMateri && overMateri) {
+          const activeId = activeMateri.tempId || activeMateri.id;
+          const overId = overMateri.tempId || overMateri.id;
+          
+          if (activeId && overId) {
+            console.log('Reordering from', activeId, 'to', overId);
+            reorderMateris(activeId, overId);
+          }
+        }
       }
     }
   };
@@ -224,20 +236,24 @@ export function StepContent() {
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={materis.map((_, index) => `materi-${index}`)}
+          items={[...materis]
+            .sort((a, b) => a.order - b.order)
+            .map((_, index) => `materi-index-${index}`)}
           strategy={verticalListSortingStrategy}
         >
           <div className="space-y-4">
-            {materis.map((materi, index) => (
-              <SortableMateriItem
-                key={materi.tempId || materi.id || `materi-${index}`}
-                materi={materi}
-                index={index}
-                onUpdateMateri={updateMateri}
-                onRemoveMateri={removeMateri}
-                onToggleMateriDraft={toggleMateriDraft}
-              />
-            ))}
+            {[...materis] // Create a copy to avoid mutating Zustand's read-only array
+              .sort((a, b) => a.order - b.order) // Sort by order field, not array index
+              .map((materi, index) => (
+                <SortableMateriItem
+                  key={materi.tempId || materi.id || `materi-${materi.order}`}
+                  materi={materi}
+                  sortableId={`materi-index-${index}`}
+                  onUpdateMateri={updateMateri}
+                  onRemoveMateri={removeMateri}
+                  onToggleMateriDraft={toggleMateriDraft}
+                />
+              ))}
           </div>
         </SortableContext>
       </DndContext>

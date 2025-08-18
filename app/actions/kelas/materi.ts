@@ -13,7 +13,7 @@ const materiSchema = z.object({
 });
 
 // Add materis to kelas
-export async function addMateris(kelasId: number, materis: z.infer<typeof materiSchema>[]) {
+export async function addMateris(kelasId: number, materis: (z.infer<typeof materiSchema> & { tempId?: string })[]) {
   try {
     const session = await assertAuthenticated();
 
@@ -35,13 +35,14 @@ export async function addMateris(kelasId: number, materis: z.infer<typeof materi
 
     let order = lastMateri?.order || 0;
 
-    // Create materis
+    // Create materis with tempId mapping
+    const tempIdMapping: Record<string, number> = {};
     const createdMateris = await Promise.all(
       materis.map(async (materi) => {
         const validMateri = materiSchema.parse(materi);
         order += 1;
         
-        return prisma.materi.create({
+        const created = await prisma.materi.create({
           data: {
             ...validMateri,
             jsonDescription: validMateri.jsonDescription || {},
@@ -50,10 +51,21 @@ export async function addMateris(kelasId: number, materis: z.infer<typeof materi
             isDraft: false,
           },
         });
+
+        // Map tempId to real ID if tempId exists
+        if (materi.tempId) {
+          tempIdMapping[materi.tempId] = created.id;
+        }
+
+        return created;
       })
     );
 
-    return { success: true, data: createdMateris };
+    return {
+      success: true,
+      data: createdMateris,
+      tempIdMapping
+    };
   } catch (error) {
     console.error("Add materis error:", error);
     return { success: false, error: "Failed to add materis" };
