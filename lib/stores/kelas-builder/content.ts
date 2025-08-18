@@ -189,7 +189,7 @@ export const createContent: StateCreator<
       return;
     }
 
-    set({ error: null });
+    set({ isLoading: true, error: null });
 
     try {
       // Handle deletions first

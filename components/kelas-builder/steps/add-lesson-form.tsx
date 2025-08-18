@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import React, { useState } from "react";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,61 +9,45 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import NovelEditor from "@/components/novel/novel-editor";
 import { Plus, Edit2 } from "lucide-react";
 
-interface LessonFormData {
-  title: string;
-  description: string;
-  jsonDescription: any;
-  htmlDescription: string;
-  isDemo: boolean;
-}
-
 interface LessonFormProps {
   mode?: 'add' | 'edit';
-  initialData?: LessonFormData;
-  onSubmit: (lesson: LessonFormData) => void;
+  initialData?: {
+    title: string;
+    description: string;
+    jsonDescription: any;
+    htmlDescription: string;
+    isDemo: boolean;
+  };
+  onSubmit: (lesson: {
+    title: string;
+    description: string;
+    jsonDescription: any;
+    htmlDescription: string;
+    isDemo: boolean;
+  }) => void;
   trigger?: React.ReactNode;
 }
 
-export function LessonForm({
-  mode = 'add',
-  initialData,
-  onSubmit,
-  trigger
+export function LessonForm({ 
+  mode = 'add', 
+  initialData, 
+  onSubmit, 
+  trigger 
 }: LessonFormProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { isLoading, saveMateris, updateMateri } = useKelasBuilderStore();
-
-  // Custom debounce hook
-  const useDebounce = (callback: Function, delay: number) => {
-    const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-    
-    return useCallback((...args: any[]) => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      timeoutRef.current = setTimeout(() => callback(...args), delay);
-    }, [callback, delay]);
-  };
-  
-  const form = useForm<LessonFormData>({
-    defaultValues: {
-      title: initialData?.title || '',
-      description: initialData?.description || '',
-      jsonDescription: initialData?.jsonDescription || { type: "doc", content: [] },
-      htmlDescription: initialData?.htmlDescription || '',
-      isDemo: initialData?.isDemo || false,
-    }
+  const { isLoading } = useKelasBuilderStore();
+  const [formData, setFormData] = useState({
+    title: initialData?.title || '',
+    description: initialData?.description || '',
+    jsonDescription: initialData?.jsonDescription || { type: "doc", content: [] },
+    htmlDescription: initialData?.htmlDescription || '',
+    isDemo: initialData?.isDemo || false,
   });
 
-  const { register, handleSubmit, reset, setValue, control, formState: { isDirty } } = form;
-
-  // Watch form changes for auto-save
-  const watchedData = useWatch({ control });
-
   // Reset form data when initialData changes (for edit mode)
-  useEffect(() => {
+  React.useEffect(() => {
     if (initialData) {
-      reset({
+      setFormData({
         title: initialData.title,
         description: initialData.description,
         jsonDescription: initialData.jsonDescription,
@@ -72,64 +55,37 @@ export function LessonForm({
         isDemo: initialData.isDemo,
       });
     }
-  }, [initialData, reset]);
-
-  // Auto-save function
-  const autoSave = useCallback(async (data: LessonFormData) => {
-    if (mode === 'edit' && initialData && isDirty) {
-      console.log('🔄 Auto-saving lesson data:', data);
-      try {
-        // Find the materi ID (could be tempId or real id)
-        const materiId = (initialData as any).tempId || (initialData as any).id;
-        if (materiId) {
-          updateMateri(materiId, data);
-          // Auto-save to backend if it's not a temp item
-          if ((initialData as any).id && !(initialData as any).tempId) {
-            await saveMateris();
-          }
-        }
-      } catch (error) {
-        console.error('Auto-save failed:', error);
-      }
-    }
-  }, [mode, initialData, isDirty, updateMateri, saveMateris]);
-
-  // Debounced auto-save function
-  const debouncedAutoSave = useDebounce(autoSave, 1500); // 1.5 second debounce
-
-  // Watch for form changes and trigger auto-save
-  useEffect(() => {
-    if (watchedData && mode === 'edit') {
-      debouncedAutoSave(watchedData as LessonFormData);
-    }
-    
-    // Cleanup is handled automatically by the debounce hook
-  }, [watchedData, debouncedAutoSave, mode]);
+  }, [initialData]);
 
   const handleContentUpdate = (data: { json: any; html: string }) => {
-    setValue('jsonDescription', data.json, { shouldDirty: true });
-    setValue('htmlDescription', data.html, { shouldDirty: true });
+    setFormData(prev => ({ 
+      ...prev, 
+      jsonDescription: data.json, 
+      htmlDescription: data.html 
+    }));
   };
 
-  const handleFormSubmit = (data: LessonFormData) => {
-    onSubmit(data);
-    if (mode === 'add') {
-      // Reset form only for add mode
-      reset({
-        title: '',
-        description: '',
-        jsonDescription: { type: "doc", content: [] },
-        htmlDescription: '',
-        isDemo: false,
-      });
+  const handleFormSubmit = () => {
+    if (formData.title && formData.description && formData.htmlDescription) {
+      onSubmit(formData);
+      if (mode === 'add') {
+        // Reset form only for add mode
+        setFormData({
+          title: '',
+          description: '',
+          jsonDescription: { type: "doc", content: [] },
+          htmlDescription: '',
+          isDemo: false,
+        });
+      }
+      setIsOpen(false);
     }
-    setIsOpen(false);
   };
 
   const handleCancel = () => {
     if (mode === 'add') {
       // Reset form for add mode
-      reset({
+      setFormData({
         title: '',
         description: '',
         jsonDescription: { type: "doc", content: [] },
@@ -138,7 +94,7 @@ export function LessonForm({
       });
     } else {
       // Reset to initial data for edit mode
-      reset({
+      setFormData({
         title: initialData?.title || '',
         description: initialData?.description || '',
         jsonDescription: initialData?.jsonDescription || { type: "doc", content: [] },
@@ -171,20 +127,16 @@ export function LessonForm({
       </DialogTrigger>
       <DialogContent className="max-w-7xl sm:max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {mode === 'add' ? 'Add New Lesson' : 'Edit Lesson'}
-            {mode === 'edit' && isDirty && (
-              <span className="ml-2 text-sm text-orange-600">(Auto-saving...)</span>
-            )}
-          </DialogTitle>
+          <DialogTitle>{mode === 'add' ? 'Add New Lesson' : 'Edit Lesson'}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">Lesson Title *</Label>
             <Input
               id="title"
               placeholder="Enter lesson title"
-              {...register('title', { required: true })}
+              value={formData.title}
+              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
             />
           </div>
           
@@ -193,17 +145,18 @@ export function LessonForm({
             <Input
               id="description"
               placeholder="Brief description of the lesson"
-              {...register('description', { required: true })}
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
             />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="content">Content *</Label>
             <NovelEditor
-              initialContent={watchedData.jsonDescription}
+              initialContent={formData.jsonDescription}
               onUpdate={handleContentUpdate}
               className="min-h-[300px]"
-              saveStatus={isLoading ? "Saving..." : isDirty ? "Unsaved" : "Saved"}
+              saveStatus={isLoading ? "Saving..." : "Saved"}
             />
           </div>
           
@@ -211,23 +164,24 @@ export function LessonForm({
             <input
               type="checkbox"
               id="isDemo"
-              {...register('isDemo')}
+              checked={formData.isDemo}
+              onChange={(e) => setFormData(prev => ({ ...prev, isDemo: e.target.checked }))}
             />
             <Label htmlFor="isDemo">Mark as demo lesson (free preview)</Label>
           </div>
           
           <div className="flex gap-2 justify-end">
-            <Button type="button" variant="outline" onClick={handleCancel}>
+            <Button variant="outline" onClick={handleCancel}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={!watchedData.title || !watchedData.description || !watchedData.htmlDescription}
+            <Button 
+              onClick={handleFormSubmit} 
+              disabled={!formData.title || !formData.description || !formData.htmlDescription}
             >
               {mode === 'add' ? 'Add Lesson' : 'Save Changes'}
             </Button>
           </div>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
