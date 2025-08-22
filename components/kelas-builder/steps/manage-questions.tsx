@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Trash2, FileText, CheckCircle, Circle, ChevronDown, ChevronRight, GripVertical, AlertTriangle } from "lucide-react";
 import { Difficulty } from "@prisma/client";
-import { SoalForm } from "./soal-form";
+import { SoalForm } from "./question-item-form";
 import {
   DndContext,
   closestCenter,

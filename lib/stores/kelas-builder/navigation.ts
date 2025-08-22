@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { KelasBuilderState, BuilderStep } from './types';
 
-const stepOrder: BuilderStep[] = ['meta', 'content', 'vocabulary', 'review'];
+const stepOrder: BuilderStep[] = ['meta', 'content', 'vocabulary', 'questions', 'review'];
 
 export interface Navigation {
   currentStep: BuilderStep;
@@ -22,6 +22,7 @@ export const createNavigation: StateCreator<
     meta: false,
     content: false,
     vocabulary: false,
+    questions: false,
     review: false,
   },
   setCurrentStep: async (step: BuilderStep) => {

@@ -7,7 +7,7 @@ import { KelasBuilderLayout } from "@/components/kelas-builder/kelas-builder-lay
 import { StepMeta } from "@/components/kelas-builder/steps/step-meta";
 import { StepContent } from "@/components/kelas-builder/steps/step-content";
 import { StepVocabulary } from "@/components/kelas-builder/steps/step-vocabulary";
-import { StepAssessment } from "@/components/kelas-builder/steps/step-assessment";
+import { StepQuestions } from "@/components/kelas-builder/steps/step-questions";
 import { StepReview } from "@/components/kelas-builder/steps/step-review";
 import { AlertCircle, Loader2 } from "lucide-react";
 import {
@@ -51,8 +51,8 @@ export default function KelasBuilderPage() {
         return <StepContent />;
       case 'vocabulary':
         return <StepVocabulary />;
-      case 'assessment':
-        return <StepAssessment />;
+      case 'questions':
+        return <StepQuestions />;
       case 'review':
         return <StepReview />;
       default:

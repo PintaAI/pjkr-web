@@ -4,7 +4,6 @@ import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -46,7 +45,7 @@ const steps = [
     icon: MessageSquare,
   },
   {
-    id: 'assessment',
+    id: 'questions',
     title: 'Paket Soal',
     description: 'tambahkan pake soal (opsional)',
     icon: ClipboardList,
@@ -62,7 +61,6 @@ const steps = [
 export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
   const {
     currentStep,
-    isDirty,
     isLoading,
     error,
     draftId,
@@ -77,7 +75,6 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
     saveMeta,
     saveMateris,
     saveVocabularySet,
-    saveAllAssessments,
     calculateOverallProgress,
     clearError,
     reset
@@ -122,7 +119,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
         // Optional step
         return { hasRequiredData: true, message: 'Optional: Add vocabulary sets to enhance learning' };
         
-      case 'assessment':
+      case 'questions':
         // Optional step
         return { hasRequiredData: true, message: 'Optional: Link question sets for assessments' };
         
@@ -150,10 +147,6 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
     }
     if (stepDirtyFlags.vocabulary) {
       await saveAllVocabularySets();
-    }
-    // Save unsaved assessments
-    if (stepDirtyFlags.assessment) {
-      await saveAllAssessments();
     }
   };
 
@@ -189,8 +182,8 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
         case 'vocabulary':
           await saveAllVocabularySets();
           break;
-        case 'assessment':
-          await saveAllAssessments();
+        case 'questions':
+          // Save questions logic would go here
           break;
         case 'review':
           await saveAllUnsavedContent();
@@ -231,12 +224,6 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {isDirty && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  Belum di simpan
-                </Badge>
-              )}
               {stepDirtyFlags[currentStep as keyof typeof stepDirtyFlags] && (
                 <Button
                   variant="default"
@@ -413,7 +400,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                 </div>
 
                 {/* Hide next button on review step since it's last step */}
-                {currentStep !== 'review' ? (
+                {currentStep !== 'review' && currentStep !== 'questions' ? (
                   <Button
                     size="sm"
                     onClick={async () => await nextStep()}

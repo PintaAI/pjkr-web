@@ -8,55 +8,86 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Plus, Trash2, GripVertical, BookOpen, Edit } from "lucide-react";
 import { VocabularyType, } from "@prisma/client";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
-import { VocabularyItemForm } from "./vocabulary-form";
+import { VocabularyItemForm } from "./vocabulary-items-form";
+
 
 interface ManageVocabularyItemsProps {
-  vocabSetIndex: number;
+  vocabSetId: string | number;
 }
 
-export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsProps) {
+export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingItemIndex, setEditingItemIndex] = useState<number | undefined>();
-  const { vocabSets, updateVocabularySet, setIsDirty, removeVocabularyItem } = useKelasBuilderStore();
-  const vocabSet = vocabSets[vocabSetIndex];
+  const [editingItemId, setEditingItemId] = useState<string | undefined>();
+  
+  // Get the specific vocabulary set reactively using Zustand selector
+  const vocabSet = useKelasBuilderStore((state) => {
+    return state.vocabSets.find(vs => vs.id === vocabSetId || vs.tempId === vocabSetId);
+  });
+  
+  // Get actions for updating
+  const { updateVocabularySet, removeVocabularyItem, debugLog } = useKelasBuilderStore();
 
   const handleAddItem = () => {
+    if (!vocabSet) return;
+    
+    console.log('🔥 [MANAGE VOCAB] handleAddItem called for vocabSet:', vocabSet.title);
+    debugLog();
     // Add a new empty item to the end of the array
+    const tempId = `temp-${Date.now()}`;
     const newItems = [...vocabSet.items, {
       korean: "",
       indonesian: "",
       type: VocabularyType.WORD,
       exampleSentences: [],
       order: vocabSet.items.length,
+      tempId,
     }];
     
-    updateVocabularySet(vocabSetIndex, {
+    console.log('Created new item with tempId:', tempId);
+    
+    updateVocabularySet(vocabSetId, {
       ...vocabSet,
       items: newItems,
     });
     
-    setEditingItemIndex(newItems.length - 1);
+    setEditingItemId(tempId);
     setShowCreateDialog(true);
-    setIsDirty(true);
+    
   };
 
-  const handleEditItem = (itemIndex: number) => {
-    setEditingItemIndex(itemIndex);
+  const handleEditItem = (itemId: string) => {
+    if (!vocabSet) return;
+    
+    console.log('handleEditItem called with itemId:', itemId);
+    const item = vocabSet.items.find(item => (item.id?.toString() === itemId) || (item.tempId === itemId));
+    console.log('Found item for editing:', item);
+    setEditingItemId(itemId);
     setShowCreateDialog(true);
   };
 
   const handleCloseDialog = () => {
     setShowCreateDialog(false);
-    setEditingItemIndex(undefined);
+    setEditingItemId(undefined);
   };
 
-  const handleRemoveItem = async (itemIndex: number) => {
-    if (confirm("Are you sure you want to delete this vocabulary item?")) {
-      try {
-        await removeVocabularyItem(vocabSetIndex, itemIndex);
-      } catch (error) {
-        console.error('Failed to remove vocabulary item:', error);
+  const handleRemoveItem = async (itemId: string) => {
+    if (!vocabSet) return;
+    
+    console.log('handleRemoveItem called with itemId:', itemId);
+    const item = vocabSet.items.find(item => (item.id?.toString() === itemId) || (item.tempId === itemId));
+    console.log('Found item for removal:', item);
+    
+    if (item) {
+      if (confirm("Are you sure you want to delete this vocabulary item?")) {
+        try {
+          console.log('Calling removeVocabularyItem with:', { vocabSetId, itemId });
+          await removeVocabularyItem(vocabSetId, itemId);
+        } catch (error) {
+          console.error('Failed to remove vocabulary item:', error);
+        }
       }
+    } else {
+      console.warn('Item not found for removal with itemId:', itemId);
     }
   };
 
@@ -102,10 +133,16 @@ export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsPr
           {vocabSet.items
             .slice()
             .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-            .map((item, itemIndex) => {
-              const originalIndex = vocabSet.items.findIndex(i => i === item);
+            .map((item) => {
               // Create a unique key that doesn't depend on sorted position
-              const uniqueKey = item.id || item.tempId || `item-${originalIndex}-${item.korean}-${item.indonesian}`;
+              const uniqueKey = item.id || item.tempId || `item-${item.korean}-${item.indonesian}`;
+              console.log('Rendering vocabulary item:', {
+                id: item.id,
+                tempId: item.tempId,
+                korean: item.korean,
+                indonesian: item.indonesian,
+                uniqueKey
+              });
               return (
                 <Card key={uniqueKey} className="py-2">
                   <CardContent>
@@ -114,7 +151,7 @@ export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsPr
                         <div className="touch-none cursor-move">
                           <GripVertical className="h-4 w-4 text-muted-foreground hover:text-foreground" />
                         </div>
-                        <Badge variant="outline" className="text-xs shrink-0">No. {itemIndex + 1}</Badge>
+                        <Badge variant="outline" className="text-xs shrink-0">No. {vocabSet.items.findIndex(i => i.id === item.id || i.tempId === item.tempId) + 1}</Badge>
                         <div className="flex-1">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                             <div>
@@ -148,7 +185,7 @@ export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsPr
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleEditItem(originalIndex)}
+                          onClick={() => handleEditItem((item.id?.toString() || item.tempId) as string)}
                           className="h-8 w-8 p-0"
                         >
                           <Edit className="h-4 w-4" />
@@ -156,7 +193,7 @@ export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsPr
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleRemoveItem(originalIndex)}
+                          onClick={() => handleRemoveItem((item.id?.toString() || item.tempId) as string)}
                           className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -175,15 +212,15 @@ export function ManageVocabularyItems({ vocabSetIndex }: ManageVocabularyItemsPr
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingItemIndex !== undefined && editingItemIndex < vocabSet.items.length 
-                ? `Edit Vocabulary Item ${editingItemIndex + 1}` 
+              {editingItemId !== undefined
+                ? `Edit Vocabulary Item ${vocabSet.items.findIndex(i => (i.id?.toString() === editingItemId) || (i.tempId === editingItemId)) + 1}`
                 : "Create New Vocabulary Item"}
             </DialogTitle>
           </DialogHeader>
-          {editingItemIndex !== undefined && (
+          {editingItemId !== undefined && (
             <VocabularyItemForm
-              vocabSetIndex={vocabSetIndex}
-              itemIndex={editingItemIndex}
+              vocabSetId={vocabSetId}
+              itemId={editingItemId}
             />
           )}
         </DialogContent>

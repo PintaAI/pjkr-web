@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
+import { useEffect, useRef } from "react";
 
 interface VocabularySetBasicFormProps {
   vocabSet?: {
@@ -46,6 +47,42 @@ export function VocabularySetBasicForm({ vocabSet, onSave, onCancel }: Vocabular
       isPublic: vocabSet?.isPublic || false,
     },
   });
+
+  const { watch } = form;
+  const watchedValues = watch();
+
+  // Debounced auto-save effect
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    // Auto-save when form values change (with debounce)
+    if (vocabSet?.id) { // Only auto-save for existing sets
+      // Clear any existing timeout
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      
+      // Set new timeout for 2 seconds after user stops typing
+      saveTimeoutRef.current = setTimeout(() => {
+        console.log("Vocabulary set form debounce timeout fired. Auto-saving...");
+        try {
+          onSave({
+            ...watchedValues,
+            isPublic: watchedValues.isPublic ?? false
+          });
+        } catch (error: any) {
+          console.error("Auto-save failed:", error);
+        }
+      }, 2000);
+    }
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [watchedValues, vocabSet?.id, onSave]);
 
   const onSubmit = (data: any) => {
     console.log("Vocabulary Set Form Submitted:", data);

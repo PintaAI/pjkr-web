@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect,} from "react";
+import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
@@ -71,7 +71,7 @@ export function StepMeta() {
   const {
     meta,
     updateMeta,
-
+    saveMeta,
     clearError,
     isLoading,
   } = useKelasBuilderStore();
@@ -85,12 +85,40 @@ export function StepMeta() {
   const { watch, formState: { errors,  } } = form;
   const watchedValues = watch();
   
+  // Debounced update and save for meta step
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   useEffect(() => {
     const hasActualChanges = JSON.stringify(watchedValues) !== JSON.stringify(meta);
+    
     if (hasActualChanges) {
-      updateMeta(watchedValues);
+      // Clear any existing timeout
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      
+      // Set new timeout for 2 seconds after user stops typing
+      console.log("Setting debounce timeout for form changes...");
+      saveTimeoutRef.current = setTimeout(() => {
+        console.log("Debounce timeout fired. Updating meta and saving...");
+        // Update meta and then save
+        updateMeta(watchedValues);
+        // Give a small delay for the store to update, then save
+        setTimeout(() => {
+          saveMeta().catch(error => {
+            console.error("Auto-save failed:", error);
+          });
+        }, 100);
+      }, 2000);
     }
-  }, [watchedValues, updateMeta, meta]);
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [watchedValues, updateMeta, saveMeta, meta]);
 
   // Clear any existing errors when form is interacted with
   useEffect(() => {

@@ -7,11 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ClipboardList, Plus, Edit, Trash2, FileText, MousePointerClick,} from "lucide-react";
-import { KoleksiSoalForm } from "./koleksi-soal-form";
+import { KoleksiSoalForm } from "./question-set-form";
 import { ManageQuestions } from "./manage-questions";
 import { Difficulty } from "@prisma/client";
 
-export function StepAssessment() {
+export function StepQuestions() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingId, setEditingId] = useState<string | number | undefined>();
   const [managingQuestionsId, setManagingQuestionsId] = useState<string | number | undefined>();

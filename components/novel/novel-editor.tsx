@@ -20,7 +20,7 @@ import { useDebouncedCallback } from "use-debounce";
 import { defaultExtensions } from "./extensions";
 import { ColorSelector } from "./selectors/color-selector";
 import { NodeSelector } from "./selectors/node-selector";
-
+import { cn } from "@/lib/utils";
 
 /* AI features removed temporarily */
 // import GenerativeMenuSwitch from "./generative/generative-menu-switch";
@@ -34,8 +34,6 @@ import hljs from "highlight.js";
 const extensions = [...defaultExtensions, slashCommand];
 
 interface NovelEditorProps {
-  wrapperClassName?: string;
-  editorClassName?: string;
   initialContent?: any;
   onUpdate?: (data: { json: any; html: string }) => void;
   onSave?: (data: { json: any; html: string }) => void;
@@ -49,6 +47,7 @@ const NovelEditor = ({
   onSave,
   initialContent: propInitialContent,
   saveStatus = "Saved",
+  className,
 }: NovelEditorProps) => {
   const [initialContent, setInitialContent] = useState<null | JSONContent>(null);
   const [openNode, setOpenNode] = useState(false);
@@ -90,17 +89,13 @@ const NovelEditor = ({
   if (!initialContent) return null;
 
   return (
-    <div className="relative w-full">
-      <div className="flex absolute right-5 top-5 z-10 mb-5 gap-2 pointer-events-none">
-        <div className="rounded-lg bg-accent px-2 py-1 text-sm text-muted-foreground">{saveStatus}</div>
-  
-      </div>
+    <div className={cn("w-full min-h-[200px]", className)}>
       <EditorRoot>
         <EditorContent
           initialContent={initialContent}
           immediatelyRender={false}
           extensions={extensions}
-          className={`relative w-full border-muted bg-background sm:rounded-lg sm:border sm:shadow-lg`}
+          className={cn("w-full border-muted bg-background sm:rounded-lg sm:border sm:shadow-lg min-h-[200px]", className)}
           editorProps={{
             handleDOMEvents: {
               keydown: (_view, event) => handleCommandNavigation(event),

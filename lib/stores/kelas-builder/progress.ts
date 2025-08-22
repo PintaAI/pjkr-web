@@ -40,6 +40,11 @@ export const createProgress: StateCreator<
         // Optional step - any vocabulary sets added is progress
         return Math.min(100, (state.vocabSets.length / 3) * 100); // Assuming 3 sets is target
         
+      case 'questions':
+        // TODO: Implement progress counting for questions step
+        // For now, return 0 as this is an optional step
+        return 0;
+        
       case 'review':
         // Review step progress based on completion of previous steps
         const metaComplete = state.meta.title.trim() !== '' && state.meta.description;
@@ -56,7 +61,7 @@ export const createProgress: StateCreator<
 
   calculateOverallProgress: (): number => {
     const state = get();
-    const steps: BuilderStep[] = ['meta', 'content', 'vocabulary', 'review'];
+    const steps: BuilderStep[] = ['meta', 'content', 'vocabulary', 'questions', 'review'];
     
     const totalProgress = steps.reduce((sum, step) => {
       return sum + state.calculateStepProgress(step);

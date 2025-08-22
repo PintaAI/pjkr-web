@@ -5,9 +5,10 @@ import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import NovelEditor from "@/components/novel/novel-editor";
-import { Plus, Edit2 } from "lucide-react";
+import { Plus, Edit2, Eye, EyeOff } from "lucide-react";
 
 interface LessonFormProps {
   mode?: 'add' | 'edit';
@@ -125,9 +126,19 @@ export function LessonForm({
       <DialogTrigger asChild>
         {trigger || defaultTrigger}
       </DialogTrigger>
-      <DialogContent className="max-w-7xl sm:max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-7xl sm:max-w-5xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{mode === 'add' ? 'Add New Lesson' : 'Edit Lesson'}</DialogTitle>
+          <DialogTitle className="flex items-center justify-between">
+            <span>{mode === 'add' ? 'Add New Lesson' : 'Edit Lesson'}</span>
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="isDemo" className="text-sm">Demo</Label>
+              <Switch
+                id="isDemo"
+                checked={formData.isDemo}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isDemo: checked }))}
+              />
+            </div>
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
@@ -155,20 +166,11 @@ export function LessonForm({
             <NovelEditor
               initialContent={formData.jsonDescription}
               onUpdate={handleContentUpdate}
-              className="min-h-[300px]"
+              className="min-h-[700px]"
               saveStatus={isLoading ? "Saving..." : "Saved"}
             />
           </div>
           
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="isDemo"
-              checked={formData.isDemo}
-              onChange={(e) => setFormData(prev => ({ ...prev, isDemo: e.target.checked }))}
-            />
-            <Label htmlFor="isDemo">Mark as demo lesson (free preview)</Label>
-          </div>
           
           <div className="flex gap-2 justify-end">
             <Button variant="outline" onClick={handleCancel}>

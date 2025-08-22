@@ -19,47 +19,62 @@ interface VocabularyItem {
 }
 
 interface VocabularyItemFormProps {
-  vocabSetIndex: number;
-  itemIndex: number;
+  vocabSetId: string | number;
+  itemId: string;
 }
 
-export function VocabularyItemForm({ vocabSetIndex, itemIndex }: VocabularyItemFormProps) {
+export function VocabularyItemForm({ vocabSetId, itemId }: VocabularyItemFormProps) {
   const {
     vocabSets,
     updateVocabularyItem,
   } = useKelasBuilderStore();
 
-  const vocabSet = vocabSets[vocabSetIndex];
-  const item = vocabSet?.items[itemIndex];
+  // Get the specific vocabulary set reactively using Zustand selector
+  const vocabSet = useKelasBuilderStore((state) => {
+    return state.vocabSets.find(vs => vs.id === vocabSetId || vs.tempId === vocabSetId);
+  });
+
+  // Find the item index
+  const itemIndex = vocabSet?.items.findIndex(item => (item.id?.toString() === itemId) || (item.tempId === itemId));
+  const item = itemIndex !== undefined ? vocabSet?.items[itemIndex] : undefined;
 
   const updateItem = (field: keyof VocabularyItem, value: any) => {
-    updateVocabularyItem(vocabSetIndex, itemIndex, { [field]: value });
+    console.log('updateItem called:', { field, value, itemIndex, itemId });
+    if (itemIndex !== undefined && item) {
+      console.log('Calling updateVocabularyItem with:', { vocabSetId, itemId, [field]: value });
+      updateVocabularyItem(vocabSetId, itemId, { [field]: value });
+    } else {
+      console.warn('itemIndex or item is undefined, cannot update item');
+    }
   };
 
   const updateExampleSentence = (sentenceIndex: number, value: string) => {
+    if (itemIndex === undefined || !item) return;
     const newExampleSentences = [...(item?.exampleSentences || [])];
     newExampleSentences[sentenceIndex] = value;
-    updateVocabularyItem(vocabSetIndex, itemIndex, { exampleSentences: newExampleSentences });
+    updateVocabularyItem(vocabSetId, itemId, { exampleSentences: newExampleSentences });
   };
 
   const addItem = () => {
+    if (itemIndex === undefined || !item) return;
     const newExampleSentences = [...(item?.exampleSentences || []), ""];
-    updateVocabularyItem(vocabSetIndex, itemIndex, { exampleSentences: newExampleSentences });
+    updateVocabularyItem(vocabSetId, itemId, { exampleSentences: newExampleSentences });
   };
 
   const removeItem = (sentenceIndex: number) => {
+    if (itemIndex === undefined || !item) return;
     const newExampleSentences = (item?.exampleSentences || []).filter((_, i) => i !== sentenceIndex);
-    updateVocabularyItem(vocabSetIndex, itemIndex, { exampleSentences: newExampleSentences });
+    updateVocabularyItem(vocabSetId, itemId, { exampleSentences: newExampleSentences });
   };
 
-  const currentItem = vocabSet?.items[itemIndex] || {
+  const currentItem = item || {
     korean: "",
     indonesian: "",
     type: VocabularyType.WORD,
     pos: undefined,
     audioUrl: "",
     exampleSentences: [""],
-    order: itemIndex || 0,
+    order: 0,
   };
 
   return (

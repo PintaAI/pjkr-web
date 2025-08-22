@@ -26,13 +26,11 @@ export const createContent: StateCreator<
   dirtyMateris: new Set(),
   addMateri: (materi) => {
     set((state) => {
-      const tempId = `temp-${Date.now()}`;
-      const newMateri: MateriData = {
+      state.materis.push({
         ...materi,
         order: state.materis.length,
-        tempId,
-      };
-      state.materis.push(newMateri);
+        tempId: `temp-${Date.now()}`,
+      });
       state.stepDirtyFlags.content = true;
     });
   },
@@ -41,10 +39,7 @@ export const createContent: StateCreator<
       const materiIndex = state.materis.findIndex(m => m.id === id || m.tempId === id);
       
       if (materiIndex !== -1) {
-        state.materis[materiIndex] = {
-          ...state.materis[materiIndex],
-          ...materi,
-        };
+        Object.assign(state.materis[materiIndex], materi);
         if (state.materis[materiIndex].id) {
           state.dirtyMateris.add(state.materis[materiIndex].id!);
         }
@@ -64,7 +59,7 @@ export const createContent: StateCreator<
       // Remove unsaved materi (only from local state)
       set((state) => {
         state.materis.splice(materiIndex, 1);
-        // Reorder remaining materis
+        // Reorder remaining materis using Immer's draft capabilities
         state.materis.forEach((m, i) => {
           m.order = i;
         });
@@ -75,7 +70,7 @@ export const createContent: StateCreator<
       set((state) => {
         state.deletedMateris.push(materi.id!);
         state.materis.splice(materiIndex, 1);
-        // Reorder remaining materis
+        // Reorder remaining materis using Immer's draft capabilities
         state.materis.forEach((m, i) => {
           m.order = i;
         });
@@ -99,6 +94,10 @@ export const createContent: StateCreator<
           if (materi.id === fromId || materi.tempId === fromId) {
             // Move the from item to the to position
             materi.order = toOrder;
+            // Mark the moved item as dirty if it has a real ID
+            if (materi.id) {
+              state.dirtyMateris.add(materi.id);
+            }
           } else if (materi.order > fromOrder && materi.order <= toOrder) {
             // Shift items down
             if (materi.id) {
@@ -113,6 +112,10 @@ export const createContent: StateCreator<
           if (materi.id === fromId || materi.tempId === fromId) {
             // Move the from item to the to position
             materi.order = toOrder;
+            // Mark the moved item as dirty if it has a real ID
+            if (materi.id) {
+              state.dirtyMateris.add(materi.id);
+            }
           } else if (materi.order >= toOrder && materi.order < fromOrder) {
             // Shift items up
             if (materi.id) {
@@ -122,13 +125,6 @@ export const createContent: StateCreator<
           }
         });
       }
-
-      // Mark all items with real IDs as dirty
-      state.materis.forEach(materi => {
-        if (materi.id) {
-          state.dirtyMateris.add(materi.id);
-        }
-      });
 
       state.stepDirtyFlags.content = true;
     });
@@ -188,8 +184,6 @@ export const createContent: StateCreator<
     if (newMateris.length === 0 && deletedMateris.length === 0 && dirtyMateris.size === 0) {
       return;
     }
-
-    set({ isLoading: true, error: null });
 
     try {
       // Handle deletions first
@@ -262,14 +256,12 @@ export const createContent: StateCreator<
       // Clear deletion and dirty tracking
       set((state) => {
         state.deletedMateris = [];
-        state.dirtyMateris = new Set();
+        state.dirtyMateris.clear();
         state.stepDirtyFlags.content = false;
-        state.isLoading = false;
       });
       toast.success('Content saved successfully');
     } catch (error) {
       set((state) => {
-        state.isLoading = false;
         state.error = error instanceof Error ? error.message : 'Failed to save content';
       });
       toast.error('Failed to save content');

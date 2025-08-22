@@ -1,43 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { MessageSquare, Plus, BookOpen, Edit, Trash2, MousePointerClick } from "lucide-react";
-import { VocabularySetBasicForm } from "./vocabulary-set-form";
-import { ManageVocabularyItems } from "./manage-vocabulary-items";
+import { VocabularySetBasicForm } from "./vocabulary/vocabulary-set-form";
+
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
+import { ManageVocabularyItems } from "./vocabulary/manage-vocabulary-items";
 
 export function StepVocabulary() {
+  console.log('🔍 [VOCAB DEBUG] StepVocabulary component mounted');
+  
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [editingIndex, setEditingIndex] = useState<number | undefined>();
-  const [managingItemsIndex, setManagingItemsIndex] = useState<number | undefined>();
+  const [editingSetId, setEditingSetId] = useState<string | number | undefined>();
+  const [managingSetId, setManagingSetId] = useState<string | number | undefined>();
   const {
     vocabSets,
     addVocabularySet,
     updateVocabularySet,
     removeVocabularySet,
-    setIsDirty
   } = useKelasBuilderStore();
+  
+  // DEBUG: Log store state on mount
+  console.log('🔍 [VOCAB DEBUG] Initial store state:', {
+    vocabSetsLength: vocabSets.length,
+    vocabSets: vocabSets.map(vs => ({ id: vs.id, tempId: vs.tempId, title: vs.title }))
+  });
 
   const handleCreateNew = () => {
-    setEditingIndex(undefined);
+    setEditingSetId(undefined);
     setShowCreateForm(true);
-    setIsDirty(true);
   };
 
-  const handleEdit = (index: number) => {
-    setEditingIndex(index);
+  const handleEdit = (setId: string | number) => {
+    setEditingSetId(setId);
     setShowCreateForm(true);
-    setIsDirty(true);
   };
 
   const handleCancel = () => {
     setShowCreateForm(false);
-    setEditingIndex(undefined);
+    setEditingSetId(undefined);
   };
 
   const handleSaveSet = (data: {
@@ -46,14 +52,14 @@ export function StepVocabulary() {
     icon?: string;
     isPublic: boolean;
   }) => {
-    if (editingIndex !== undefined) {
+    if (editingSetId !== undefined) {
       // Update existing set
-      updateVocabularySet(editingIndex, {
+      updateVocabularySet(editingSetId, {
         ...data,
         icon: data.icon || "FaBook",
       });
       setShowCreateForm(false);
-      setEditingIndex(undefined);
+      setEditingSetId(undefined);
     } else {
       // Create new set with basic info
       addVocabularySet({
@@ -62,27 +68,31 @@ export function StepVocabulary() {
         items: [],
       });
       setShowCreateForm(false);
-      setEditingIndex(undefined);
+      setEditingSetId(undefined);
     }
   };
 
-  const handleManageItems = (index: number) => {
-    setManagingItemsIndex(index);
+  const handleManageItems = (setId: string | number) => {
+    setManagingSetId(setId);
   };
 
   const handleCloseManageItems = () => {
-    setManagingItemsIndex(undefined);
+    setManagingSetId(undefined);
   };
 
-  const handleDelete = (index: number) => {
-    if (confirm(`Are you sure you want to delete "${vocabSets[index].title}"? This action cannot be undone and all vocabulary items in this set will be permanently removed.`)) {
+  const handleDelete = (setId: string | number) => {
+    const vocabSet = vocabSets.find(vs => vs.id === setId || vs.tempId === setId);
+    if (!vocabSet) return;
+
+    if (confirm(`Are you sure you want to delete "${vocabSet.title}"? This action cannot be undone and all vocabulary items in this set will be permanently removed.`)) {
       // Close the manage items sheet if it's open for the deleted item
-      if (managingItemsIndex === index) {
-        setManagingItemsIndex(undefined);
+      if (managingSetId === setId) {
+        setManagingSetId(undefined);
       }
-      removeVocabularySet(index);
+      removeVocabularySet(setId);
     }
   };
+
 
   return (
     <div className="space-y-4">
@@ -144,11 +154,16 @@ export function StepVocabulary() {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {vocabSets.map((vocabSet, index) => (
+          {vocabSets.map((vocabSet) => (
             <Card
-              key={vocabSet.tempId || vocabSet.id || index}
+              key={vocabSet.tempId || vocabSet.id}
               className="relative cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-200 group"
-              onClick={() => handleManageItems(index)}
+              onClick={() => {
+                const setId = vocabSet.id || vocabSet.tempId;
+                if (setId) {
+                  handleManageItems(setId);
+                }
+              }}
             >
               {/* Overlay for click instruction */}
               <div className="absolute inset-0 bg-black/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
@@ -174,7 +189,10 @@ export function StepVocabulary() {
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleEdit(index);
+                        const setId = vocabSet.id || vocabSet.tempId;
+                        if (setId) {
+                          handleEdit(setId);
+                        }
                       }}
                     >
                       <Edit className="h-4 w-4" />
@@ -184,7 +202,10 @@ export function StepVocabulary() {
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDelete(index);
+                        const setId = vocabSet.id || vocabSet.tempId;
+                        if (setId) {
+                          handleDelete(setId);
+                        }
                       }}
                       className="text-destructive hover:text-destructive"
                     >
@@ -214,11 +235,11 @@ export function StepVocabulary() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingIndex !== undefined ? "Edit Vocabulary Set" : "Create New Vocabulary Set"}
+              {editingSetId !== undefined ? "Edit Vocabulary Set" : "Create New Vocabulary Set"}
             </DialogTitle>
           </DialogHeader>
           <VocabularySetBasicForm
-            vocabSet={editingIndex !== undefined ? vocabSets[editingIndex] : undefined}
+            vocabSet={editingSetId !== undefined ? vocabSets.find(vs => vs.id === editingSetId || vs.tempId === editingSetId) : undefined}
             onCancel={handleCancel}
             onSave={handleSaveSet}
           />
@@ -226,7 +247,7 @@ export function StepVocabulary() {
       </Dialog>
 
       {/* Manage Vocabulary Items Sheet */}
-      <Sheet open={managingItemsIndex !== undefined} onOpenChange={handleCloseManageItems}>
+      <Sheet open={managingSetId !== undefined} onOpenChange={handleCloseManageItems}>
         <SheetContent side="right" className="w-[800px] sm:max-w-[800px] overflow-y-auto">
           <SheetHeader className="px-6 py-4">
             <SheetTitle>
@@ -234,8 +255,8 @@ export function StepVocabulary() {
             </SheetTitle>
           </SheetHeader>
           <div className="px-6 pb-6">
-            {managingItemsIndex !== undefined && (
-              <ManageVocabularyItems vocabSetIndex={managingItemsIndex} />
+            {managingSetId && (
+              <ManageVocabularyItems vocabSetId={managingSetId} />
             )}
           </div>
         </SheetContent>
@@ -247,3 +268,4 @@ export function StepVocabulary() {
     </div>
   );
 }
+

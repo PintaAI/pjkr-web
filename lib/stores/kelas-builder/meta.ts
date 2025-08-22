@@ -29,7 +29,7 @@ export const createMeta: StateCreator<
   meta: initialMeta,
   updateMeta: (meta: Partial<KelasMetaData>) => {
     set((state) => {
-      state.meta = { ...state.meta, ...meta };
+      Object.assign(state.meta, meta);
       state.stepDirtyFlags.meta = true;
     });
   },
@@ -37,7 +37,7 @@ export const createMeta: StateCreator<
     const { draftId, meta } = get();
     if (!draftId) return;
 
-    set({ isLoading: true, error: null });
+    set({ error: null });
 
     try {
       // Serialize JSON data to ensure it's safe for server actions
@@ -52,7 +52,6 @@ export const createMeta: StateCreator<
       if (result.success) {
         set((state) => {
           state.stepDirtyFlags.meta = false;
-          state.isLoading = false;
         });
         toast.success('Meta information updated successfully');
       } else {
@@ -60,7 +59,7 @@ export const createMeta: StateCreator<
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to update meta';
-      set({ isLoading: false, error: errorMessage });
+      set({ error: errorMessage });
       toast.error('Failed to update meta information');
     }
   },

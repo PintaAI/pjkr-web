@@ -1,6 +1,7 @@
 "use client";
 
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
+import { useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,7 @@ import {
   Trash2,
   GripVertical,
   Eye,
-  EyeOff
+  EyeOff,
 } from "lucide-react";
 import {
   DndContext,
@@ -30,6 +31,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useCallback } from "react";
 
 interface SortableMateriItemProps {
   materi: any;
@@ -140,8 +142,44 @@ export function StepContent() {
     removeMateri,
     updateMateri,
     reorderMateris,
-    toggleMateriDraft
+    toggleMateriDraft,
+    saveMateris,
+    stepDirtyFlags
   } = useKelasBuilderStore();
+
+  // Debounced auto-save for content step
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  useEffect(() => {
+    if (stepDirtyFlags.content) {
+      // Clear any existing timeout
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      
+      // Set new timeout for 2 seconds after user stops making changes
+      console.log("Setting debounce timeout for content changes...");
+      saveTimeoutRef.current = setTimeout(() => {
+        console.log("Content debounce timeout fired. Saving materis...");
+        saveMateris().catch(error => {
+          console.error("Auto-save failed:", error);
+        });
+      }, 2000);
+    }
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [stepDirtyFlags.content, saveMateris]);
+
+  // Enhanced updateMateri handler that triggers auto-save
+  const handleUpdateMateri = useCallback((id: number | string, data: Partial<any>) => {
+    updateMateri(id, data);
+    // Auto-save will be triggered by the useEffect above
+  }, [updateMateri]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -249,7 +287,7 @@ export function StepContent() {
                   key={materi.tempId || materi.id || `materi-${materi.order}`}
                   materi={materi}
                   sortableId={`materi-index-${index}`}
-                  onUpdateMateri={updateMateri}
+                  onUpdateMateri={handleUpdateMateri}
                   onRemoveMateri={removeMateri}
                   onToggleMateriDraft={toggleMateriDraft}
                 />
@@ -257,17 +295,6 @@ export function StepContent() {
           </div>
         </SortableContext>
       </DndContext>
-
-
-      {/* Note: Global save button is available in the header when there are unsaved changes */}
-      {materis.filter(m => m.tempId).length > 0 && (
-        <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-          <p className="text-sm text-blue-700 dark:text-blue-300">
-            You have {materis.filter(m => m.tempId).length} unsaved lesson(s). 
-            Use the Save button in the header to save your changes.
-          </p>
-        </div>
-      )}
     </div>
   );
 }

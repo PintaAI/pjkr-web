@@ -52,7 +52,7 @@ export interface VocabularySetData {
 
 
 // The steps in the builder UI
-export type BuilderStep = 'meta' | 'content' | 'vocabulary' | 'review';
+export type BuilderStep = 'meta' | 'content' | 'vocabulary' | 'questions' | 'review';
 
 export type ActionResult<T> =
   | { success: true; data: T }
@@ -109,11 +109,11 @@ export interface KelasBuilderState {
 
   // Vocabulary
   addVocabularySet: (vocabSet: Omit<VocabularySetData, 'items'> & { items: Omit<VocabularyItemData, 'order'>[] }) => void;
-  updateVocabularySet: (index: number, vocabSet: Partial<VocabularySetData>) => void;
-  removeVocabularySet: (index: number) => void;
+  updateVocabularySet: (setId: number | string, vocabSet: Partial<VocabularySetData>) => void;
+  removeVocabularySet: (setId: number | string) => Promise<void>;
   saveVocabularySet: (index: number) => Promise<void>;
-  updateVocabularyItem: (vocabSetIndex: number, itemIndex: number, itemData: Partial<VocabularyItemData>) => void;
-  removeVocabularyItem: (vocabSetIndex: number, itemIndex: number) => Promise<void>;
+  updateVocabularyItem: (vocabSetId: number | string, itemId: number | string, itemData: Partial<VocabularyItemData>) => void;
+  removeVocabularyItem: (vocabSetId: number | string, itemId: number | string) => Promise<void>;
   reorderVocabularyItems: (vocabSetId: number, itemOrders: { id: number; order: number }[]) => Promise<void>;
 
   // Assessment actions removed
@@ -128,4 +128,7 @@ export interface KelasBuilderState {
   reset: () => void;
   setError: (error: string | null) => void;
   clearError: () => void;
+  
+  // Debug helper from vocabulary slice
+  debugLog: () => void;
 }

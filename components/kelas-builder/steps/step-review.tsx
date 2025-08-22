@@ -31,17 +31,14 @@ export function StepReview() {
     meta,
     materis,
     vocabSets,
-    soalSets,
     draftId,
     publishDraft,
     unpublishDraft,
     reset,
     kelasIsDraft,
-    isDirty,
     stepDirtyFlags,
     saveMeta,
     saveMateris,
-    saveAllAssessments,
     dirtyVocabSets,
     saveVocabularySet
   } = useKelasBuilderStore();
@@ -104,7 +101,7 @@ export function StepReview() {
       liveSessions: 0,
       vocabularySets: vocabSets.length,
       posts: 0,
-      kelasKoleksiSoals: soalSets.length,
+      kelasKoleksiSoals: 0, // TODO: Add question sets tracking to store
     },
   };
 
@@ -112,7 +109,7 @@ export function StepReview() {
     if (!draftId) return;
 
     // Unpublish path (already published and no local changes)
-    if (!kelasIsDraft && !isDirty) {
+    if (!kelasIsDraft) {
       setIsPublishing(true);
       try {
         await unpublishDraft();
@@ -152,8 +149,9 @@ export function StepReview() {
             }
           });
         }
-        if (stepDirtyFlags.assessment) {
-          await saveAllAssessments();
+        if (stepDirtyFlags.questions) {
+          // TODO: Implement saveAllQuestions function
+          // await saveAllQuestions();
         }
         toast.success('Changes saved');
       }
@@ -162,7 +160,7 @@ export function StepReview() {
       toast.error(
         kelasIsDraft
           ? 'Failed to publish'
-          : (isDirty ? 'Failed to save changes' : 'Failed to unpublish')
+          : 'Failed to unpublish'
       );
     } finally {
       setIsPublishing(false);
@@ -257,7 +255,7 @@ export function StepReview() {
               <div className="text-sm text-muted-foreground">Vocabulary Sets</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{soalSets.length}</div>
+              <div className="text-2xl font-bold text-blue-600">0</div>
               <div className="text-sm text-muted-foreground">Question Sets</div>
             </div>
             <div className="text-center">
@@ -342,14 +340,14 @@ export function StepReview() {
                     <Loader2 className="h-6 w-6 animate-spin mr-3" />
                     {kelasIsDraft
                       ? 'Publishing...'
-                      : (isDirty ? 'Saving Changes...' : 'Unpublishing...')}
+                      : 'Unpublishing...'}
                   </>
                 ) : (
                   <>
                     <Rocket className="h-6 w-6 mr-3" />
                     {kelasIsDraft
                       ? 'Publish Course Now'
-                      : (isDirty ? 'Save Changes' : 'Unpublish Course')}
+                      : 'Unpublish Course'}
                     {!draftId && " (No Draft ID)"}
                   </>
                 )}
@@ -358,7 +356,7 @@ export function StepReview() {
               <p className="text-sm text-muted-foreground">
                 {kelasIsDraft
                   ? 'This will make your course live and available to students'
-                  : (isDirty
+                  : (false
                       ? 'This will save your changes to the published course'
                       : 'This will revert the course back to draft (students will lose access)')}
               </p>

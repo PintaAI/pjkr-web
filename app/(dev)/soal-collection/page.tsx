@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StepAssessment } from "@/components/kelas-builder/steps/step-assessment";
+import { StepAssessment } from "@/components/kelas-builder/steps/step-questions";
 
 export default function SoalCollectionDemo() {
   return (

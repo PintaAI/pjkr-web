@@ -211,6 +211,7 @@ export const useKelasBuilderStore = create<Store>()(
           }
         },
         reset: () => {
+          console.log('🔍 [VOCAB DEBUG] Resetting store state');
           set({
             draftId: null,
             kelasIsDraft: true,
@@ -233,12 +234,39 @@ export const useKelasBuilderStore = create<Store>()(
             dirtyVocabSets: new Set(),
             // Removed assessment-related deletion tracking
           });
+          console.log('🔍 [VOCAB DEBUG] Store reset complete. stepDirtyFlags:', {
+            meta: false,
+            content: false,
+            vocabulary: false,
+            review: false
+          });
         },
         setError: (error: string | null) => {
           set({ error });
         },
         clearError: () => {
           set({ error: null });
+        },
+        
+        // Debug helper from vocabulary slice
+        debugLog: () => {
+          const { vocabSets, dirtyVocabSets } = get();
+          console.log('🔥 [VOCAB STORE] DEBUG STATE:', {
+            totalVocabSets: vocabSets.length,
+            dirtyVocabSets: Array.from(dirtyVocabSets),
+            vocabSets: vocabSets.map(vs => ({
+              id: vs.id,
+              tempId: vs.tempId,
+              title: vs.title,
+              isDirty: vs.id ? dirtyVocabSets.has(vs.id) : false,
+              items: vs.items.map(item => ({
+                id: item.id,
+                tempId: item.tempId,
+                korean: item.korean,
+                indonesian: item.indonesian
+              }))
+            }))
+          });
         },
       }))
     ),
