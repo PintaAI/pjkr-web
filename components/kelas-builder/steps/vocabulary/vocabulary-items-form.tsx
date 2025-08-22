@@ -25,7 +25,6 @@ interface VocabularyItemFormProps {
 
 export function VocabularyItemForm({ vocabSetId, itemId }: VocabularyItemFormProps) {
   const {
-    vocabSets,
     updateVocabularyItem,
   } = useKelasBuilderStore();
 
@@ -34,47 +33,38 @@ export function VocabularyItemForm({ vocabSetId, itemId }: VocabularyItemFormPro
     return state.vocabSets.find(vs => vs.id === vocabSetId || vs.tempId === vocabSetId);
   });
 
-  // Find the item index
-  const itemIndex = vocabSet?.items.findIndex(item => (item.id?.toString() === itemId) || (item.tempId === itemId));
-  const item = itemIndex !== undefined ? vocabSet?.items[itemIndex] : undefined;
+  // Find the item directly by ID or temp ID
+  const item = vocabSet?.items.find(item => (item.id?.toString() === itemId) || (item.tempId === itemId));
+
+  // Error handling for missing item
+  if (!vocabSet) {
+    return <div>Error: Vocabulary set not found</div>;
+  }
+
+  if (!item) {
+    return <div>Error: Vocabulary item not found. This might be a new item that needs to be saved first.</div>;
+  }
 
   const updateItem = (field: keyof VocabularyItem, value: any) => {
-    console.log('updateItem called:', { field, value, itemIndex, itemId });
-    if (itemIndex !== undefined && item) {
-      console.log('Calling updateVocabularyItem with:', { vocabSetId, itemId, [field]: value });
-      updateVocabularyItem(vocabSetId, itemId, { [field]: value });
-    } else {
-      console.warn('itemIndex or item is undefined, cannot update item');
-    }
+    console.log('updateItem called:', { field, value, itemId });
+    console.log('Calling updateVocabularyItem with:', { vocabSetId, itemId, [field]: value });
+    updateVocabularyItem(vocabSetId, itemId, { [field]: value });
   };
 
   const updateExampleSentence = (sentenceIndex: number, value: string) => {
-    if (itemIndex === undefined || !item) return;
-    const newExampleSentences = [...(item?.exampleSentences || [])];
+    const newExampleSentences = [...(item.exampleSentences || [])];
     newExampleSentences[sentenceIndex] = value;
     updateVocabularyItem(vocabSetId, itemId, { exampleSentences: newExampleSentences });
   };
 
   const addItem = () => {
-    if (itemIndex === undefined || !item) return;
-    const newExampleSentences = [...(item?.exampleSentences || []), ""];
+    const newExampleSentences = [...(item.exampleSentences || []), ""];
     updateVocabularyItem(vocabSetId, itemId, { exampleSentences: newExampleSentences });
   };
 
   const removeItem = (sentenceIndex: number) => {
-    if (itemIndex === undefined || !item) return;
-    const newExampleSentences = (item?.exampleSentences || []).filter((_, i) => i !== sentenceIndex);
+    const newExampleSentences = (item.exampleSentences || []).filter((_, i) => i !== sentenceIndex);
     updateVocabularyItem(vocabSetId, itemId, { exampleSentences: newExampleSentences });
-  };
-
-  const currentItem = item || {
-    korean: "",
-    indonesian: "",
-    type: VocabularyType.WORD,
-    pos: undefined,
-    audioUrl: "",
-    exampleSentences: [""],
-    order: 0,
   };
 
   return (
@@ -85,7 +75,7 @@ export function VocabularyItemForm({ vocabSetId, itemId }: VocabularyItemFormPro
               <Label htmlFor="korean">Korean *</Label>
               <Input
                 id="korean"
-                value={currentItem.korean || ""}
+                value={item.korean || ""}
                 onChange={(e) => {
                   updateItem("korean", e.target.value);
                 }}
@@ -97,7 +87,7 @@ export function VocabularyItemForm({ vocabSetId, itemId }: VocabularyItemFormPro
               <Label htmlFor="indonesian">Indonesian *</Label>
               <Input
                 id="indonesian"
-                value={currentItem.indonesian || ""}
+                value={item.indonesian || ""}
                 onChange={(e) => {
                   updateItem("indonesian", e.target.value);
                 }}
@@ -110,7 +100,7 @@ export function VocabularyItemForm({ vocabSetId, itemId }: VocabularyItemFormPro
             <div className="space-y-2">
               <Label htmlFor="type">Type</Label>
               <Select
-                value={currentItem.type}
+                value={item.type}
                 onValueChange={(value) => {
                   updateItem("type", value);
                 }}
@@ -129,7 +119,7 @@ export function VocabularyItemForm({ vocabSetId, itemId }: VocabularyItemFormPro
             <div className="space-y-2">
               <Label htmlFor="pos">Part of Speech</Label>
               <Select
-                value={currentItem.pos || "none"}
+                value={item.pos || "none"}
                 onValueChange={(value) => {
                   const parsedValue = value === "none" ? undefined : (value as PartOfSpeech);
                   updateItem("pos", parsedValue);
@@ -153,7 +143,7 @@ export function VocabularyItemForm({ vocabSetId, itemId }: VocabularyItemFormPro
             <Label htmlFor="audio">Audio URL (optional)</Label>
             <Input
               id="audio"
-              value={currentItem.audioUrl || ""}
+              value={item.audioUrl || ""}
               onChange={(e) => {
                 updateItem("audioUrl", e.target.value);
               }}
@@ -175,7 +165,7 @@ export function VocabularyItemForm({ vocabSetId, itemId }: VocabularyItemFormPro
               </Button>
             </div>
             <div className="space-y-2">
-              {currentItem.exampleSentences.map((sentence, sentenceIndex) => (
+              {item.exampleSentences.map((sentence: string, sentenceIndex: number) => (
                 <div key={sentenceIndex} className="flex gap-2">
                   <Input
                     value={sentence || ""}
@@ -184,7 +174,7 @@ export function VocabularyItemForm({ vocabSetId, itemId }: VocabularyItemFormPro
                     }}
                     placeholder={`Example ${sentenceIndex + 1}`}
                   />
-                  {currentItem.exampleSentences.length > 1 && (
+                  {item.exampleSentences.length > 1 && (
                     <Button
                       type="button"
                       onClick={() => {
