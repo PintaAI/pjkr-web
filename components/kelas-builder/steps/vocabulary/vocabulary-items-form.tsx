@@ -28,16 +28,13 @@ export function VocabularyItemForm({ vocabSetId, itemId }: VocabularyItemFormPro
     updateVocabularyItem,
   } = useKelasBuilderStore();
 
-  // Single selector to get both vocab set and item in one pass
-  const { vocabSet, item } = useKelasBuilderStore((state) => {
-    const targetVocabSet = state.vocabSets.find(vs => vs.id === vocabSetId || vs.tempId === vocabSetId);
-    const targetItem = targetVocabSet?.items.find(item => (item.id?.toString() === itemId) || (item.tempId === itemId));
-    
-    return {
-      vocabSet: targetVocabSet,
-      item: targetItem
-    };
+  // Get the specific vocabulary set reactively using Zustand selector
+  const vocabSet = useKelasBuilderStore((state) => {
+    return state.vocabSets.find(vs => vs.id === vocabSetId || vs.tempId === vocabSetId);
   });
+
+  // Find the item directly by ID or temp ID
+  const item = vocabSet?.items.find(item => (item.id?.toString() === itemId) || (item.tempId === itemId));
 
   // Error handling for missing item
   if (!vocabSet) {
@@ -55,11 +52,6 @@ export function VocabularyItemForm({ vocabSetId, itemId }: VocabularyItemFormPro
   };
 
   const updateExampleSentence = (sentenceIndex: number, value: string) => {
-    if (sentenceIndex < 0 || sentenceIndex >= (item.exampleSentences?.length || 0)) {
-      console.warn('Invalid sentence index:', sentenceIndex);
-      return;
-    }
-    
     const newExampleSentences = [...(item.exampleSentences || [])];
     newExampleSentences[sentenceIndex] = value;
     updateVocabularyItem(vocabSetId, itemId, { exampleSentences: newExampleSentences });
@@ -71,11 +63,6 @@ export function VocabularyItemForm({ vocabSetId, itemId }: VocabularyItemFormPro
   };
 
   const removeItem = (sentenceIndex: number) => {
-    if (sentenceIndex < 0 || sentenceIndex >= (item.exampleSentences?.length || 0)) {
-      console.warn('Invalid sentence index for removal:', sentenceIndex);
-      return;
-    }
-    
     const newExampleSentences = (item.exampleSentences || []).filter((_, i) => i !== sentenceIndex);
     updateVocabularyItem(vocabSetId, itemId, { exampleSentences: newExampleSentences });
   };
