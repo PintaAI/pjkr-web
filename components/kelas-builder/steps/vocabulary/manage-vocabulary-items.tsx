@@ -29,31 +29,7 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
   });
   
   // Get actions for updating
-  const { updateVocabularySet, removeVocabularyItem, debugLog } = useKelasBuilderStore();
-
-  const handleAddItem = () => {
-    if (!vocabSet) return;
-    
-    // Add a new empty item to the end of the array
-    const tempId = `temp-${Date.now()}`;
-    const newItems = [...vocabSet.items, {
-      korean: "",
-      indonesian: "",
-      type: VocabularyType.WORD,
-      exampleSentences: [],
-      order: vocabSet.items.length,
-      tempId,
-    }];
-    
-    updateVocabularySet(vocabSetId, {
-      ...vocabSet,
-      items: newItems,
-    });
-    
-    setEditingItemId(tempId);
-    setShowCreateDialog(true);
-    
-  };
+  const { updateVocabularySet, removeVocabularyItem } = useKelasBuilderStore();
 
   const handleQuickAdd = async () => {
     if (!vocabSet) return;
@@ -128,10 +104,6 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
             Manage vocabulary items for this set
           </p>
         </div>
-        <Button onClick={handleAddItem} size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Item
-        </Button>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2 w-full">
@@ -176,12 +148,8 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
               <div>
                 <h3 className="font-semibold mb-2">No Vocabulary Items Yet</h3>
                 <p className="text-muted-foreground mb-4">
-                  Add your first vocabulary item to this set.
+                  Add your first vocabulary item using the quick add fields below.
                 </p>
-                <Button onClick={handleAddItem} variant="outline" size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add First Item
-                </Button>
               </div>
             </div>
           </CardContent>
@@ -269,7 +237,7 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
           <DialogHeader>
             <DialogTitle>
               {editingItemId !== undefined
-                ? `Edit Vocabulary Item ${vocabSet.items.findIndex(i => (i.id?.toString() === editingItemId) || (i.tempId === editingItemId)) + 1}`
+                ? `Edit Vocabulary Item`
                 : "Create New Vocabulary Item"}
             </DialogTitle>
           </DialogHeader>
