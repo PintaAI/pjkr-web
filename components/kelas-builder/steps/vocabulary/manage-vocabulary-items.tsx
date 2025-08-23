@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Trash2, GripVertical, BookOpen, Edit } from "lucide-react";
@@ -35,8 +34,6 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
   const handleAddItem = () => {
     if (!vocabSet) return;
     
-    console.log('🔥 [MANAGE VOCAB] handleAddItem called for vocabSet:', vocabSet.title);
-    debugLog();
     // Add a new empty item to the end of the array
     const tempId = `temp-${Date.now()}`;
     const newItems = [...vocabSet.items, {
@@ -47,8 +44,6 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
       order: vocabSet.items.length,
       tempId,
     }];
-    
-    console.log('Created new item with tempId:', tempId);
     
     updateVocabularySet(vocabSetId, {
       ...vocabSet,
@@ -85,7 +80,7 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
       setQuickIndonesian("");
       // Do not open edit dialog automatically; user can click Edit to add more details
     } catch (error) {
-      console.error("Failed quick add vocabulary item:", error);
+      // Error handling removed for production
     } finally {
       setQuickAdding(false);
     }
@@ -94,9 +89,7 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
   const handleEditItem = (itemId: string) => {
     if (!vocabSet) return;
     
-    console.log('handleEditItem called with itemId:', itemId);
     const item = vocabSet.items.find(item => (item.id?.toString() === itemId) || (item.tempId === itemId));
-    console.log('Found item for editing:', item);
     setEditingItemId(itemId);
     setShowCreateDialog(true);
   };
@@ -109,21 +102,16 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
   const handleRemoveItem = async (itemId: string) => {
     if (!vocabSet) return;
     
-    console.log('handleRemoveItem called with itemId:', itemId);
     const item = vocabSet.items.find(item => (item.id?.toString() === itemId) || (item.tempId === itemId));
-    console.log('Found item for removal:', item);
     
     if (item) {
       if (confirm("Are you sure you want to delete this vocabulary item?")) {
         try {
-          console.log('Calling removeVocabularyItem with:', { vocabSetId, itemId });
           await removeVocabularyItem(vocabSetId, itemId);
         } catch (error) {
-          console.error('Failed to remove vocabulary item:', error);
+          // Error handling removed for production
         }
       }
-    } else {
-      console.warn('Item not found for removal with itemId:', itemId);
     }
   };
 
@@ -206,13 +194,6 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
             .map((item) => {
               // Create a unique key that doesn't depend on sorted position
               const uniqueKey = item.id || item.tempId;
-              console.log('Rendering vocabulary item:', {
-                id: item.id,
-                tempId: item.tempId,
-                korean: item.korean,
-                indonesian: item.indonesian,
-                uniqueKey
-              });
               return (
                 <Card key={uniqueKey} className="py-2">
                   <CardContent>
