@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Trash2, GripVertical, BookOpen, Edit } from "lucide-react";
@@ -18,6 +20,9 @@ interface ManageVocabularyItemsProps {
 export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | undefined>();
+  const [quickKorean, setQuickKorean] = useState("");
+  const [quickIndonesian, setQuickIndonesian] = useState("");
+  const [quickAdding, setQuickAdding] = useState(false);
   
   // Get the specific vocabulary set reactively using Zustand selector
   const vocabSet = useKelasBuilderStore((state) => {
@@ -53,6 +58,37 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
     setEditingItemId(tempId);
     setShowCreateDialog(true);
     
+  };
+
+  const handleQuickAdd = async () => {
+    if (!vocabSet) return;
+    if (!quickKorean.trim() || !quickIndonesian.trim()) {
+      alert("Please enter both Korean and Indonesian.");
+      return;
+    }
+    setQuickAdding(true);
+    try {
+      const tempId = `temp-item-${Date.now()}`;
+      const newItems = [...vocabSet.items, {
+        korean: quickKorean.trim(),
+        indonesian: quickIndonesian.trim(),
+        type: VocabularyType.WORD,
+        exampleSentences: [],
+        order: vocabSet.items.length,
+        tempId,
+      }];
+      updateVocabularySet(vocabSetId, {
+        ...vocabSet,
+        items: newItems,
+      });
+      setQuickKorean("");
+      setQuickIndonesian("");
+      // Do not open edit dialog automatically; user can click Edit to add more details
+    } catch (error) {
+      console.error("Failed quick add vocabulary item:", error);
+    } finally {
+      setQuickAdding(false);
+    }
   };
 
   const handleEditItem = (itemId: string) => {
@@ -96,7 +132,7 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
   }
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-7 mt-12">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">{vocabSet.title}</h3>
@@ -108,6 +144,40 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
           <Plus className="h-4 w-4 mr-2" />
           Add Item
         </Button>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-2 w-full">
+        <div className="flex-1">
+          <Input
+            id="quick-korean"
+            value={quickKorean}
+            onChange={(e) => setQuickKorean(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleQuickAdd();
+              }
+            }}
+            placeholder="Korean (e.g., 안녕하세요)"
+          />
+        </div>
+        <div className="flex-1">
+          <Input
+            id="quick-indonesian"
+            value={quickIndonesian}
+            onChange={(e) => setQuickIndonesian(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleQuickAdd();
+              }
+            }}
+            placeholder="Indonesian (e.g., Halo)"
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" onClick={handleQuickAdd} disabled={quickAdding}>
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {vocabSet.items.length === 0 ? (
@@ -135,7 +205,7 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
             .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
             .map((item) => {
               // Create a unique key that doesn't depend on sorted position
-              const uniqueKey = item.id || item.tempId || `item-${item.korean}-${item.indonesian}`;
+              const uniqueKey = item.id || item.tempId;
               console.log('Rendering vocabulary item:', {
                 id: item.id,
                 tempId: item.tempId,
@@ -151,7 +221,7 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
                         <div className="touch-none cursor-move">
                           <GripVertical className="h-4 w-4 text-muted-foreground hover:text-foreground" />
                         </div>
-                        <Badge variant="outline" className="text-xs shrink-0">No. {vocabSet.items.findIndex(i => i.id === item.id || i.tempId === item.tempId) + 1}</Badge>
+                        <Badge variant="outline" className="text-xs shrink-0">No. {item.order + 1}</Badge>
                         <div className="flex-1">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                             <div>
@@ -177,6 +247,11 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
                                 {item.exampleSentences.length} example{item.exampleSentences.length > 1 ? 's' : ''}
                               </Badge>
                             )}
+                            
+                            {/* Display the actual ID of the item */}
+                            <Badge variant="outline" className="text-xs">
+                              ID: {item.id || item.tempId}
+                            </Badge>
                           </div>
                         </div>
                       </div>

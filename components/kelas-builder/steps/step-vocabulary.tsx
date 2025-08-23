@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { MessageSquare, Plus, BookOpen, Edit, Trash2, MousePointerClick } from "lucide-react";
 import { VocabularySetBasicForm } from "./vocabulary/vocabulary-set-form";
 
@@ -249,11 +250,11 @@ export function StepVocabulary() {
       {/* Manage Vocabulary Items Sheet */}
       <Sheet open={managingSetId !== undefined} onOpenChange={handleCloseManageItems}>
         <SheetContent side="right" className="w-[800px] sm:max-w-[800px] overflow-y-auto">
-          <SheetHeader className="px-6 py-4">
-            <SheetTitle>
-              Manage Vocabulary Items
-            </SheetTitle>
-          </SheetHeader>
+          <VisuallyHidden>
+            <SheetHeader>
+              <SheetTitle>Manage Vocabulary Items</SheetTitle>
+            </SheetHeader>
+          </VisuallyHidden>
           <div className="px-6 pb-6">
             {managingSetId && (
               <ManageVocabularyItems vocabSetId={managingSetId} />
