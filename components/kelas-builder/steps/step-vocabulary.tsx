@@ -224,6 +224,9 @@ export function StepVocabulary() {
                   {vocabSet.tempId && (
                     <Badge variant="outline">Unsaved</Badge>
                   )}
+                  <Badge variant="secondary" className="text-xs">
+                    {vocabSet.id ? `ID: ${vocabSet.id}` : ` ${vocabSet.tempId?.substring(0, 8)}...`}
+                  </Badge>
                 </div>
               </CardContent>
             </Card>

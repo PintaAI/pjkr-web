@@ -48,10 +48,7 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
         order: vocabSet.items.length,
         tempId,
       }];
-      updateVocabularySet(vocabSetId, {
-        ...vocabSet,
-        items: newItems,
-      });
+      updateVocabularySet(vocabSetId, { items: newItems });
       setQuickKorean("");
       setQuickIndonesian("");
       // Do not open edit dialog automatically; user can click Edit to add more details
@@ -65,7 +62,6 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
   const handleEditItem = (itemId: string) => {
     if (!vocabSet) return;
     
-    const item = vocabSet.items.find(item => (item.id?.toString() === itemId) || (item.tempId === itemId));
     setEditingItemId(itemId);
     setShowCreateDialog(true);
   };
@@ -217,7 +213,12 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleRemoveItem((item.id?.toString() || item.tempId) as string)}
+                          onClick={() => {
+                            const itemId = item.id?.toString() || item.tempId;
+                            if (itemId) {
+                              handleRemoveItem(itemId);
+                            }
+                          }}
                           className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
