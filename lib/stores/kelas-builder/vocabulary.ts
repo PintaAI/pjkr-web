@@ -21,17 +21,17 @@ const toNumericId = (id: VocabSetId | VocabItemId): number =>
   typeof id === 'number' ? id : Number(id);
 
 // Helper to find vocabulary set by ID
-const findVocabSetIndex = (vocabSets: VocabularySetData[], setId: VocabSetId): number => {
-  return isTempId(setId) 
-    ? vocabSets.findIndex(vs => vs.tempId === setId)
-    : vocabSets.findIndex(vs => vs.id === toNumericId(setId));
+const findVocabSet = (vocabSets: VocabularySetData[], setId: VocabSetId): VocabularySetData | null => {
+  return isTempId(setId)
+    ? vocabSets.find(vs => vs.tempId === setId) || null
+    : vocabSets.find(vs => vs.id === toNumericId(setId)) || null;
 };
 
 // Helper to find vocabulary item by ID
-const findVocabItemIndex = (items: VocabularyItemData[], itemId: VocabItemId): number => {
+const findVocabItem = (items: VocabularyItemData[], itemId: VocabItemId): VocabularyItemData | null => {
   return isTempId(itemId)
-    ? items.findIndex(item => item.tempId === itemId)
-    : items.findIndex(item => item.id === toNumericId(itemId));
+    ? items.find(item => item.tempId === itemId) || null
+    : items.find(item => item.id === toNumericId(itemId)) || null;
 };
 
 // Helper to mark vocabulary set as dirty
@@ -56,10 +56,10 @@ export interface Vocabulary {
   addVocabularySet: (vocabSet: Omit<VocabularySetData, 'items'> & { items: Omit<VocabularyItemData, 'order'>[] }) => void;
   updateVocabularySet: (setId: VocabSetId, vocabSet: Partial<VocabularySetData>) => void;
   removeVocabularySet: (setId: VocabSetId) => Promise<void>;
-  saveVocabularySet: (index: number) => Promise<void>;
+  saveVocabularySet: (setId: VocabSetId) => Promise<void>;
   updateVocabularyItem: (vocabSetId: VocabSetId, itemId: VocabItemId, itemData: Partial<VocabularyItemData>) => void;
   removeVocabularyItem: (vocabSetId: VocabSetId, itemId: VocabItemId) => Promise<void>;
-  reorderVocabularyItems: (vocabSetId: number, itemOrders: { id: number; order: number }[]) => Promise<void>;
+  reorderVocabularyItems: (vocabSetId: VocabSetId, itemOrders: { id: VocabItemId; order: number }[]) => Promise<void>;
 }
 
 export const createVocabulary: StateCreator<
@@ -74,10 +74,10 @@ export const createVocabulary: StateCreator<
   addVocabularySet: (vocabSet) => {
     set((state) => {
       const tempId = createTempId('vocab');
-      const newItems = vocabSet.items.map((item, index) => ({
+      const newItems = vocabSet.items.map((item, order) => ({
         ...item,
-        order: index,
-        tempId: createTempId(`item-${index}`),
+        order,
+        tempId: createTempId(`item-${Date.now()}-${order}`),
       }));
       
       state.vocabSets.push({
@@ -92,10 +92,9 @@ export const createVocabulary: StateCreator<
 
   updateVocabularySet: (setId, updates) => {
     set((state) => {
-      const vocabSetIndex = findVocabSetIndex(state.vocabSets, setId);
-      if (vocabSetIndex === -1) return;
+      const vocabSet = findVocabSet(state.vocabSets, setId);
+      if (!vocabSet) return;
 
-      const vocabSet = state.vocabSets[vocabSetIndex];
       Object.assign(vocabSet, updates);
       
       markSetDirty(state, vocabSet);
@@ -123,10 +122,12 @@ export const createVocabulary: StateCreator<
 
     // Remove from local state
     set((state) => {
-      const vocabSetIndex = findVocabSetIndex(state.vocabSets, setId);
-      if (vocabSetIndex === -1) return;
+      const vocabSetToRemove = findVocabSet(state.vocabSets, setId);
+      if (!vocabSetToRemove) return;
 
-      state.vocabSets.splice(vocabSetIndex, 1);
+      state.vocabSets = state.vocabSets.filter(vs =>
+        isTempId(setId) ? vs.tempId !== setId : vs.id !== toNumericId(setId)
+      );
       
       // Clean up dirty tracking for real IDs
       if (!isTempId(setId)) {
@@ -135,15 +136,13 @@ export const createVocabulary: StateCreator<
     });
   },
 
-  saveVocabularySet: async (index) => {
+  saveVocabularySet: async (setId) => {
     const { vocabSets, draftId } = get();
     
-    if (index < 0 || index >= vocabSets.length || !vocabSets[index] || !draftId) {
+    const vocabSet = findVocabSet(vocabSets, setId);
+    if (!vocabSet || !draftId) {
       return;
     }
-
-    const vocabSet = vocabSets[index];
-    const setId = vocabSet.id || vocabSet.tempId;
 
     set({ isLoading: true, error: null });
 
@@ -172,10 +171,9 @@ export const createVocabulary: StateCreator<
       }
 
       set((state) => {
-        const vocabSetIndex = state.vocabSets.findIndex(vs => vs.id === setId || vs.tempId === setId);
-        if (vocabSetIndex === -1) return;
+        const savedVocabSet = findVocabSet(state.vocabSets, setId);
+        if (!savedVocabSet) return;
         
-        const savedVocabSet = state.vocabSets[vocabSetIndex];
         savedVocabSet.id = result.data!.id;
         
         cleanupTempIds(savedVocabSet);
@@ -198,15 +196,13 @@ export const createVocabulary: StateCreator<
 
   updateVocabularyItem: (vocabSetId, itemId, itemData) => {
     set((state) => {
-      const vocabSetIndex = findVocabSetIndex(state.vocabSets, vocabSetId);
-      if (vocabSetIndex === -1) return;
+      const vocabSet = findVocabSet(state.vocabSets, vocabSetId);
+      if (!vocabSet) return;
 
-      const vocabSet = state.vocabSets[vocabSetIndex];
-      const itemIndex = findVocabItemIndex(vocabSet.items, itemId);
-      
-      if (itemIndex === -1) return;
+      const item = findVocabItem(vocabSet.items, itemId);
+      if (!item) return;
 
-      Object.assign(vocabSet.items[itemIndex], itemData);
+      Object.assign(item, itemData);
       markSetDirty(state, vocabSet);
     });
   },
@@ -225,15 +221,13 @@ export const createVocabulary: StateCreator<
     
     // Remove from local state
     set((state) => {
-      const vocabSetIndex = findVocabSetIndex(state.vocabSets, vocabSetId);
-      if (vocabSetIndex === -1) return;
-      
-      const targetVocabSet = state.vocabSets[vocabSetIndex];
+      const targetVocabSet = findVocabSet(state.vocabSets, vocabSetId);
+      if (!targetVocabSet) return;
       
       // Remove item and reorder
       targetVocabSet.items = targetVocabSet.items
         .filter(item => isTempId(itemId) ? item.tempId !== itemId : item.id !== toNumericId(itemId))
-        .map((item, index) => ({ ...item, order: index }));
+        .map((item, order) => ({ ...item, order }));
       
       markSetDirty(state, targetVocabSet);
     });
@@ -241,13 +235,15 @@ export const createVocabulary: StateCreator<
 
   reorderVocabularyItems: async (vocabSetId, itemOrders) => {
     set((state) => {
-      const vocabSetIndex = state.vocabSets.findIndex(vs => vs.id === vocabSetId);
-      if (vocabSetIndex === -1) return;
+      const vocabSet = findVocabSet(state.vocabSets, vocabSetId);
+      if (!vocabSet) return;
 
       // Reorder items based on the provided orders
-      state.vocabSets[vocabSetIndex].items.sort((a, b) => {
-        const orderA = itemOrders.find(order => order.id === a.id)?.order || 0;
-        const orderB = itemOrders.find(order => order.id === b.id)?.order || 0;
+      vocabSet.items.sort((a, b) => {
+        const aId = a.id || a.tempId;
+        const bId = b.id || b.tempId;
+        const orderA = itemOrders.find(order => order.id === aId)?.order || 0;
+        const orderB = itemOrders.find(order => order.id === bId)?.order || 0;
         return orderA - orderB;
       });
       
