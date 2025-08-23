@@ -29,7 +29,6 @@ export const createVocabulary: StateCreator<
   vocabSets: [],
   dirtyVocabSets: new Set(),
   addVocabularySet: (vocabSet) => {
-    console.log('🔥 [VOCAB STORE] addVocabularySet called:', vocabSet);
     set((state) => {
       const tempId = `temp-vocab-${Date.now()}`;
       const newItems = vocabSet.items.map((item, index) => ({
@@ -37,8 +36,6 @@ export const createVocabulary: StateCreator<
         order: index,
         tempId: `temp-item-${Date.now()}-${index}`,
       }));
-      console.log('🔥 [VOCAB STORE] Generated tempIds for items:', newItems.map(item => ({ tempId: item.tempId, korean: item.korean })));
-      console.log('🔥 [VOCAB STORE] Current vocabSets before add:', state.vocabSets.map(vs => ({ id: vs.id, tempId: vs.tempId, title: vs.title, itemCount: vs.items.length })));
       
       state.vocabSets.push({
         ...vocabSet,
@@ -46,47 +43,29 @@ export const createVocabulary: StateCreator<
         tempId,
       });
       
-      console.log('🔥 [VOCAB STORE] Added vocabSet:', {
-        tempId,
-        title: vocabSet.title,
-        itemCount: newItems.length,
-        totalVocabSets: state.vocabSets.length
-      });
-      console.log('🔥 [VOCAB STORE] Current vocabSets after add:', state.vocabSets.map(vs => ({ id: vs.id, tempId: vs.tempId, title: vs.title, itemCount: vs.items.length })));
-      
-      console.log('🔍 [VOCAB DEBUG] Setting stepDirtyFlags.vocabulary = true in addVocabularySet');
       state.stepDirtyFlags.vocabulary = true;
     });
   },
   updateVocabularySet: (setId, updates) => {
-    console.log('🔥 [VOCAB STORE] updateVocabularySet called:', { setId, updates });
     set((state) => {
       const vocabSetIndex = state.vocabSets.findIndex(vs => vs.id === setId || vs.tempId === setId);
       if (vocabSetIndex === -1) {
-        console.warn('🔥 [VOCAB STORE] Vocab set not found for setId:', setId);
         return;
       }
 
       const vocabSet = state.vocabSets[vocabSetIndex];
-      console.log('🔥 [VOCAB STORE] Updating vocabSet:', { setId, oldData: vocabSet, newData: updates });
       
       Object.assign(vocabSet, updates);
-      console.log('🔥 [VOCAB STORE] VocabSet updated to:', vocabSet);
 
       if (vocabSet.id) {
         state.dirtyVocabSets.add(vocabSet.id);
-        console.log('🔥 [VOCAB STORE] Added vocabSet to dirty sets:', vocabSet.id);
       }
-      console.log('🔍 [VOCAB DEBUG] Setting stepDirtyFlags.vocabulary = true in updateVocabularySet');
       state.stepDirtyFlags.vocabulary = true;
     });
   },
   removeVocabularySet: async (setId) => {
-    console.log('🔥 [VOCAB STORE] removeVocabularySet called with setId:', setId);
-
     const vocabSet = get().vocabSets.find(vs => vs.id === setId || vs.tempId === setId);
     if (!vocabSet) {
-      console.warn('🔥 [VOCAB STORE] Vocab set not found for setId:', setId);
       return;
     }
 
@@ -98,7 +77,7 @@ export const createVocabulary: StateCreator<
         }
         toast.success('Vocabulary set deleted from database.');
       } catch (error) {
-        console.error('🔥 [VOCAB STORE] Failed to delete vocab set from database:', error);
+        console.error('Failed to delete vocab set from database:', error);
         toast.error(error instanceof Error ? error.message : 'An unknown error occurred.');
         return; // Stop if the database deletion fails
       }
@@ -117,16 +96,12 @@ export const createVocabulary: StateCreator<
   },
   saveVocabularySet: async (index) => {
     const { vocabSets, draftId } = get();
-    console.log('🔥 [VOCAB STORE] saveVocabularySet called:', { index, draftId, vocabSet: vocabSets[index] });
     
-    // DEBUG: Check for potential index out of bounds
     if (index < 0 || index >= vocabSets.length) {
-      console.error('🚨 [VOCAB DEBUG] CRITICAL: Invalid vocabSetIndex:', { index, vocabSetsLength: vocabSets.length });
       return;
     }
     
     if (!vocabSets[index] || !draftId) {
-      console.warn('🔥 [VOCAB STORE] Cannot save: missing vocab set or draftId');
       return;
     }
 
@@ -136,13 +111,6 @@ export const createVocabulary: StateCreator<
     set({ isLoading: true, error: null });
 
     try {
-      console.log('🔥 [VOCAB STORE] Calling saveVocabularySetAction with:', {
-        draftId,
-        title: vocabSet.title,
-        itemCount: vocabSet.items.length,
-        hasExistingId: !!vocabSet.id
-      });
-      
       const result = await saveVocabularySetAction(
         draftId,
         {
@@ -162,49 +130,29 @@ export const createVocabulary: StateCreator<
         vocabSet.id
       );
 
-      console.log('🔥 [VOCAB STORE] Save result:', result);
-
       if (result.success && result.data?.id) {
         set((state) => {
           const vocabSetIndex = state.vocabSets.findIndex(vs => vs.id === setId || vs.tempId === setId);
           if (vocabSetIndex === -1) {
-             console.warn('🔥 [VOCAB STORE] Vocab set not found for update after save:', setId);
              return;
           }
           
           const vocabSet = state.vocabSets[vocabSetIndex];
-          const oldId = vocabSet.id;
-          const oldTempId = vocabSet.tempId;
           
           vocabSet.id = result.data!.id;
           delete vocabSet.tempId;
           
           // Clean up tempIds for items too
-          let itemsWithTempIds = 0;
           vocabSet.items.forEach(item => {
             if (item.tempId) {
-              itemsWithTempIds++;
               delete item.tempId;
             }
           });
           
-          console.log('🔥 [VOCAB STORE] Vocab set saved:', {
-            oldId,
-            newId: vocabSet.id,
-            oldTempId,
-            itemsWithTempIdsCleaned: itemsWithTempIds,
-            isDirty: state.dirtyVocabSets.has(result.data!.id)
-          });
-          
           state.dirtyVocabSets.delete(result.data!.id);
           state.isLoading = false;
-          // DEBUG: Log stepDirtyFlags access
-          console.log('🔍 [VOCAB DEBUG] About to set stepDirtyFlags.vocabulary = false');
           if (state.stepDirtyFlags && typeof state.stepDirtyFlags.vocabulary !== 'undefined') {
             state.stepDirtyFlags.vocabulary = false;
-            console.log('🔍 [VOCAB DEBUG] Successfully set stepDirtyFlags.vocabulary = false');
-          } else {
-            console.error('🚨 [VOCAB DEBUG] CRITICAL: stepDirtyFlags is undefined or missing vocabulary property!');
           }
         });
 
@@ -213,7 +161,7 @@ export const createVocabulary: StateCreator<
         throw new Error(result.error || 'Failed to save vocabulary set');
       }
     } catch (error) {
-      console.error('🔥 [VOCAB STORE] Error saving vocabulary set:', error);
+      console.error('Error saving vocabulary set:', error);
       set({
         isLoading: false,
         error: error instanceof Error ? error.message : 'Failed to save vocabulary set',
@@ -222,7 +170,6 @@ export const createVocabulary: StateCreator<
     }
   },
   updateVocabularyItem: (vocabSetId, itemId, itemData) => {
-    console.log('updateVocabularyItem called:', { vocabSetId, itemId, itemData });
     set((state) => {
       let vocabSetIndex = -1;
       if (typeof vocabSetId === 'number') {
@@ -232,7 +179,6 @@ export const createVocabulary: StateCreator<
       }
 
       if (vocabSetIndex === -1) {
-        console.warn('🔥 [VOCAB STORE] Vocab set not found for updateVocabularyItem:', vocabSetId);
         return;
       }
       const vocabSet = state.vocabSets[vocabSetIndex];
@@ -245,17 +191,12 @@ export const createVocabulary: StateCreator<
       }
       
       if (itemIndex !== -1 && vocabSet.items[itemIndex]) {
-        console.log('Updating vocabulary item:', vocabSet.items[itemIndex]);
         Object.assign(vocabSet.items[itemIndex], itemData);
-        console.log('Updated vocabulary item:', vocabSet.items[itemIndex]);
         
         if (vocabSet.id) {
           state.dirtyVocabSets.add(vocabSet.id!);
         }
-      } else {
-        console.warn('Vocabulary item not found for update:', { vocabSetId, itemId });
       }
-      console.log('🔍 [VOCAB DEBUG] Setting stepDirtyFlags.vocabulary = true in updateVocabularyItem');
       state.stepDirtyFlags.vocabulary = true;
     });
   },
@@ -278,15 +219,11 @@ export const createVocabulary: StateCreator<
       item = vocabSet?.items.find(item => item.tempId === itemId);
     }
 
-    console.log('removeVocabularyItem called:', { vocabSetId, itemId, item });
-
     if (!item) {
-      console.warn('Vocabulary item not found for removal:', { vocabSetId, itemId });
       return;
     }
 
     if (item.id) {
-      console.log('Deleting vocabulary item from server:', item.id);
       await deleteVocabularyItemAction(item.id);
     }
 
@@ -301,7 +238,6 @@ export const createVocabulary: StateCreator<
         }
 
         if (itemIndex !== -1) {
-            console.log('Removing vocabulary item from local state:', item);
             // Remove item and reorder properly using Immer's draft capabilities
             targetVocabSet.items.splice(itemIndex, 1);
             targetVocabSet.items.forEach((item, index) => {
@@ -311,11 +247,8 @@ export const createVocabulary: StateCreator<
             if (targetVocabSet.id) {
               state.dirtyVocabSets.add(targetVocabSet.id);
             }
-            console.log('Vocabulary items after removal:', targetVocabSet.items);
         }
       }
-      console.log('🔍 [VOCAB DEBUG] Setting stepDirtyFlags.vocabulary = true in removeVocabularyItem');
-      console.log('🔍 [VOCAB DEBUG] Setting stepDirtyFlags.vocabulary = true in reorderVocabularyItems');
       state.stepDirtyFlags.vocabulary = true;
     });
   },
@@ -336,21 +269,6 @@ export const createVocabulary: StateCreator<
   },
   debugLog: () => {
     const { vocabSets, dirtyVocabSets } = get();
-    console.log('🔥 [VOCAB STORE] DEBUG STATE:', {
-      totalVocabSets: vocabSets.length,
-      dirtyVocabSets: Array.from(dirtyVocabSets),
-      vocabSets: vocabSets.map(vs => ({
-        id: vs.id,
-        tempId: vs.tempId,
-        title: vs.title,
-        isDirty: vs.id ? dirtyVocabSets.has(vs.id) : false,
-        items: vs.items.map(item => ({
-          id: item.id,
-          tempId: item.tempId,
-          korean: item.korean,
-          indonesian: item.indonesian
-        }))
-      }))
-    });
+    // Debug functionality removed - keeping function signature for compatibility
   }
 });
