@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Trash2, GripVertical, BookOpen, Edit } from "lucide-react";
 import { VocabularyType, } from "@prisma/client";
-import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { VocabularyItemForm } from "./vocabulary-items-form";
 
 
@@ -22,14 +21,71 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
   const [quickKorean, setQuickKorean] = useState("");
   const [quickIndonesian, setQuickIndonesian] = useState("");
   const [quickAdding, setQuickAdding] = useState(false);
-  
-  // Get the specific vocabulary set reactively using Zustand selector
-  const vocabSet = useKelasBuilderStore((state) => {
-    return state.vocabSets.find(vs => vs.id === vocabSetId || vs.tempId === vocabSetId);
-  });
-  
-  // Get actions for updating
-  const { updateVocabularySet, removeVocabularyItem } = useKelasBuilderStore();
+
+  // Mock data for vocabulary sets
+  const mockVocabSets = [
+    {
+      id: 1,
+      title: "Basic Greetings",
+      description: "Common Korean greetings and introductions",
+      icon: "FaBook",
+      isPublic: true,
+      items: [
+        {
+          id: 1,
+          tempId: "temp-1",
+          korean: "안녕하세요",
+          indonesian: "Halo",
+          type: "WORD",
+          pos: "NOUN",
+          order: 0,
+          exampleSentences: ["안녕하세요, 만나서 반갑습니다."]
+        },
+        {
+          id: 2,
+          tempId: "temp-2",
+          korean: "감사합니다",
+          indonesian: "Terima kasih",
+          type: "WORD",
+          pos: "NOUN",
+          order: 1,
+          exampleSentences: ["감사합니다 도움을 주셔서."]
+        }
+      ]
+    },
+    {
+      id: 2,
+      title: "Food Vocabulary",
+      description: "Common Korean food terms",
+      icon: "FaUtensils",
+      isPublic: true,
+      items: [
+        {
+          id: 3,
+          tempId: "temp-3",
+          korean: "밥",
+          indonesian: "Nasi",
+          type: "WORD",
+          pos: "NOUN",
+          order: 0,
+          exampleSentences: ["저는 밥을 먹고 싶어요."]
+        },
+        {
+          id: 4,
+          tempId: "temp-4",
+          korean: "김치",
+          indonesian: "Kimchi",
+          type: "WORD",
+          pos: "NOUN",
+          order: 1,
+          exampleSentences: ["김치는 한국의 전통 음식입니다."]
+        }
+      ]
+    }
+  ];
+
+  // Find the specific vocabulary set
+  const vocabSet = mockVocabSets.find(vs => vs.id === vocabSetId);
 
   const handleQuickAdd = async () => {
     if (!vocabSet) return;
@@ -39,16 +95,14 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
     }
     setQuickAdding(true);
     try {
-      const tempId = `temp-item-${Date.now()}`;
-      const newItems = [...vocabSet.items, {
+      // Mock add - in real app this would update the store
+      console.log("Mock quick add:", {
         korean: quickKorean.trim(),
         indonesian: quickIndonesian.trim(),
         type: VocabularyType.WORD,
         exampleSentences: [],
         order: vocabSet.items.length,
-        tempId,
-      }];
-      updateVocabularySet(vocabSetId, { items: newItems });
+      });
       setQuickKorean("");
       setQuickIndonesian("");
       // Do not open edit dialog automatically; user can click Edit to add more details
@@ -78,11 +132,8 @@ export function ManageVocabularyItems({ vocabSetId }: ManageVocabularyItemsProps
     
     if (item) {
       if (confirm("Are you sure you want to delete this vocabulary item?")) {
-        try {
-          await removeVocabularyItem(vocabSetId, itemId);
-        } catch (error) {
-          // Error handling removed for production
-        }
+        // Mock delete - in real app this would call removeVocabularyItem from store
+        console.log("Mock delete item:", itemId);
       }
     }
   };

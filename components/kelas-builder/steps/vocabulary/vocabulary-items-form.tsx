@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, Plus } from "lucide-react";
 import { VocabularyType, PartOfSpeech } from "@prisma/client";
-import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 
 interface VocabularyItem {
   korean: string;
@@ -24,14 +23,76 @@ interface VocabularyItemFormProps {
 }
 
 export function VocabularyItemForm({ vocabSetId, itemId }: VocabularyItemFormProps) {
-  const {
-    updateVocabularyItem,
-  } = useKelasBuilderStore();
+  // Mock data for vocabulary sets
+  const mockVocabSets = [
+    {
+      id: 1,
+      tempId: "temp-1",
+      title: "Basic Greetings",
+      description: "Common Korean greetings and introductions",
+      icon: "FaBook",
+      isPublic: true,
+      items: [
+        {
+          id: 1,
+          tempId: "temp-1-1",
+          korean: "안녕하세요",
+          indonesian: "Halo",
+          type: VocabularyType.WORD,
+          pos: PartOfSpeech.KATA_BENDA,
+          audioUrl: "",
+          order: 0,
+          exampleSentences: ["안녕하세요, 만나서 반갑습니다."]
+        },
+        {
+          id: 2,
+          tempId: "temp-1-2",
+          korean: "감사합니다",
+          indonesian: "Terima kasih",
+          type: VocabularyType.WORD,
+          pos: PartOfSpeech.KATA_BENDA,
+          audioUrl: "",
+          order: 1,
+          exampleSentences: ["감사합니다 도움을 주셔서."]
+        }
+      ]
+    },
+    {
+      id: 2,
+      tempId: "temp-2",
+      title: "Food Vocabulary",
+      description: "Common Korean food terms",
+      icon: "FaUtensils",
+      isPublic: true,
+      items: [
+        {
+          id: 3,
+          tempId: "temp-2-1",
+          korean: "밥",
+          indonesian: "Nasi",
+          type: VocabularyType.WORD,
+          pos: PartOfSpeech.KATA_BENDA,
+          audioUrl: "",
+          order: 0,
+          exampleSentences: ["저는 밥을 먹고 싶어요."]
+        },
+        {
+          id: 4,
+          tempId: "temp-2-2",
+          korean: "김치",
+          indonesian: "Kimchi",
+          type: VocabularyType.WORD,
+          pos: PartOfSpeech.KATA_BENDA,
+          audioUrl: "",
+          order: 1,
+          exampleSentences: ["김치는 한국의 전통 음식입니다."]
+        }
+      ]
+    }
+  ];
 
-  // Get the specific vocabulary set reactively using Zustand selector
-  const vocabSet = useKelasBuilderStore((state) => {
-    return state.vocabSets.find(vs => vs.id === vocabSetId || vs.tempId === vocabSetId);
-  });
+  // Find the specific vocabulary set
+  const vocabSet = mockVocabSets.find(vs => vs.id === vocabSetId || vs.tempId === vocabSetId);
 
   // Find the item directly by ID or temp ID
   const item = vocabSet?.items.find(item => (item.id?.toString() === itemId) || (item.tempId === itemId));
@@ -46,23 +107,27 @@ export function VocabularyItemForm({ vocabSetId, itemId }: VocabularyItemFormPro
   }
 
   const updateItem = (field: keyof VocabularyItem, value: any) => {
-    updateVocabularyItem(vocabSetId, itemId, { [field]: value });
+    // Mock update - in real app this would call updateVocabularyItem from store
+    console.log("Mock update item:", { vocabSetId, itemId, field, value });
   };
 
   const updateExampleSentence = (sentenceIndex: number, value: string) => {
     const newExampleSentences = [...(item.exampleSentences || [])];
     newExampleSentences[sentenceIndex] = value;
-    updateVocabularyItem(vocabSetId, itemId, { exampleSentences: newExampleSentences });
+    // Mock update - in real app this would call updateVocabularyItem from store
+    console.log("Mock update example sentence:", { vocabSetId, itemId, sentenceIndex, value });
   };
 
   const addItem = () => {
     const newExampleSentences = [...(item.exampleSentences || []), ""];
-    updateVocabularyItem(vocabSetId, itemId, { exampleSentences: newExampleSentences });
+    // Mock update - in real app this would call updateVocabularyItem from store
+    console.log("Mock add example sentence:", { vocabSetId, itemId, newExampleSentences });
   };
 
   const removeItem = (sentenceIndex: number) => {
     const newExampleSentences = (item.exampleSentences || []).filter((_, i) => i !== sentenceIndex);
-    updateVocabularyItem(vocabSetId, itemId, { exampleSentences: newExampleSentences });
+    // Mock update - in real app this would call updateVocabularyItem from store
+    console.log("Mock remove example sentence:", { vocabSetId, itemId, sentenceIndex, newExampleSentences });
   };
 
   return (

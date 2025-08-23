@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,27 +10,76 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { MessageSquare, Plus, BookOpen, Edit, Trash2, MousePointerClick } from "lucide-react";
 import { VocabularySetBasicForm } from "./vocabulary/vocabulary-set-form";
 
-import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { ManageVocabularyItems } from "./vocabulary/manage-vocabulary-items";
 
 export function StepVocabulary() {
-  console.log('🔍 [VOCAB DEBUG] StepVocabulary component mounted');
-  
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingSetId, setEditingSetId] = useState<string | number | undefined>();
   const [managingSetId, setManagingSetId] = useState<string | number | undefined>();
-  const {
-    vocabSets,
-    addVocabularySet,
-    updateVocabularySet,
-    removeVocabularySet,
-  } = useKelasBuilderStore();
-  
-  // DEBUG: Log store state on mount
-  console.log('🔍 [VOCAB DEBUG] Initial store state:', {
-    vocabSetsLength: vocabSets.length,
-    vocabSets: vocabSets.map(vs => ({ id: vs.id, tempId: vs.tempId, title: vs.title }))
-  });
+
+  // Mock data for vocabulary sets
+  const mockVocabSets = [
+    {
+      id: 1,
+      tempId: "temp-1",
+      title: "Basic Greetings",
+      description: "Common Korean greetings and introductions",
+      icon: "FaBook",
+      isPublic: true,
+      items: [
+        {
+          id: 1,
+          tempId: "temp-1-1",
+          korean: "안녕하세요",
+          indonesian: "Halo",
+          type: "WORD",
+          pos: "NOUN",
+          order: 0,
+          exampleSentences: ["안녕하세요, 만나서 반갑습니다."]
+        },
+        {
+          id: 2,
+          tempId: "temp-1-2",
+          korean: "감사합니다",
+          indonesian: "Terima kasih",
+          type: "WORD",
+          pos: "NOUN",
+          order: 1,
+          exampleSentences: ["감사합니다 도움을 주셔서."]
+        }
+      ]
+    },
+    {
+      id: 2,
+      tempId: "temp-2",
+      title: "Food Vocabulary",
+      description: "Common Korean food terms",
+      icon: "FaUtensils",
+      isPublic: true,
+      items: [
+        {
+          id: 3,
+          tempId: "temp-2-1",
+          korean: "밥",
+          indonesian: "Nasi",
+          type: "WORD",
+          pos: "NOUN",
+          order: 0,
+          exampleSentences: ["저는 밥을 먹고 싶어요."]
+        },
+        {
+          id: 4,
+          tempId: "temp-2-2",
+          korean: "김치",
+          indonesian: "Kimchi",
+          type: "WORD",
+          pos: "NOUN",
+          order: 1,
+          exampleSentences: ["김치는 한국의 전통 음식입니다."]
+        }
+      ]
+    }
+  ];
 
   const handleCreateNew = () => {
     setEditingSetId(undefined);
@@ -53,24 +102,10 @@ export function StepVocabulary() {
     icon?: string;
     isPublic: boolean;
   }) => {
-    if (editingSetId !== undefined) {
-      // Update existing set
-      updateVocabularySet(editingSetId, {
-        ...data,
-        icon: data.icon || "FaBook",
-      });
-      setShowCreateForm(false);
-      setEditingSetId(undefined);
-    } else {
-      // Create new set with basic info
-      addVocabularySet({
-        ...data,
-        icon: data.icon || "FaBook",
-        items: [],
-      });
-      setShowCreateForm(false);
-      setEditingSetId(undefined);
-    }
+    // Mock save - in real app this would update the store
+    console.log("Mock save:", data);
+    setShowCreateForm(false);
+    setEditingSetId(undefined);
   };
 
   const handleManageItems = (setId: string | number) => {
@@ -82,7 +117,7 @@ export function StepVocabulary() {
   };
 
   const handleDelete = (setId: string | number) => {
-    const vocabSet = vocabSets.find(vs => vs.id === setId || vs.tempId === setId);
+    const vocabSet = mockVocabSets.find(vs => vs.id === setId);
     if (!vocabSet) return;
 
     if (confirm(`Are you sure you want to delete "${vocabSet.title}"? This action cannot be undone and all vocabulary items in this set will be permanently removed.`)) {
@@ -90,7 +125,8 @@ export function StepVocabulary() {
       if (managingSetId === setId) {
         setManagingSetId(undefined);
       }
-      removeVocabularySet(setId);
+      // In real app, this would call removeVocabularySet from store
+      console.log("Mock delete:", setId);
     }
   };
 
@@ -109,18 +145,18 @@ export function StepVocabulary() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{vocabSets.length}</div>
+              <div className="text-2xl font-bold text-primary">{mockVocabSets.length}</div>
               <div className="text-sm text-muted-foreground">Sets</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                {vocabSets.reduce((total, vocabSet) => total + vocabSet.items.length, 0)}
+                {mockVocabSets.reduce((total: number, vocabSet: any) => total + vocabSet.items.length, 0)}
               </div>
               <div className="text-sm text-muted-foreground">Total Items</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600">
-                {vocabSets.filter(v => v.tempId).length}
+                {mockVocabSets.filter((v: any) => v.tempId).length}
               </div>
               <div className="text-sm text-muted-foreground">Unsaved Changes</div>
             </div>
@@ -131,7 +167,7 @@ export function StepVocabulary() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BookOpen className="h-5 w-5" />
-          <span className="font-semibold">Vocabulary Sets ({vocabSets.length})</span>
+          <span className="font-semibold">Vocabulary Sets ({mockVocabSets.length})</span>
         </div>
         <Button onClick={handleCreateNew} className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
@@ -139,7 +175,7 @@ export function StepVocabulary() {
         </Button>
       </div>
 
-      {vocabSets.length === 0 ? (
+      {mockVocabSets.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
             <div className="space-y-4">
@@ -155,7 +191,7 @@ export function StepVocabulary() {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {vocabSets.map((vocabSet) => (
+          {mockVocabSets.map((vocabSet: any) => (
             <Card
               key={vocabSet.tempId || vocabSet.id}
               className="relative cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-200 group"
@@ -243,7 +279,7 @@ export function StepVocabulary() {
             </DialogTitle>
           </DialogHeader>
           <VocabularySetBasicForm
-            vocabSet={editingSetId !== undefined ? vocabSets.find(vs => vs.id === editingSetId || vs.tempId === editingSetId) : undefined}
+            vocabSet={editingSetId !== undefined ? mockVocabSets.find((vs: any) => vs.id === editingSetId || vs.tempId === editingSetId) : undefined}
             onCancel={handleCancel}
             onSave={handleSaveSet}
           />
