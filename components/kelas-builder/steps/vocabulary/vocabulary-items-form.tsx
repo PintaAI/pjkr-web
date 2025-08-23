@@ -46,8 +46,6 @@ export function VocabularyItemForm({ vocabSetId, itemId }: VocabularyItemFormPro
   }
 
   const updateItem = (field: keyof VocabularyItem, value: any) => {
-    console.log('updateItem called:', { field, value, itemId });
-    console.log('Calling updateVocabularyItem with:', { vocabSetId, itemId, [field]: value });
     updateVocabularyItem(vocabSetId, itemId, { [field]: value });
   };
 
