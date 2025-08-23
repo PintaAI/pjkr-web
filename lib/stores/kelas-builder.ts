@@ -226,6 +226,7 @@ export const useKelasBuilderStore = create<Store>()(
               meta: false,
               content: false,
               vocabulary: false,
+              questions: false,
               review: false,
             },
             optimisticUpdates: {},
@@ -238,6 +239,7 @@ export const useKelasBuilderStore = create<Store>()(
             meta: false,
             content: false,
             vocabulary: false,
+            questions: false,
             review: false
           });
         },
