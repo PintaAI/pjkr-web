@@ -7,7 +7,6 @@ import { createProgress, type Progress } from './kelas-builder/progress';
 import { createNavigation, type Navigation } from './kelas-builder/navigation';
 import { createMeta, type Meta, initialMeta } from './kelas-builder/meta';
 import { createContent, type Content } from './kelas-builder/content';
-import { createVocabulary, type Vocabulary } from './kelas-builder/vocabulary';
 
 import {
   createDraftKelas,
@@ -25,8 +24,7 @@ type Store = KelasBuilderState &
   Progress &
   Navigation &
   Meta &
-  Content &
-  Vocabulary;
+  Content;
 
 export const useKelasBuilderStore = create<Store>()(
   devtools(
@@ -42,7 +40,6 @@ export const useKelasBuilderStore = create<Store>()(
         ...createNavigation(set, get, store),
         ...createMeta(set, get, store),
         ...createContent(set, get, store),
-        ...createVocabulary(set, get, store),
 
         // Global Actions
         createDraft: async (initialMeta: KelasMetaData) => {
@@ -104,23 +101,6 @@ export const useKelasBuilderStore = create<Store>()(
                   order: materi.order,
                   isDemo: materi.isDemo,
                   isDraft: materi.isDraft,
-                })),
-                vocabSets: (kelas.vocabularySets || []).map((vocabSet: any) => ({
-                  id: vocabSet.id,
-                  title: vocabSet.title,
-                  description: vocabSet.description,
-                  icon: vocabSet.icon,
-                  isPublic: vocabSet.isPublic,
-                  items: (vocabSet.items || []).map((item: any) => ({
-                    id: item.id,
-                    korean: item.korean,
-                    indonesian: item.indonesian,
-                    type: item.type,
-                    pos: item.pos,
-                    audioUrl: item.audioUrl,
-                    exampleSentences: item.exampleSentences,
-                    order: item.order,
-                  })),
                 })),
                 isLoading: false,
                 currentStep: 'meta',
@@ -211,7 +191,6 @@ export const useKelasBuilderStore = create<Store>()(
           }
         },
         reset: () => {
-          console.log('🔍 [VOCAB DEBUG] Resetting store state');
           set({
             draftId: null,
             kelasIsDraft: true,
@@ -220,27 +199,14 @@ export const useKelasBuilderStore = create<Store>()(
             error: null,
             meta: initialMeta,
             materis: [],
-            vocabSets: [],
-            // Removed assessment-related arrays
             stepDirtyFlags: {
               meta: false,
               content: false,
-              vocabulary: false,
-              questions: false,
               review: false,
             },
             optimisticUpdates: {},
             deletedMateris: [],
             dirtyMateris: new Set(),
-            dirtyVocabSets: new Set(),
-            // Removed assessment-related deletion tracking
-          });
-          console.log('🔍 [VOCAB DEBUG] Store reset complete. stepDirtyFlags:', {
-            meta: false,
-            content: false,
-            vocabulary: false,
-            questions: false,
-            review: false
           });
         },
         setError: (error: string | null) => {
@@ -250,26 +216,6 @@ export const useKelasBuilderStore = create<Store>()(
           set({ error: null });
         },
         
-        // Debug helper from vocabulary slice
-        debugLog: () => {
-          const { vocabSets, dirtyVocabSets } = get();
-          console.log('🔥 [VOCAB STORE] DEBUG STATE:', {
-            totalVocabSets: vocabSets.length,
-            dirtyVocabSets: Array.from(dirtyVocabSets),
-            vocabSets: vocabSets.map(vs => ({
-              id: vs.id,
-              tempId: vs.tempId,
-              title: vs.title,
-              isDirty: vs.id ? dirtyVocabSets.has(vs.id) : false,
-              items: vs.items.map(item => ({
-                id: item.id,
-                tempId: item.tempId,
-                korean: item.korean,
-                indonesian: item.indonesian
-              }))
-            }))
-          });
-        },
       }))
     ),
     {

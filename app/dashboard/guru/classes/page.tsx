@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { getUserKelasList } from "@/app/actions/kelas";
 import { GuruClassesPage } from "@/components/dashboard/guru-classes-page";
 import { redirect } from "next/navigation";

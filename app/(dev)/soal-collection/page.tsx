@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StepAssessment } from "@/components/kelas-builder/steps/step-questions";
 
 export default function SoalCollectionDemo() {
   return (
@@ -12,30 +11,19 @@ export default function SoalCollectionDemo() {
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground mb-4">
-            This is a demo of the soal (question) collection system integrated into the kelas builder.
-            You can create question collections, add questions with multiple choice options, and manage assessments.
+            This demo page is no longer available as the soal (question) collection system has been removed from the kelas builder.
           </p>
           
           <div className="space-y-4">
-            <h3 className="font-semibold">Features Implemented:</h3>
+            <h3 className="font-semibold">Status:</h3>
             <ul className="list-disc list-inside space-y-1 text-sm">
-              <li>✅ Zustand store with soal collection state management</li>
-              <li>✅ Zod validation schemas for questions and options</li>
-              <li>✅ Question collection creation and management</li>
-              <li>✅ Individual question creation with multiple choice options</li>
-              <li>✅ Difficulty levels (Beginner, Intermediate, Advanced)</li>
-              <li>✅ Private/Public collection settings</li>
-              <li>✅ Draft/Published status</li>
-              <li>✅ Real-time validation and preview</li>
-              <li>✅ Integrated with existing kelas builder workflow</li>
+              <li>❌ Soal collection components have been removed</li>
+              <li>❌ Question management features disabled</li>
+              <li>✅ Core kelas builder functionality preserved</li>
             </ul>
           </div>
         </CardContent>
       </Card>
-
-      <div className="border rounded-lg p-6">
-        <StepAssessment />
-      </div>
     </div>
   );
 }

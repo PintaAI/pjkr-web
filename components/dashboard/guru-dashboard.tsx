@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatsCard } from "@/components/ui/stats-card";
 import {
@@ -166,7 +165,7 @@ export function GuruDashboard({ stats, user }: GuruDashboardProps) {
         </CardHeader>
         <CardContent>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {teachingTools.map((tool, idx) => (
+            {teachingTools.map((tool,) => (
               <Link href={tool.href} key={tool.title}>
                 <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
                   <CardHeader className="pb-3">

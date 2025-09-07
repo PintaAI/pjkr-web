@@ -46,7 +46,7 @@ const DailyVocab = ({ user, take = 5 }: DailyVocabProps) => {
   const { vocabulary, loading, error } = useDailyVocabulary(user, take);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showBack, setShowBack] = useState(false);
-  const [autoAdvance, setAutoAdvance] = useState(false);
+  const [autoAdvance] = useState(false);
   const [guess, setGuess] = useState("");
   const [guessResult, setGuessResult] = useState<null | "correct" | "incorrect">(null);
   const [autoFlipping, setAutoFlipping] = useState(false);
@@ -160,7 +160,7 @@ const DailyVocab = ({ user, take = 5 }: DailyVocabProps) => {
       <Card className="mb-4">
         <CardHeader className="py-2">
           <CardTitle className="text-sm">Daily Vocabulary (일일 어휘)</CardTitle>
-          <CardDescription className="text-[11px]">Loading today's words...</CardDescription>
+          <CardDescription className="text-[11px]">Loading todays words...</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-32">

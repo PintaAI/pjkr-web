@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import NovelEditor from "@/components/novel/novel-editor";
-import { Plus, Edit2, Eye, EyeOff } from "lucide-react";
+import { Plus, Edit2,} from "lucide-react";
 
 interface LessonFormProps {
   mode?: 'add' | 'edit';

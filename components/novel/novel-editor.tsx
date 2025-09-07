@@ -46,7 +46,6 @@ const NovelEditor = ({
   onUpdate,
   onSave,
   initialContent: propInitialContent,
-  saveStatus = "Saved",
   className,
 }: NovelEditorProps) => {
   const [initialContent, setInitialContent] = useState<null | JSONContent>(null);

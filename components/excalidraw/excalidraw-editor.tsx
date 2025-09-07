@@ -7,25 +7,39 @@ import { useTheme } from "next-themes";
 
 export default function ExcalidrawEditor() {
   const [isClient, setIsClient] = useState(false);
-  const { theme } = useTheme();
+  const { theme, resolvedTheme } = useTheme();
+  const [excalidrawKey, setExcalidrawKey] = useState(0);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  // Force re-render of Excalidraw when theme changes
+  useEffect(() => {
+    if (isClient) {
+      setExcalidrawKey(prev => prev + 1);
+    }
+  }, [theme, resolvedTheme, isClient]);
+
+  // Determine the current theme, handling system preference
+  const currentTheme = resolvedTheme === "dark" ? "dark" : "light";
+
   return (
     <div className="h-full flex flex-col rounded-lg overflow-hidden">
       {isClient ? (
         <Excalidraw
-          theme={theme === "dark" ? "dark" : "light"}
+          key={excalidrawKey}
+          theme={currentTheme}
           initialData={{
             appState: {
-              theme: theme === "dark" ? "dark" : "light",
+              theme: currentTheme,
             },
           }}
         />
       ) : (
-        <p className="text-center">Loading Excalidraw...</p>
+        <div className="flex items-center justify-center h-full text-muted-foreground">
+          Loading Excalidraw...
+        </div>
       )}
     </div>
   );

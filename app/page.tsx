@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { getServerSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import LandingPage from "@/components/landing-page";

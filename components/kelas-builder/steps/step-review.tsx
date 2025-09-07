@@ -30,7 +30,6 @@ export function StepReview() {
   const {
     meta,
     materis,
-    vocabSets,
     draftId,
     publishDraft,
     unpublishDraft,
@@ -38,9 +37,7 @@ export function StepReview() {
     kelasIsDraft,
     stepDirtyFlags,
     saveMeta,
-    saveMateris,
-    dirtyVocabSets,
-    saveVocabularySet
+    saveMateris
   } = useKelasBuilderStore();
 
   const { session } = useSession();
@@ -87,19 +84,13 @@ export function StepReview() {
       createdAt: new Date(),
     })),
     liveSessions: [],
-    vocabularySets: vocabSets.map((set, index) => ({
-      id: set.id || index,
-      title: set.title,
-      description: set.description || null,
-      icon: null,
-      _count: { items: set.items?.length || 0 },
-    })),
+    vocabularySets: [],
     posts: [],
     _count: {
       members: 0,
       materis: materis.length,
       liveSessions: 0,
-      vocabularySets: vocabSets.length,
+      vocabularySets: 0,
       posts: 0,
       kelasKoleksiSoals: 0, // TODO: Add question sets tracking to store
     },
@@ -141,17 +132,6 @@ export function StepReview() {
         }
         if (stepDirtyFlags.content) {
           await saveMateris();
-        }
-        if (stepDirtyFlags.vocabulary) {
-          vocabSets.forEach((vs, idx) => {
-            if (vs.tempId || (vs.id && dirtyVocabSets.has(vs.id))) {
-              void saveVocabularySet(idx);
-            }
-          });
-        }
-        if (stepDirtyFlags.questions) {
-          // TODO: Implement saveAllQuestions function
-          // await saveAllQuestions();
         }
         toast.success('Changes saved');
       }
@@ -245,18 +225,10 @@ export function StepReview() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-primary">{materis.length}</div>
               <div className="text-sm text-muted-foreground">Lessons</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{vocabSets.length}</div>
-              <div className="text-sm text-muted-foreground">Vocabulary Sets</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">0</div>
-              <div className="text-sm text-muted-foreground">Question Sets</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600">

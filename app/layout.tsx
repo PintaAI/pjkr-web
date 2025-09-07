@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pejuangkorea Academy",
+  title: "Hakgyo",
   description: "Learn Korean language and culture with Pejuangkorea Academy",
 };
 

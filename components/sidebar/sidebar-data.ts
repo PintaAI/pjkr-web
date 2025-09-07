@@ -1,8 +1,6 @@
 import {
   Home,
   GraduationCap,
-  BookOpen,
-  FileText,
   Gamepad2,
   Frame,
   LifeBuoy,

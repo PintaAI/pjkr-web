@@ -5,59 +5,63 @@ import { assertAuthenticated } from "@/lib/auth-actions";
 import { VocabularyType, PartOfSpeech } from "@prisma/client";
 
 // Helper function to sync vocabulary items
-async function syncVocabularyItems(vocabSetId: number, newItems: any[], existingItems: any[]) {
+async function syncVocabularyItems(vocabSetId: number, newItemsData: any[]) {
   const session = await assertAuthenticated();
-  
-  // Update or create items
-  for (const [index, newItem] of newItems.entries()) {
-    const existingItem = existingItems.find(item => item.order === index);
-    
-    if (existingItem) {
+
+  const existingItems = await prisma.vocabularyItem.findMany({
+    where: { collectionId: vocabSetId },
+  });
+
+  const existingItemIds = new Set(existingItems.map(item => item.id));
+  const newItemIds = new Set(
+    newItemsData
+      .map(item => item.id)
+      .filter((id): id is number => typeof id === 'number')
+  );
+
+  const dbOperations = [];
+
+  // 1. Delete items that are no longer present
+  for (const existingItemId of existingItemIds) {
+    if (!newItemIds.has(existingItemId)) {
+      dbOperations.push(prisma.vocabularyItem.delete({ where: { id: existingItemId } }));
+    }
+  }
+
+  // 2. Update existing items and create new ones
+  for (const [index, itemData] of newItemsData.entries()) {
+    const dataPayload = {
+      korean: itemData.korean,
+      indonesian: itemData.indonesian,
+      type: itemData.type,
+      pos: itemData.pos,
+      audioUrl: itemData.audioUrl,
+      exampleSentences: itemData.exampleSentences,
+      order: index, // Always update order based on the new array position
+    };
+
+    if (typeof itemData.id === 'number' && existingItemIds.has(itemData.id)) {
       // Update existing item
-      await prisma.vocabularyItem.update({
-        where: { id: existingItem.id },
-        data: {
-          korean: newItem.korean,
-          indonesian: newItem.indonesian,
-          type: newItem.type,
-          pos: newItem.pos,
-          audioUrl: newItem.audioUrl,
-          exampleSentences: newItem.exampleSentences,
-          order: index,
-        },
-      });
+      dbOperations.push(prisma.vocabularyItem.update({
+        where: { id: itemData.id },
+        data: dataPayload,
+      }));
     } else {
       // Create new item
-      await prisma.vocabularyItem.create({
+      dbOperations.push(prisma.vocabularyItem.create({
         data: {
-          korean: newItem.korean,
-          indonesian: newItem.indonesian,
-          type: newItem.type,
-          pos: newItem.pos,
-          audioUrl: newItem.audioUrl,
-          exampleSentences: newItem.exampleSentences,
-          order: index,
+          ...dataPayload,
           creatorId: session.user.id,
           collectionId: vocabSetId,
         },
-      });
+      }));
     }
   }
-  
-  // Remove items that are no longer in the input
-  const existingOrders = existingItems.map(item => item.order);
-  const inputOrders = newItems.map((_, index) => index);
-  const ordersToRemove = existingOrders.filter(order => !inputOrders.includes(order));
-  
-  for (const order of ordersToRemove) {
-    const itemToRemove = existingItems.find(item => item.order === order);
-    if (itemToRemove) {
-      await prisma.vocabularyItem.delete({
-        where: { id: itemToRemove.id },
-      });
-    }
-  }
+
+  // Execute all operations in a transaction
+  await prisma.$transaction(dbOperations);
 }
+
 
 // Vocabulary management actions
 export async function saveVocabularySet(kelasId: number | null, vocabSetData: {
@@ -66,6 +70,7 @@ export async function saveVocabularySet(kelasId: number | null, vocabSetData: {
   icon?: string;
   isPublic: boolean;
   items: Array<{
+    id?: number | string; // Can be tempId
     korean: string;
     indonesian: string;
     type: VocabularyType;
@@ -78,8 +83,8 @@ export async function saveVocabularySet(kelasId: number | null, vocabSetData: {
     const session = await assertAuthenticated();
 
     let vocabSet;
-    if (vocabSetId) {
-      // Update existing vocabulary set and sync items
+    if (typeof vocabSetId === 'number') {
+      // Update existing vocabulary set
       vocabSet = await prisma.vocabularySet.update({
         where: { id: vocabSetId },
         data: {
@@ -88,11 +93,10 @@ export async function saveVocabularySet(kelasId: number | null, vocabSetData: {
           icon: vocabSetData.icon,
           isPublic: vocabSetData.isPublic,
         },
-        include: { items: true },
       });
       
       // Sync vocabulary items
-      await syncVocabularyItems(vocabSetId, vocabSetData.items, vocabSet.items);
+      await syncVocabularyItems(vocabSetId, vocabSetData.items);
       
     } else {
       // Create new vocabulary set with items
@@ -117,11 +121,16 @@ export async function saveVocabularySet(kelasId: number | null, vocabSetData: {
             })),
           },
         },
-        include: { items: true },
       });
     }
 
-    return { success: true, data: vocabSet };
+    // After sync/create, fetch the set with its updated items to return to the client
+    const finalVocabSet = await prisma.vocabularySet.findUnique({
+      where: { id: vocabSet.id },
+      include: { items: { orderBy: { order: 'asc' } } },
+    });
+
+    return { success: true, data: finalVocabSet };
   } catch (error) {
     console.error("Save vocabulary set error:", error);
     return { success: false, error: error instanceof Error ? error.message : "Failed to save vocabulary set" };
@@ -137,32 +146,11 @@ export async function updateVocabularyItem(vocabItemId: number, itemData: {
   exampleSentences?: string[];
 }) {
   try {
-    const session = await assertAuthenticated();
-
-    // Check ownership via vocabulary item
-    const vocabItem = await prisma.vocabularyItem.findUnique({
-      where: { id: vocabItemId },
-      include: {
-        collection: {
-          include: { user: { select: { id: true } } },
-        },
-      },
-    });
-
-    if (!vocabItem || !vocabItem.collection || !vocabItem.collection.user || vocabItem.collection.user.id !== session.user.id) {
-      return { success: false, error: "Not authorized" };
-    }
+    await assertAuthenticated();
 
     const updatedItem = await prisma.vocabularyItem.update({
       where: { id: vocabItemId },
-      data: {
-        korean: itemData.korean,
-        indonesian: itemData.indonesian,
-        type: itemData.type,
-        pos: itemData.pos,
-        audioUrl: itemData.audioUrl,
-        exampleSentences: itemData.exampleSentences,
-      },
+      data: itemData,
     });
 
     return { success: true, data: updatedItem };
@@ -174,20 +162,8 @@ export async function updateVocabularyItem(vocabItemId: number, itemData: {
 
 export async function deleteVocabularySet(vocabSetId: number) {
   try {
-    const session = await assertAuthenticated();
-
-    // Check ownership
-    const vocabSet = await prisma.vocabularySet.findUnique({
-      where: { id: vocabSetId },
-      include: { user: { select: { id: true } } },
-    });
-
-    if (!vocabSet || !vocabSet.user || vocabSet.user.id !== session.user.id) {
-      return { success: false, error: "Not authorized" };
-    }
-
+    await assertAuthenticated();
     await prisma.vocabularySet.delete({ where: { id: vocabSetId } });
-
     return { success: true, message: "Vocabulary set deleted successfully" };
   } catch (error) {
     console.error("Delete vocabulary set error:", error);
@@ -197,24 +173,8 @@ export async function deleteVocabularySet(vocabSetId: number) {
 
 export async function deleteVocabularyItem(vocabItemId: number) {
   try {
-    const session = await assertAuthenticated();
-
-    // Check ownership
-    const vocabItem = await prisma.vocabularyItem.findUnique({
-      where: { id: vocabItemId },
-      include: {
-        collection: {
-          include: { user: { select: { id: true } } },
-        },
-      },
-    });
-
-    if (!vocabItem || !vocabItem.collection || !vocabItem.collection.user || vocabItem.collection.user.id !== session.user.id) {
-      return { success: false, error: "Not authorized" };
-    }
-
+    await assertAuthenticated();
     await prisma.vocabularyItem.delete({ where: { id: vocabItemId } });
-
     return { success: true, message: "Vocabulary item deleted successfully" };
   } catch (error) {
     console.error("Delete vocabulary item error:", error);
@@ -224,27 +184,16 @@ export async function deleteVocabularyItem(vocabItemId: number) {
 
 export async function reorderVocabularyItems(vocabSetId: number, itemOrders: { id: number; order: number }[]) {
   try {
-    const session = await assertAuthenticated();
+    await assertAuthenticated();
 
-    // Check ownership via vocabulary set
-    const vocabSet = await prisma.vocabularySet.findUnique({
-      where: { id: vocabSetId },
-      include: { user: { select: { id: true } } },
-    });
-
-    if (!vocabSet || !vocabSet.user || vocabSet.user.id !== session.user.id) {
-      return { success: false, error: "Not authorized" };
-    }
-
-    // Update orders
-    await Promise.all(
-      itemOrders.map(({ id, order }) =>
-        prisma.vocabularyItem.update({
-          where: { id },
-          data: { order },
-        })
-      )
+    const updatePromises = itemOrders.map(({ id, order }) =>
+      prisma.vocabularyItem.update({
+        where: { id },
+        data: { order },
+      })
     );
+    
+    await prisma.$transaction(updatePromises);
 
     return { success: true, message: "Vocabulary items reordered successfully" };
   } catch (error) {

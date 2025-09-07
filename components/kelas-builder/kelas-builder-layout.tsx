@@ -12,10 +12,7 @@ import {
   Save,
   BookOpen,
   FileText,
-  MessageSquare,
-  ClipboardList,
   Rocket,
-  Clock,
   AlertCircle,
   ArrowLeft
 } from "lucide-react";
@@ -39,18 +36,6 @@ const steps = [
     icon: FileText,
   },
   {
-    id: 'vocabulary',
-    title: 'Kosa-kata',
-    description: 'Tambahkan set kosakata (opsional)',
-    icon: MessageSquare,
-  },
-  {
-    id: 'questions',
-    title: 'Paket Soal',
-    description: 'tambahkan pake soal (opsional)',
-    icon: ClipboardList,
-  },
-  {
     id: 'review',
     title: 'Tinjau & Publikasikan',
     description: 'Tinjau dan publikasikan kursus',
@@ -66,15 +51,12 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
     draftId,
     meta,
     materis,
-    vocabSets,
-    dirtyVocabSets,
     stepDirtyFlags,
     setCurrentStep,
     nextStep,
     prevStep,
     saveMeta,
     saveMateris,
-    saveVocabularySet,
     calculateOverallProgress,
     clearError,
     reset
@@ -115,13 +97,6 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
           return { hasRequiredData: false, message: 'At least 1 lesson required' };
         }
         
-      case 'vocabulary':
-        // Optional step
-        return { hasRequiredData: true, message: 'Optional: Add vocabulary sets to enhance learning' };
-        
-      case 'questions':
-        // Optional step
-        return { hasRequiredData: true, message: 'Optional: Link question sets for assessments' };
         
       case 'review':
         const metaComplete = meta.title.trim() !== '' && meta.description;
@@ -145,29 +120,6 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
     if (materis.some(m => m.tempId)) {
       await saveMateris();
     }
-    if (stepDirtyFlags.vocabulary) {
-      await saveAllVocabularySets();
-    }
-  };
-
-  const saveAllVocabularySets = async () => {
-    if (!vocabSets.length) return;
-    
-   
-    
-    // Save existing sets that have tempId (unsaved) or are in dirtyVocabSets
-    for (let i = 0; i < vocabSets.length; i++) {
-      const vocabSet = vocabSets[i];
-      if (vocabSet.tempId || (vocabSet.id && dirtyVocabSets.has(vocabSet.id))) {
-        try {
-          await saveVocabularySet(i);
-          
-
-        } catch (error) {
-          console.error(`Failed to save vocabulary set ${vocabSet.id || vocabSet.tempId}:`, error);
-        }
-      }
-    }
   };
 
   const handleSave = async () => {
@@ -178,12 +130,6 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
           break;
         case 'content':
           await saveMateris();
-          break;
-        case 'vocabulary':
-          await saveAllVocabularySets();
-          break;
-        case 'questions':
-          // Save questions logic would go here
           break;
         case 'review':
           await saveAllUnsavedContent();
@@ -400,7 +346,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                 </div>
 
                 {/* Hide next button on review step since it's last step */}
-                {currentStep !== 'review' && currentStep !== 'questions' ? (
+                {currentStep !== 'review' ? (
                   <Button
                     size="sm"
                     onClick={async () => await nextStep()}

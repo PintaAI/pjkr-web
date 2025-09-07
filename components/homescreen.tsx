@@ -8,18 +8,17 @@ import DailyVocab from "./home/daily-vocab";
 import {
   BookOpen,
   Users,
-  PlayCircle,
+
   Trophy,
   Star,
   Zap,
   Clock,
-  ArrowRight,
+
   Target,
   Flame,
   Brain,
   Headphones
 } from 'lucide-react';
-import Link from 'next/link';
 import { SearchComponent } from "./ui/search";
 
 interface User {

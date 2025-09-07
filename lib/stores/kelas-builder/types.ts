@@ -1,4 +1,4 @@
-import type { KelasType, Difficulty, VocabularyType, PartOfSpeech } from '@prisma/client';
+import type { KelasType, Difficulty,} from '@prisma/client';
 
 // Base data structures from the database, used for form data
 export interface KelasMetaData {
@@ -28,31 +28,8 @@ export interface MateriData {
   tempId?: string; // For optimistic UI updates
 }
 
-export interface VocabularyItemData {
-  id?: number;
-  korean: string;
-  indonesian: string;
-  type: VocabularyType;
-  pos?: PartOfSpeech;
-  audioUrl?: string;
-  exampleSentences: string[];
-  order: number;
-  tempId?: string; // For optimistic UI updates
-}
-
-export interface VocabularySetData {
-  id?: number;
-  title: string;
-  description?: string;
-  icon: string;
-  isPublic: boolean;
-  items: VocabularyItemData[];
-  tempId?: string; // For optimistic UI updates
-}
-
-
 // The steps in the builder UI
-export type BuilderStep = 'meta' | 'content' | 'vocabulary' | 'questions' | 'review';
+export type BuilderStep = 'meta' | 'content' | 'review';
 
 export type ActionResult<T> =
   | { success: true; data: T }
@@ -62,31 +39,22 @@ export type ActionResult<T> =
 export interface KelasBuilderState {
   // Core state
   draftId: number | null;
-  // Tracks whether the loaded kelas (course) is still a draft on the server
-  // When false, the kelas is already published and subsequent action is "save changes"
   kelasIsDraft: boolean;
   isLoading: boolean;
   error: string | null;
-  optimisticUpdates: {
-    // Removed assessment-related optimistic updates
-  };
+  optimisticUpdates: Record<string, unknown>;
 
   // Deletion tracking
   deletedMateris: number[];
   dirtyMateris: Set<number>;
-  dirtyVocabSets: Set<number>;
-  // Removed assessment-related deletion tracking
 
   // Slices
   meta: KelasMetaData;
   materis: MateriData[];
-  vocabSets: VocabularySetData[];
-  // Removed assessment-related slices
   currentStep: BuilderStep;
   stepDirtyFlags: Record<BuilderStep, boolean>;
 
-  // Actions from all slices will be merged here
-  // Progress
+
   calculateStepProgress: (step: BuilderStep) => number;
   calculateOverallProgress: () => number;
 
@@ -106,17 +74,6 @@ export interface KelasBuilderState {
   reorderMateris: (fromId: number | string, toId: number | string) => void;
   toggleMateriDraft: (id: number | string) => Promise<void>;
   saveMateris: () => Promise<void>;
-
-  // Vocabulary
-  addVocabularySet: (vocabSet: Omit<VocabularySetData, 'items'> & { items: Omit<VocabularyItemData, 'order'>[] }) => void;
-  updateVocabularySet: (setId: number | string, vocabSet: Partial<VocabularySetData>) => void;
-  removeVocabularySet: (setId: number | string) => Promise<void>;
-  saveVocabularySet: (index: number) => Promise<void>;
-  updateVocabularyItem: (vocabSetId: number | string, itemId: number | string, itemData: Partial<VocabularyItemData>) => void;
-  removeVocabularyItem: (vocabSetId: number | string, itemId: number | string) => Promise<void>;
-  reorderVocabularyItems: (vocabSetId: number, itemOrders: { id: number; order: number }[]) => Promise<void>;
-
-  // Assessment actions removed
  
   // Global Actions
   createDraft: (initialMeta: KelasMetaData) => Promise<void>;
@@ -128,7 +85,4 @@ export interface KelasBuilderState {
   reset: () => void;
   setError: (error: string | null) => void;
   clearError: () => void;
-  
-  // Debug helper from vocabulary slice
-  debugLog: () => void;
 }
