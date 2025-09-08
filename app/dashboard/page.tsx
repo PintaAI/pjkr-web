@@ -5,6 +5,7 @@ import { AdminDashboard } from "../../components/dashboard/admin-dashboard";
 import { GuruDashboard } from "../../components/dashboard/guru-dashboard";
 import { getGuruDashboardData } from "../actions/guru-dashboard";
 import { getAdminDashboardData } from "../actions/admin-dashboard";
+import { getUserKelasList } from "../actions/kelas";
 
 type UserRoles = "GURU" | "MURID" | "ADMIN";
 
@@ -37,7 +38,8 @@ export default async function DashboardPage() {
   } else if (user.role === "GURU") {
     // Fetch real guru dashboard data
     const dashboardResult = await getGuruDashboardData();
-    
+    const classesResult = await getUserKelasList();
+
     if (!dashboardResult.success) {
       // Fallback to empty data if fetch fails
       const emptyData = {
@@ -49,14 +51,16 @@ export default async function DashboardPage() {
           totalMateris: 0
         },
         recentClasses: [],
+        classes: classesResult.success ? classesResult.data || [] : [],
         user
       };
       return <GuruDashboard {...emptyData} />;
     }
 
-    return <GuruDashboard 
+    return <GuruDashboard
       stats={dashboardResult.data!.stats}
       recentClasses={dashboardResult.data!.recentClasses}
+      classes={classesResult.success ? classesResult.data || [] : []}
       user={user}
     />;
   }

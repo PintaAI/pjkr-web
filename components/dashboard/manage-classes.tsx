@@ -36,9 +36,10 @@ interface User {
   role: string;
 }
 
-interface GuruClassesPageProps {
+interface ManageClassesProps {
   classes: any[];
-  user: User;
+  user?: User;
+  embedded?: boolean;
 }
 
 // Constants
@@ -391,7 +392,7 @@ const ClassTabs = ({
   </Tabs>
 );
 
-export function GuruClassesPage({ classes: initialClasses }: Omit<GuruClassesPageProps, 'user'>) {
+export function ManageClasses({ classes: initialClasses, embedded = false }: Omit<ManageClassesProps, 'user'>) {
   const management = useClassManagement(initialClasses);
   const stats = calculateStats(management.classes);
 
@@ -400,23 +401,27 @@ export function GuruClassesPage({ classes: initialClasses }: Omit<GuruClassesPag
   };
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-6xl">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Managemen Kelas</h1>
-          <p className="text-muted-foreground">
-            Manage your drafted and published classes
-          </p>
-        </div>
-        <Button onClick={handleCreateClass}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create New Class
-        </Button>
-      </div>
+    <div className={embedded ? "" : "container mx-auto px-6 py-8 max-w-6xl"}>
+      {!embedded && (
+        <>
+          {/* Header */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Managemen Kelas</h1>
+              <p className="text-muted-foreground">
+                Manage your drafted and published classes
+              </p>
+            </div>
+            <Button onClick={handleCreateClass}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create New Class
+            </Button>
+          </div>
 
-      {/* Stats Cards */}
-      <StatsCards stats={stats} />
+          {/* Stats Cards */}
+          <StatsCards stats={stats} />
+        </>
+      )}
 
       {/* Filters */}
       <ClassFilters

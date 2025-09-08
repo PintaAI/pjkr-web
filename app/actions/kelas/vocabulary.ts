@@ -192,12 +192,70 @@ export async function reorderVocabularyItems(vocabSetId: number, itemOrders: { i
         data: { order },
       })
     );
-    
+
     await prisma.$transaction(updatePromises);
 
     return { success: true, message: "Vocabulary items reordered successfully" };
   } catch (error) {
     console.error("Reorder vocabulary items error:", error);
     return { success: false, error: "Failed to reorder vocabulary items" };
+  }
+}
+
+export async function getGuruVocabularySets() {
+  try {
+    const session = await assertAuthenticated();
+
+    if (session.user.role !== "GURU") {
+      return { success: false, error: "Not authorized" };
+    }
+
+    const userId = session.user.id;
+
+    // Get kelas IDs that the user has joined
+    const joinedKelas = await prisma.kelas.findMany({
+      where: {
+        members: {
+          some: { id: userId }
+        }
+      },
+      select: { id: true }
+    });
+
+    const joinedKelasIds = joinedKelas.map(k => k.id);
+
+    // Get vocabulary sets: either created by the guru or associated with joined kelas
+    const vocabSets = await prisma.vocabularySet.findMany({
+      where: {
+        OR: [
+          { userId: userId },
+          { kelasId: { in: joinedKelasIds } }
+        ]
+      },
+      include: {
+        items: {
+          orderBy: { order: 'asc' }
+        },
+        kelas: {
+          select: {
+            id: true,
+            title: true,
+            level: true
+          }
+        },
+        user: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return { success: true, data: vocabSets };
+  } catch (error) {
+    console.error("Get guru vocabulary sets error:", error);
+    return { success: false, error: "Failed to get vocabulary sets" };
   }
 }

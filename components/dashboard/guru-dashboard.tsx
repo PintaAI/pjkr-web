@@ -3,6 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatsCard } from "@/components/ui/stats-card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BookOpen,
   Users,
@@ -14,6 +15,12 @@ import Link from "next/link";
 
 import { Difficulty } from "@prisma/client";
 import { SearchComponent } from "@/components/ui/search";
+import { ManageClasses } from "@/components/dashboard/manage-classes";
+import { ManageVocab } from "@/components/dashboard/manage-vocab";
+import { ManageSoals } from "@/components/dashboard/manage-soals";
+import { getGuruVocabularySets } from "@/app/actions/kelas/vocabulary";
+import { getGuruSoalSets } from "@/app/actions/kelas/soal-set";
+import { useEffect, useState } from "react";
 
 const teachingTools = [
   {
@@ -24,15 +31,6 @@ const teachingTools = [
     description: "Create comprehensive Korean language classes with guided steps",
     footerLeft: "Build Classes",
     footerRight: "Step-by-step",
-  },
-  {
-    href: "/dashboard/guru/classes",
-    icon: <BookOpen className="h-6 w-6 text-primary" />,
-    badge: { text: undefined, variant: "secondary", className: "", dynamic: "classes" },
-    title: "My Classes",
-    description: "View and manage your classes and materials",
-    footerLeft: "Total Classes",
-    footerRight: "stats.totalClasses",
   },
   {
     href: "/dashboard/guru/teach/white-board",
@@ -99,16 +97,87 @@ interface RecentClass {
   createdAt: Date;
 }
 
+interface VocabSet {
+  id: number;
+  title: string;
+  description: string | null;
+  icon: string | null;
+  isPublic: boolean;
+  createdAt: Date;
+  items: Array<{
+    id: number;
+    korean: string;
+    indonesian: string;
+    type: string;
+  }>;
+  kelas: {
+    id: number;
+    title: string;
+    level: string;
+  } | null;
+  user: {
+    id: string;
+    name: string | null;
+  } | null;
+}
+
+interface SoalSet {
+  id: number;
+  nama: string;
+  deskripsi: string | null;
+  isPrivate: boolean;
+  isDraft: boolean;
+  createdAt: Date;
+  soals: Array<{
+    id: number;
+    pertanyaan: string;
+    difficulty: string | null;
+  }>;
+  user: {
+    id: string;
+    name: string | null;
+  } | null;
+  kelasKoleksiSoals: Array<{
+    kelas: {
+      id: number;
+      title: string;
+      level: string;
+    };
+  }>;
+}
+
 interface GuruDashboardProps {
   stats: GuruStats;
   recentClasses: RecentClass[];
+  classes: any[];
   user: DashboardUser;
 }
 
 
 
 
-export function GuruDashboard({ stats, user }: GuruDashboardProps) {
+export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
+  const [vocabSets, setVocabSets] = useState<VocabSet[]>([]);
+  const [soalSets, setSoalSets] = useState<SoalSet[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const vocabResult = await getGuruVocabularySets();
+        if (vocabResult.success && vocabResult.data) {
+          setVocabSets(vocabResult.data);
+        }
+        const soalResult = await getGuruSoalSets();
+        if (soalResult.success && soalResult.data) {
+          setSoalSets(soalResult.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
   return (
     <div className="container mx-auto px-6 py-8 max-w-6xl">
       {/* Header */}
@@ -155,54 +224,76 @@ export function GuruDashboard({ stats, user }: GuruDashboardProps) {
         />
       </div>
 
-      {/* Teaching Tools */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Alat untuk Mengajar</CardTitle>
-          <CardDescription>
-            Manage your classes and content
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {teachingTools.map((tool,) => (
-              <Link href={tool.href} key={tool.title}>
-                <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      {tool.icon}
-                      {tool.badge && (
-                        <Badge
-                          variant={tool.badge.variant as "default" | "secondary" | "outline" | "destructive" | undefined}
-                          className={`text-xs ${tool.badge.className}`}
-                        >
-                          {tool.badge.dynamic === "classes"
-                            ? `${stats.totalClasses} classes`
-                            : tool.badge.text}
-                        </Badge>
-                      )}
-                    </div>
-                    <CardTitle className="text-lg">{tool.title}</CardTitle>
-                    <CardDescription>
-                      {tool.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">{tool.footerLeft}</span>
-                      <span className="font-medium">
-                        {tool.footerRight === "stats.totalClasses"
-                          ? stats.totalClasses
-                          : tool.footerRight}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Tabs */}
+      <Tabs defaultValue="tools" className="w-full">
+        <TabsList>
+          <TabsTrigger value="tools">Tools</TabsTrigger>
+          <TabsTrigger value="classes">Manage Classes</TabsTrigger>
+          <TabsTrigger value="vocabulary">Manage Vocabulary</TabsTrigger>
+          <TabsTrigger value="soals">Manage Soals</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="tools">
+          {/* Teaching Tools */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Alat untuk Mengajar</CardTitle>
+              <CardDescription>
+                Manage your classes and content
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {teachingTools.map((tool,) => (
+                  <Link href={tool.href} key={tool.title}>
+                    <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          {tool.icon}
+                          {tool.badge && (
+                            <Badge
+                              variant={tool.badge.variant as "default" | "secondary" | "outline" | "destructive" | undefined}
+                              className={`text-xs ${tool.badge.className}`}
+                            >
+                              {tool.badge.text}
+                            </Badge>
+                          )}
+                        </div>
+                        <CardTitle className="text-lg">{tool.title}</CardTitle>
+                        <CardDescription>
+                          {tool.description}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">{tool.footerLeft}</span>
+                          <span className="font-medium">
+                            {tool.footerRight === "stats.totalClasses"
+                              ? stats.totalClasses
+                              : tool.footerRight}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="classes">
+          <ManageClasses classes={classes} embedded={true} />
+        </TabsContent>
+
+        <TabsContent value="vocabulary">
+          <ManageVocab embedded={true} vocabSets={vocabSets} />
+        </TabsContent>
+
+        <TabsContent value="soals">
+          <ManageSoals embedded={true} soalSets={soalSets} />
+        </TabsContent>
+      </Tabs>
 
     </div>
   );

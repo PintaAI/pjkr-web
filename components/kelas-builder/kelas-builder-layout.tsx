@@ -152,12 +152,12 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
               size="sm"
               onClick={() => {
                 reset();
-                window.location.href = '/dashboard/guru/classes';
+                window.location.href = '/dashboard';
               }}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to Classes
+              Back to Dashboard
             </Button>
           </div>
 

@@ -117,7 +117,7 @@ export function KelasCard({
 
   return (
     <Card
-      className={`group overflow-hidden hover:shadow-lg transition-shadow cursor-pointer py-0 ${className}`}
+      className={`group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer py-0 ${className}`}
       onClick={handleView}
     >
       {/* Media */}
