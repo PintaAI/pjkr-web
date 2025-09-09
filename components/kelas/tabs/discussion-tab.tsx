@@ -14,18 +14,11 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { MessageSquare, Plus, RefreshCw } from "lucide-react";
+import { MessageSquare, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useSession } from "@/lib/hooks/use-session";
 import PostThread from "../components/post-thread";
 import NewPostForm from "../components/new-post-form";
-import { AnimatePresence, motion } from "framer-motion";
 
 interface Author {
   id: string;
@@ -46,6 +39,7 @@ interface Post {
   viewCount: number;
   createdAt: Date;
   author: Author;
+  userLiked?: boolean;
   _count: {
     comments: number;
     likes: number;
@@ -54,18 +48,19 @@ interface Post {
 
 interface DiscussionTabProps {
   kelasId: number;
+  kelasTitle?: string;
   initialPosts?: Post[];
   initialPostsCount?: number;
 }
 
 export default function DiscussionTab({
   kelasId,
+  kelasTitle = "Class",
   initialPosts = [],
   initialPostsCount = 0,
 }: DiscussionTabProps) {
   const { user, isAuthenticated } = useSession();
   const [posts, setPosts] = useState<Post[]>(initialPosts);
-  const [showNewPostForm, setShowNewPostForm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -184,70 +179,74 @@ export default function DiscussionTab({
   return (
     <div className="space-y-4">
       {/* Header with actions */}
-      <Card>
-        <CardContent >
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-semibold">Discussions
-                <span className="text-muted-foreground font-normal">{totalText}</span>
-              </h3>
-            </div>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="w-5 h-5 text-primary" />
+          <h3 className="text-lg font-semibold">Discussions
+            <span className="text-muted-foreground font-normal">{totalText}</span>
+          </h3>
+        </div>
 
-            <div className="flex flex-wrap items-center gap-2 md:justify-end">
-              <div className="w-full sm:w-[220px]">
-                <Input
-                  placeholder="Search discussions..."
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  className="h-9"
-                />
-              </div>
-
-              <Select value={sort} onValueChange={(v) => setSort(v as any)}>
-                <SelectTrigger className="h-9 w-[160px]">
-                  <SelectValue placeholder="Sort" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="new">Newest</SelectItem>
-                  <SelectItem value="comments">Most Commented</SelectItem>
-                  <SelectItem value="likes">Most Liked</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <div className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-md border bg-background">
-                <Switch
-                  id="pin-toggle"
-                  checked={pinnedFirst}
-                  onCheckedChange={setPinnedFirst}
-                />
-                <Label htmlFor="pin-toggle" className="text-xs text-muted-foreground">
-                  Pinned first
-                </Label>
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={isLoading}
-              >
-                <RefreshCw
-                  className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
-                />
-                Refresh
-              </Button>
-
-              {isAuthenticated && (
-                <Button size="sm" onClick={() => setShowNewPostForm(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Post
-                </Button>
-              )}
-            </div>
+        <div className="flex flex-wrap items-center gap-2 md:justify-end">
+          <div className="w-full sm:w-[220px]">
+            <Input
+              placeholder="Search discussions..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="h-9"
+            />
           </div>
-        </CardContent>
-      </Card>
+
+          <Select value={sort} onValueChange={(v) => setSort(v as any)}>
+            <SelectTrigger className="h-9 w-[160px]">
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="new">Newest</SelectItem>
+              <SelectItem value="comments">Most Commented</SelectItem>
+              <SelectItem value="likes">Most Liked</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-md bg-background">
+            <Switch
+              id="pin-toggle"
+              checked={pinnedFirst}
+              onCheckedChange={setPinnedFirst}
+            />
+            <Label htmlFor="pin-toggle" className="text-xs text-muted-foreground">
+              Pinned first
+            </Label>
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+          >
+            <RefreshCw
+              className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
+            />
+          </Button>
+        </div>
+      </div>
+
+      {/* New Post Form - Always visible for authenticated users */}
+      {isAuthenticated && (
+        <div className="mb-6">
+          <NewPostForm
+            kelasId={kelasId}
+            kelasTitle={kelasTitle}
+            onPostCreated={(post) => {
+              setPosts([post, ...posts]);
+            }}
+            onCancel={() => {
+              // No cancel action needed since form is always visible
+            }}
+          />
+        </div>
+      )}
 
       {/* Content */}
       {showLoadingSkeleton ? (
@@ -257,21 +256,12 @@ export default function DiscussionTab({
           <PostSkeleton />
         </div>
       ) : posts.length > 0 ? (
-        <div className="space-y-4">
-          <AnimatePresence mode="popLayout">
-            {visiblePosts.map((post) => (
-              <motion.div
-                key={post.id}
-                layout
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
-              >
-                <PostThread post={post} currentUserId={user?.id as string} />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+        <div >
+          {visiblePosts.map((post) => (
+            <div key={post.id}>
+              <PostThread post={post} currentUserId={user?.id as string} />
+            </div>
+          ))}
 
           {/* Infinite scroll sentinel */}
           {hasMore && (
@@ -295,44 +285,10 @@ export default function DiscussionTab({
               <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <h3 className="text-lg font-medium mb-2">No discussions yet</h3>
               <p className="mb-4">Be the first to start a conversation!</p>
-              {isAuthenticated && (
-                <Button onClick={() => setShowNewPostForm(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create First Post
-                </Button>
-              )}
             </div>
           </CardContent>
         </Card>
       )}
-
-      {/* Mobile FAB */}
-      {isAuthenticated && !showNewPostForm && (
-        <Button
-          onClick={() => setShowNewPostForm(true)}
-          className="md:hidden fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg"
-          aria-label="Create new post"
-        >
-          <Plus className="w-5 h-5" />
-        </Button>
-      )}
-
-      {/* Dialog for New Post Form */}
-      <Dialog open={showNewPostForm} onOpenChange={setShowNewPostForm}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Create New Post</DialogTitle>
-          </DialogHeader>
-          <NewPostForm
-            kelasId={kelasId}
-            onPostCreated={(post) => {
-              setPosts([post, ...posts]);
-              setShowNewPostForm(false);
-            }}
-            onCancel={() => setShowNewPostForm(false)}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

@@ -14,6 +14,7 @@ import VocabularyTab from "./tabs/vocabulary-tab";
 import { useState, useRef,} from "react";
 import { useAnimation } from "framer-motion";
 import React from "react";
+import { useKelasColorsContext } from "@/lib/contexts/kelas-colors-context";
 
 // Import modular components
 import KelasHeader from "./components/kelas-header";
@@ -111,7 +112,8 @@ interface KelasDetailPageProps {
 export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
   const router = useRouter();
   const { user, isLoading } = useSession();
-  
+  const { colors } = useKelasColorsContext();
+
   // Use the enrollment hook
   const enrollment = useKelasEnrollment(kelas.id);
   
@@ -252,20 +254,56 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
         <div className="pt-6">
           <Tabs defaultValue="detail" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="detail" className="flex items-center gap-2">
-                <FileText className="w-4 h-4" />
+              <TabsTrigger
+                value="detail"
+                className="flex items-center gap-2"
+                style={{
+                  color: colors?.primary || undefined
+                }}
+              >
+                <FileText
+                  className="w-4 h-4"
+                  style={{ color: colors?.primary || undefined }}
+                />
                 Detail
               </TabsTrigger>
-              <TabsTrigger value="live-session" className="flex items-center gap-2">
-                <Video className="w-4 h-4" />
+              <TabsTrigger
+                value="live-session"
+                className="flex items-center gap-2"
+                style={{
+                  color: colors?.primary || undefined
+                }}
+              >
+                <Video
+                  className="w-4 h-4"
+                  style={{ color: colors?.primary || undefined }}
+                />
                 Live Session
               </TabsTrigger>
-              <TabsTrigger value="discussion" className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4" />
+              <TabsTrigger
+                value="discussion"
+                className="flex items-center gap-2"
+                style={{
+                  color: colors?.primary || undefined
+                }}
+              >
+                <MessageSquare
+                  className="w-4 h-4"
+                  style={{ color: colors?.primary || undefined }}
+                />
                 Discussion
               </TabsTrigger>
-              <TabsTrigger value="vocabulary" className="flex items-center gap-2">
-                <GraduationCap className="w-4 h-4" />
+              <TabsTrigger
+                value="vocabulary"
+                className="flex items-center gap-2"
+                style={{
+                  color: colors?.primary || undefined
+                }}
+              >
+                <GraduationCap
+                  className="w-4 h-4"
+                  style={{ color: colors?.primary || undefined }}
+                />
                 Vocabulary
               </TabsTrigger>
             </TabsList>
@@ -287,6 +325,7 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
             <TabsContent value="discussion" className="mt-6">
               <DiscussionTab
                 kelasId={kelas.id}
+                kelasTitle={kelas.title}
                 initialPosts={kelas.posts.map(post => ({
                   ...post,
                   htmlDescription: post.title, // Fallback since we don't have htmlDescription in the basic Post interface
@@ -310,20 +349,48 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
 
         {/* Running Text Ads Placeholder */}
         <div className="mt-8 mb-6">
-          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-dashed border-2 border-blue-200 dark:border-blue-800">
+          <Card
+            className="border-dashed border-2"
+            style={{
+              background: colors
+                ? `linear-gradient(90deg, ${colors.primary}10, ${colors.secondary}10)`
+                : 'linear-gradient(90deg, hsl(var(--blue-50)), hsl(var(--indigo-50)))'
+            }}
+          >
             <CardContent className="p-6">
-              <div className="flex items-center justify-center gap-3 text-blue-600 dark:text-blue-400">
-                <Megaphone className="w-6 h-6" />
+              <div
+                className="flex items-center justify-center gap-3"
+                style={{ color: colors?.primary || 'hsl(var(--blue-600))' }}
+              >
+                <Megaphone
+                  className="w-6 h-6"
+                  style={{ color: colors?.primary || 'hsl(var(--blue-600))' }}
+                />
                 <div className="text-center">
                   <h3 className="font-medium text-lg mb-1">Advertisement Space</h3>
-                  <p className="text-sm text-blue-500 dark:text-blue-300">
+                  <p
+                    className="text-sm"
+                    style={{ color: colors?.secondary || 'hsl(var(--blue-500))' }}
+                  >
                     Running text ads will be displayed here
                   </p>
                 </div>
-                <div className="flex items-center gap-1 text-xs text-blue-400 dark:text-blue-500">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                <div
+                  className="flex items-center gap-1 text-xs"
+                  style={{ color: colors?.secondary || 'hsl(var(--blue-400))' }}
+                >
+                  <div
+                    className="w-2 h-2 rounded-full animate-pulse"
+                    style={{ backgroundColor: colors?.primary || 'hsl(var(--blue-400))' }}
+                  ></div>
+                  <div
+                    className="w-2 h-2 rounded-full animate-pulse"
+                    style={{ animationDelay: '0.2s', backgroundColor: colors?.secondary || 'hsl(var(--blue-400))' }}
+                  ></div>
+                  <div
+                    className="w-2 h-2 rounded-full animate-pulse"
+                    style={{ animationDelay: '0.4s', backgroundColor: colors?.primary || 'hsl(var(--blue-400))' }}
+                  ></div>
                 </div>
               </div>
             </CardContent>

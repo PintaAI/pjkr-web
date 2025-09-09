@@ -4,6 +4,9 @@ import { auth } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await auth.api.getSession({ headers: request.headers });
+    const userId = session?.user?.id;
+
     const { searchParams } = new URL(request.url);
     const kelasId = searchParams.get('kelasId');
     const page = parseInt(searchParams.get('page') || '1');
@@ -42,6 +45,33 @@ export async function GET(request: NextRequest) {
       take: limit,
     });
 
+    // Add userLiked field if user is authenticated
+    let postsWithLikeStatus = posts;
+    if (userId) {
+      const postIds = posts.map(post => post.id);
+      const userLikes = await prisma.postLike.findMany({
+        where: {
+          userId,
+          postId: { in: postIds },
+        },
+        select: {
+          postId: true,
+        },
+      });
+
+      const likedPostIds = new Set(userLikes.map(like => like.postId));
+
+      postsWithLikeStatus = posts.map(post => ({
+        ...post,
+        userLiked: likedPostIds.has(post.id),
+      }));
+    } else {
+      postsWithLikeStatus = posts.map(post => ({
+        ...post,
+        userLiked: false,
+      }));
+    }
+
     const totalPosts = await prisma.post.count({
       where: {
         kelasId: parseInt(kelasId),
@@ -50,7 +80,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      posts,
+      posts: postsWithLikeStatus,
       pagination: {
         page,
         limit,

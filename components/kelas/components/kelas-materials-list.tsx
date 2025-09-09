@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useKelasColorsContext } from "@/lib/contexts/kelas-colors-context";
 
 interface Materi {
   id: number;
@@ -20,19 +21,31 @@ interface KelasMaterialsListProps {
   hasTeasedMaterials: boolean;
 }
 
-export default function KelasMaterialsList({ 
-  materis, 
-  showMaterials, 
-  setShowMaterials, 
-  hasTeasedMaterials 
+export default function KelasMaterialsList({
+  materis,
+  showMaterials,
+  setShowMaterials,
+  hasTeasedMaterials
 }: KelasMaterialsListProps) {
+  const { colors } = useKelasColorsContext()
+
   if (materis.length === 0) return null;
 
   return (
     <div className="hidden lg:block lg:absolute lg:top-full lg:left-0 lg:w-64 mt-1 lg:border-border backdrop-blur-sm">
       <button
         onClick={() => setShowMaterials(!showMaterials)}
-        className={` p-2 border rounded-lg flex items-center justify-between w-full text-left text-sm font-medium text-primary hover:text-primary/80 transition-colors ${!hasTeasedMaterials ? 'animate-pulse' : ''}`}
+        className={` p-2 border rounded-lg flex items-center justify-between w-full text-left text-sm font-medium transition-colors ${!hasTeasedMaterials ? 'animate-pulse' : ''}`}
+        style={{
+          color: colors?.primary || 'hsl(var(--primary))',
+          borderColor: colors?.primary || 'hsl(var(--border))'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = colors?.primaryDark || 'hsl(var(--primary) / 0.8)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = colors?.primary || 'hsl(var(--primary))';
+        }}
       >
         <span className="flex items-center gap-2">
           <FileText className="w-4 h-4" />
@@ -67,7 +80,14 @@ export default function KelasMaterialsList({
                     <div className="font-medium text-foreground mb-2">{materi.title}</div>
                     <div className="text-muted-foreground text-xs line-clamp-2 mb-1">{materi.description}</div>
                     {materi.isDemo && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge
+                        variant="outline"
+                        className="text-xs"
+                        style={{
+                          color: colors?.secondary || 'hsl(var(--foreground))',
+                          borderColor: colors?.secondary || 'hsl(var(--border))'
+                        }}
+                      >
                         Demo
                       </Badge>
                     )}

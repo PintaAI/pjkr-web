@@ -7,6 +7,7 @@ import { motion} from "framer-motion";
 import Image from "next/image";
 import React from "react";
 import { KelasType, Difficulty } from "@prisma/client";
+import { useKelasColorsContext } from "@/lib/contexts/kelas-colors-context";
 
 interface KelasHeaderProps {
   kelas: {
@@ -49,6 +50,8 @@ const getDifficultyColor = (level: Difficulty) => {
 };
 
 export default function KelasHeader({ kelas, onBack, teaserControls }: KelasHeaderProps) {
+  const { colors } = useKelasColorsContext()
+
   return (
     <motion.div
       className="relative h-80 rounded-b-2xl overflow-hidden mb-6"
@@ -69,7 +72,14 @@ export default function KelasHeader({ kelas, onBack, teaserControls }: KelasHead
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
           </>
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/80 via-primary/60 to-secondary/80 flex items-center justify-center">
+          <div
+            className="w-full h-full flex items-center justify-center"
+            style={{
+              background: colors
+                ? `linear-gradient(135deg, ${colors.primary}CC, ${colors.secondary}99)`
+                : "linear-gradient(135deg, hsl(var(--primary)) / 0.8, hsl(var(--secondary)) / 0.6)"
+            }}
+          >
             <BookOpen className="w-24 h-24 text-white/30" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
           </div>
@@ -90,10 +100,18 @@ export default function KelasHeader({ kelas, onBack, teaserControls }: KelasHead
       {/* Header content */}
       <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
         <div className="flex items-center gap-2 mb-3">
-          <Badge variant="secondary" className={getDifficultyColor(kelas.level)}>
+          <Badge
+            variant="secondary"
+            className={getDifficultyColor(kelas.level)}
+            style={colors ? { backgroundColor: `${colors.primary}20`, color: colors.primary, borderColor: `${colors.primary}30` } : {}}
+          >
             {levelLabels[kelas.level]}
           </Badge>
-          <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+          <Badge
+            variant="secondary"
+            className="bg-white/20 text-white border-white/30"
+            style={colors ? { backgroundColor: `${colors.secondary}30`, color: colors.secondary, borderColor: `${colors.secondary}40` } : {}}
+          >
             {typeLabels[kelas.type]}
           </Badge>
           {kelas.isDraft && (

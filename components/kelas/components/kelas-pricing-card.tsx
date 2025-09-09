@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { useKelasColorsContext } from "@/lib/contexts/kelas-colors-context";
 
 interface User {
   name?: string | null | undefined;
@@ -47,14 +48,15 @@ interface KelasPricingCardProps {
   onNavigateToLearn: () => void;
 }
 
-export default function KelasPricingCard({ 
-  kelas, 
-  enrollment, 
-  user, 
-  isClient, 
+export default function KelasPricingCard({
+  kelas,
+  enrollment,
+  user,
+  isClient,
   isLoading,
-  onNavigateToLearn 
+  onNavigateToLearn
 }: KelasPricingCardProps) {
+  const { colors } = useKelasColorsContext()
   const [promoCode, setPromoCode] = useState("");
   const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
@@ -95,7 +97,7 @@ export default function KelasPricingCard({
     if (kelas.isPaidClass) {
       const displayPrice = getDisplayPrice();
       const discount = getDisplayDiscount();
-      
+
       return (
         <div className="space-y-1">
           {discount && (
@@ -103,21 +105,36 @@ export default function KelasPricingCard({
               {formatPrice(kelas.price)}
             </div>
           )}
-          <div className="text-2xl font-bold text-primary">
+          <div
+            className="text-2xl font-bold"
+            style={{ color: colors?.primary || 'hsl(var(--primary))' }}
+          >
             {formatPrice(displayPrice)}
           </div>
           {discount && (
-            <div className="inline-flex items-center gap-1 bg-success/10 text-success px-2 py-1 rounded-full text-xs">
+            <div
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs"
+              style={{
+                backgroundColor: colors ? `${colors.secondary}20` : 'hsl(var(--success) / 0.1)',
+                color: colors?.secondary || 'hsl(var(--success))'
+              }}
+            >
               <span>{discount}% OFF</span>
             </div>
           )}
         </div>
       );
     }
-    
+
     return (
-      <div className="inline-flex items-center gap-2 bg-success/10 text-success px-4 py-2 rounded-full">
-        <span className="text-lg font-bold">Free</span>
+      <div
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-full"
+        style={{
+          backgroundColor: colors ? `${colors.primary}20` : 'hsl(var(--success) / 0.1)',
+          color: colors?.primary || 'hsl(var(--success))'
+        }}
+      >
+        <span className="text-lg font-bold">Gratis ! ! !</span>
       </div>
     );
   };
@@ -187,12 +204,30 @@ export default function KelasPricingCard({
   };
 
   return (
-    <Card className="lg:w-64 py-0">
+    <Card
+      className="lg:w-64 py-0 relative overflow-hidden"
+      style={{
+        borderColor: colors?.primary || undefined
+      }}
+    >
+      {!kelas.isPaidClass && (
+        <div className="absolute top-6 right-6 px-6 text-white px-3 py-1 text-xs font-bold transform rotate-45 translate-x-1/2 -translate-y-1/2 shadow-md border-2"
+          style={{
+            backgroundColor: colors?.primary || 'hsl(var(--primary))',
+            borderColor: colors?.primary || 'hsl(var(--primary))'
+          }}
+        >
+          GRATIS
+        </div>
+      )}
       <CardContent className="p-4">
         {enrollment.isEnrolled ? (
           <div className="space-y-3">
             <div className="text-center">
-              <div className="text-lg font-bold text-success mb-2">
+              <div
+                className="text-lg font-bold mb-2"
+                style={{ color: colors?.primary || 'hsl(var(--success))' }}
+              >
                 hai {user?.name || "Murid"}!
               </div>
               <div className="text-xs text-muted-foreground">
@@ -211,7 +246,13 @@ export default function KelasPricingCard({
         {kelas.isPaidClass && (
           <div className="space-y-2 pt-2 mt-2 border-t">
             {appliedPromoCode ? (
-              <div className="flex items-center justify-between bg-success/10 text-success px-3 py-2 rounded-md">
+              <div
+                className="flex items-center justify-between px-3 py-2 rounded-md"
+                style={{
+                  backgroundColor: colors ? `${colors.primary}20` : 'hsl(var(--success) / 0.1)',
+                  color: colors?.primary || 'hsl(var(--success))'
+                }}
+              >
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4" />
                   <span className="text-sm font-medium">{appliedPromoCode}</span>
@@ -221,6 +262,7 @@ export default function KelasPricingCard({
                   size="sm"
                   onClick={handleRemovePromoCode}
                   className="h-6 w-6 p-0 text-xs"
+                  style={{ color: colors?.primary || 'hsl(var(--success))' }}
                 >
                   ×
                 </Button>
@@ -234,12 +276,18 @@ export default function KelasPricingCard({
                   onKeyDown={(e) => e.key === 'Enter' && handleApplyPromoCode()}
                   className="text-xs"
                   disabled={isApplyingPromo}
+                  style={{ borderColor: colors?.primary || undefined }}
                 />
                 <Button
                   onClick={handleApplyPromoCode}
                   disabled={isApplyingPromo || !promoCode.trim()}
                   size="sm"
                   className="text-xs"
+                  style={{
+                    backgroundColor: colors?.primaryDark || colors?.primary || undefined,
+                    borderColor: colors?.primaryDark || colors?.primary || undefined,
+                    color: 'white'
+                  }}
                 >
                   {isApplyingPromo ? "..." : "Apply"}
                 </Button>
@@ -257,6 +305,10 @@ export default function KelasPricingCard({
               variant="outline"
               className="flex-1"
               onClick={onNavigateToLearn}
+              style={{
+                color: colors?.primary || undefined,
+                borderColor: colors?.primary || undefined
+              }}
             >
               <BookOpen className="w-4 h-4 mr-2" />
               Belajar
@@ -265,12 +317,23 @@ export default function KelasPricingCard({
               variant="outline"
               size="icon"
               onClick={handleShare}
+              style={{
+                color: colors?.secondary || undefined,
+                borderColor: colors?.secondary || undefined
+              }}
             >
               <Share2 className="w-4 h-4" />
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  style={{
+                    color: colors?.primary || undefined,
+                    borderColor: colors?.primary || undefined
+                  }}
+                >
                   <MoreVertical className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -291,6 +354,10 @@ export default function KelasPricingCard({
             className="w-full mt-3"
             onClick={enrollment.buttonConfig.action}
             disabled={!isClient || enrollment.buttonConfig.disabled}
+            style={{
+              backgroundColor: colors?.primary || undefined,
+              borderColor: colors?.primary || undefined
+            }}
           >
             <BookOpen className="w-4 h-4 mr-2" />
             {!isClient ? "Loading..." :

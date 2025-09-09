@@ -1,9 +1,12 @@
 "use server";
 
 import { prisma } from "@/lib/db";
+import { getServerSession } from "@/lib/session";
 
 export async function getKelasDetail(id: string) {
   try {
+    const session = await getServerSession();
+    const userId = session?.user?.id;
     const kelasId = parseInt(id);
     
     if (isNaN(kelasId)) {
@@ -106,16 +109,26 @@ export async function getKelasDetail(id: string) {
           select: {
             id: true,
             title: true,
+            htmlDescription: true,
+            jsonDescription: true,
             type: true,
             isPinned: true,
             likeCount: true,
             commentCount: true,
+            shareCount: true,
+            viewCount: true,
             createdAt: true,
             author: {
               select: {
                 id: true,
                 name: true,
                 image: true,
+              },
+            },
+            _count: {
+              select: {
+                comments: true,
+                likes: true,
               },
             },
           },
@@ -141,9 +154,37 @@ export async function getKelasDetail(id: string) {
       };
     }
 
+    // Add userLiked field to posts if user is authenticated
+    let postsWithLikeStatus = kelas.posts;
+    if (userId && kelas.posts.length > 0) {
+      const postIds = kelas.posts.map(post => post.id);
+      const userLikes = await prisma.postLike.findMany({
+        where: {
+          userId,
+          postId: { in: postIds },
+        },
+        select: {
+          postId: true,
+        },
+      });
+
+      const likedPostIds = new Set(userLikes.map(like => like.postId));
+
+      postsWithLikeStatus = kelas.posts.map(post => ({
+        ...post,
+        userLiked: likedPostIds.has(post.id),
+      }));
+    } else {
+      postsWithLikeStatus = kelas.posts.map(post => ({
+        ...post,
+        userLiked: false,
+      }));
+    }
+
     // Convert Decimal fields to numbers for client components
     const serializedKelas = {
       ...kelas,
+      posts: postsWithLikeStatus,
       price: kelas.price ? Number(kelas.price) : null,
       discount: kelas.discount ? Number(kelas.discount) : null,
     };
