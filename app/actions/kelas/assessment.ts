@@ -283,3 +283,34 @@ export async function deleteOpsi(opsiId: number) {
     return { success: false, error: "Failed to delete option" };
   }
 }
+
+export async function getSoalsByKoleksi(koleksiSoalId: number) {
+  try {
+    const session = await assertAuthenticated();
+
+    // Check ownership
+    const koleksiSoal = await prisma.koleksiSoal.findUnique({
+      where: { id: koleksiSoalId },
+      include: { user: { select: { id: true } } },
+    });
+
+    if (!koleksiSoal || koleksiSoal.user.id !== session.user.id) {
+      return { success: false, error: "Not authorized" };
+    }
+
+    const soals = await prisma.soal.findMany({
+      where: { koleksiSoalId },
+      include: {
+        opsis: {
+          orderBy: { order: 'asc' },
+        },
+      },
+      orderBy: { order: 'asc' },
+    });
+
+    return { success: true, data: soals };
+  } catch (error) {
+    console.error("Get soals by koleksi error:", error);
+    return { success: false, error: "Failed to get questions" };
+  }
+}

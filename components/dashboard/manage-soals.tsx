@@ -10,6 +10,8 @@ import { StatsCard } from "@/components/ui/stats-card";
 import { Plus, Users, Calendar, Lock, Search } from "lucide-react";
 import { BsCreditCard2Front } from "react-icons/bs";
 import { getGuruSoalSets } from "@/app/actions/kelas/soal-set";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { SoalSetForm } from "./soal-set-form";
 
 const SoalFilters = ({
   searchTerm,
@@ -111,6 +113,8 @@ export function ManageSoals({ embedded = false, soalSets: initialSoalSets }: Man
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"ALL" | "DRAFT" | "PUBLISHED">("ALL");
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [editingSoalSet, setEditingSoalSet] = useState<SoalSet | null>(null);
 
   useEffect(() => {
     if (!initialSoalSets || initialSoalSets.length === 0) {
@@ -151,7 +155,35 @@ export function ManageSoals({ embedded = false, soalSets: initialSoalSets }: Man
   const draftSets = totalSets - publishedSets;
 
   const handleCreateSoal = () => {
-    window.location.href = "/dashboard/guru/soal/create";
+    setEditingSoalSet(null);
+    setSheetOpen(true);
+  };
+
+  const handleEditSoal = (soalSet: SoalSet) => {
+    setEditingSoalSet(soalSet);
+    setSheetOpen(true);
+  };
+
+  const handleFormSuccess = () => {
+    setSheetOpen(false);
+    setEditingSoalSet(null);
+    // Refresh the soal sets list
+    const fetchSoalSets = async () => {
+      try {
+        const result = await getGuruSoalSets();
+        if (result.success && result.data) {
+          setSoalSets(result.data);
+        }
+      } catch (err) {
+        console.error("Failed to refresh soal sets:", err);
+      }
+    };
+    fetchSoalSets();
+  };
+
+  const handleFormCancel = () => {
+    setSheetOpen(false);
+    setEditingSoalSet(null);
   };
 
   if (loading) {
@@ -266,7 +298,7 @@ export function ManageSoals({ embedded = false, soalSets: initialSoalSets }: Man
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredSoalSets.map((soalSet) => (
-            <Card key={soalSet.id} className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer py-0">
+            <Card key={soalSet.id} className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer py-0" onClick={() => handleEditSoal(soalSet)}>
               {/* Media */}
               <div className="relative">
                 <div className="relative w-full aspect-[16/9] bg-muted/40">
@@ -315,6 +347,21 @@ export function ManageSoals({ embedded = false, soalSets: initialSoalSets }: Man
           ))}
         </div>
       )}
+
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto m-0">
+          <SheetHeader>
+            <SheetTitle className="text-center">
+              {editingSoalSet ? "Edit Soal Set" : "Create Soal Set"}
+            </SheetTitle>
+          </SheetHeader>
+          <SoalSetForm
+            soalSet={editingSoalSet || undefined}
+            onSuccess={handleFormSuccess}
+            onCancel={handleFormCancel}
+          />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

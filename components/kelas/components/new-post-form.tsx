@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 interface NewPostFormProps {
   kelasId: number;
@@ -32,9 +34,12 @@ export default function NewPostForm({ kelasId, onPostCreated, onCancel }: NewPos
   const [newTag, setNewTag] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const typeMeta = postTypes.find((t) => t.value === type);
+
   const handleAddTag = () => {
-    if (newTag.trim() && !tags.includes(newTag.trim()) && tags.length < 5) {
-      setTags([...tags, newTag.trim()]);
+    const val = newTag.trim();
+    if (val && !tags.includes(val) && tags.length < 5) {
+      setTags([...tags, val]);
       setNewTag("");
     }
   };
@@ -45,12 +50,10 @@ export default function NewPostForm({ kelasId, onPostCreated, onCancel }: NewPos
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!title.trim() || !content.trim()) {
       toast.error("Please fill in all required fields");
       return;
     }
-
     setIsSubmitting(true);
     try {
       const response = await fetch("/api/posts", {
@@ -70,13 +73,10 @@ export default function NewPostForm({ kelasId, onPostCreated, onCancel }: NewPos
           tags,
         }),
       });
-
       if (response.ok) {
         const newPost = await response.json();
         onPostCreated(newPost);
         toast.success("Post created successfully!");
-        
-        // Reset form
         setTitle("");
         setContent("");
         setType("DISCUSSION");
@@ -94,132 +94,158 @@ export default function NewPostForm({ kelasId, onPostCreated, onCancel }: NewPos
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="text-lg">Create New Post</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Post Type */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Post Type</label>
-            <Select value={type} onValueChange={setType}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {postTypes.map((postType) => (
-                  <SelectItem key={postType.value} value={postType.value}>
-                    <div>
-                      <div className="font-medium">{postType.label}</div>
-                      <div className="text-xs text-muted-foreground">{postType.description}</div>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Title */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Title *</label>
-            <Input
-              placeholder="Enter post title..."
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              maxLength={200}
-            />
-            <div className="text-xs text-muted-foreground text-right">
-              {title.length}/200
+    <TooltipProvider>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="text-lg">Create New Post</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Post Type */}
+            <div className="space-y-2">
+              <label htmlFor="post-type" className="text-sm font-medium">Post Type</label>
+              <div className="flex items-center gap-2">
+                <Select value={type} onValueChange={setType}>
+                  <SelectTrigger id="post-type" className="w-56">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {postTypes.map((postType) => (
+                      <SelectItem key={postType.value} value={postType.value}>
+                        <div>
+                          <div className="font-medium">{postType.label}</div>
+                          <div className="text-xs text-muted-foreground">{postType.description}</div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Badge variant="outline" className="text-xs">
+                  {typeMeta?.label}
+                </Badge>
+                <span className="text-xs text-muted-foreground">{typeMeta?.description}</span>
+              </div>
             </div>
-          </div>
 
-          {/* Content */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Content *</label>
-            <Textarea
-              placeholder="Write your post content here..."
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="min-h-[120px]"
-              maxLength={5000}
-            />
-            <div className="text-xs text-muted-foreground text-right">
-              {content.length}/5000
-            </div>
-          </div>
-
-          {/* Tags */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Tags (optional)</label>
-            <div className="flex gap-2">
+            {/* Title */}
+            <div className="space-y-2">
+              <label htmlFor="post-title" className="text-sm font-medium">Title *</label>
               <Input
-                placeholder="Add a tag..."
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
+                id="post-title"
+                placeholder="Enter post title..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                maxLength={200}
+              />
+              <div className="flex justify-between text-xs text-muted-foreground" aria-live="polite">
+                <span>Keep it concise and specific.</span>
+                <span>{title.length}/200</span>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="space-y-2">
+              <label htmlFor="post-content" className="text-sm font-medium">Content *</label>
+              <Textarea
+                id="post-content"
+                placeholder="Write your post content here..."
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+                  if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !isSubmitting && title.trim() && content.trim()) {
                     e.preventDefault();
-                    handleAddTag();
+                    handleSubmit(e as unknown as React.FormEvent);
                   }
                 }}
-                maxLength={20}
+                className="min-h-[140px]"
+                maxLength={5000}
               />
+              <div className="flex justify-between text-xs text-muted-foreground" aria-live="polite">
+                <span>Press Ctrl/⌘ + Enter to post</span>
+                <span>{content.length}/5000</span>
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div className="space-y-2">
+              <label htmlFor="post-tags" className="text-sm font-medium">Tags (optional)</label>
+              <div className="flex gap-2">
+                <Input
+                  id="post-tags"
+                  placeholder="Add a tag..."
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                  maxLength={20}
+                />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddTag}
+                      disabled={!newTag.trim() || tags.length >= 5}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Add tag</TooltipContent>
+                </Tooltip>
+              </div>
+
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs">
+                      {tag}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto p-0 ml-1 text-muted-foreground hover:text-foreground"
+                        onClick={() => handleRemoveTag(tag)}
+                        aria-label={`Remove tag ${tag}`}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Press Enter to add. Max 5 tags.</span>
+                <span>{tags.length}/5</span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2 pt-4">
+              <Button
+                type="submit"
+                disabled={!title.trim() || !content.trim() || isSubmitting}
+                className={cn("flex-1")}
+              >
+                {isSubmitting ? "Creating..." : "Create Post"}
+              </Button>
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                onClick={handleAddTag}
-                disabled={!newTag.trim() || tags.length >= 5}
+                onClick={onCancel}
+                disabled={isSubmitting}
               >
-                <Plus className="w-4 h-4" />
+                Cancel
               </Button>
             </div>
-            
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag, index) => (
-                  <Badge key={index} variant="secondary" className="text-xs">
-                    {tag}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-auto p-0 ml-1 text-muted-foreground hover:text-foreground"
-                      onClick={() => handleRemoveTag(tag)}
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-            
-            <div className="text-xs text-muted-foreground">
-              You can add up to 5 tags to help categorize your post
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-2 pt-4">
-            <Button
-              type="submit"
-              disabled={!title.trim() || !content.trim() || isSubmitting}
-              className="flex-1"
-            >
-              {isSubmitting ? "Creating..." : "Create Post"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+          </form>
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 }

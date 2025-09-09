@@ -224,7 +224,6 @@ export async function getGuruVocabularySets() {
 
     const joinedKelasIds = joinedKelas.map(k => k.id);
 
-    // Get vocabulary sets: either created by the guru or associated with joined kelas
     const vocabSets = await prisma.vocabularySet.findMany({
       where: {
         OR: [
