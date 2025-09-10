@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -277,17 +278,24 @@ export default function PostDetailSheet({ post, currentUserId, isOpen, onOpenCha
           <Card className="border-0 shadow-none">
             <CardContent className="p-0">
               <div className="flex gap-3">
-                {/* Avatar */}
-                <Avatar className="w-10 h-10 shrink-0">
-                  <AvatarImage src={post.author.image || ""} alt={post.author.name || "Unknown"} />
-                  <AvatarFallback>{getAuthorInitials(post.author.name)}</AvatarFallback>
-                </Avatar>
+                {/* Avatar - Clickable */}
+                <Link href={`/profile/${post.author.id}`}>
+                  <Avatar className="w-10 h-10 shrink-0 hover:ring-2 hover:ring-primary/20 transition-all cursor-pointer">
+                    <AvatarImage src={post.author.image || ""} alt={post.author.name || "Unknown"} />
+                    <AvatarFallback>{getAuthorInitials(post.author.name)}</AvatarFallback>
+                  </Avatar>
+                </Link>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   {/* Author and metadata */}
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className="font-semibold text-foreground">{post.author.name || "Unknown User"}</span>
+                    <Link
+                      href={`/profile/${post.author.id}`}
+                      className="font-semibold text-foreground hover:text-primary transition-colors cursor-pointer"
+                    >
+                      {post.author.name || "Unknown User"}
+                    </Link>
                     <span className="text-sm text-muted-foreground">
                       {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
                     </span>

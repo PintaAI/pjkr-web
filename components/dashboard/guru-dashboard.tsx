@@ -9,7 +9,9 @@ import {
   Users,
   FileText,
   PlusCircle,
-  Calendar
+  Calendar,
+  Wrench,
+  FileQuestion
 } from "lucide-react";
 import Link from "next/link";
 
@@ -226,11 +228,23 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
 
       {/* Tabs */}
       <Tabs defaultValue="tools" className="w-full">
-        <TabsList>
-          <TabsTrigger value="tools">Tools</TabsTrigger>
-          <TabsTrigger value="classes">Manage Classes</TabsTrigger>
-          <TabsTrigger value="vocabulary">Manage Vocabulary</TabsTrigger>
-          <TabsTrigger value="soals">Manage Soals</TabsTrigger>
+        <TabsList className="w-full">
+          <TabsTrigger value="tools" className="flex-1">
+            <Wrench className="w-4 h-4 mr-2" />
+            Tools
+          </TabsTrigger>
+          <TabsTrigger value="classes" className="flex-1">
+            <BookOpen className="w-4 h-4 mr-2" />
+            Manage Classes
+          </TabsTrigger>
+          <TabsTrigger value="vocabulary" className="flex-1">
+            <FileText className="w-4 h-4 mr-2" />
+            Manage Vocabulary
+          </TabsTrigger>
+          <TabsTrigger value="soals" className="flex-1">
+            <FileQuestion className="w-4 h-4 mr-2" />
+            Manage Soals
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="tools">

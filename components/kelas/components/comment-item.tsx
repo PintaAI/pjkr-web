@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef } from "react";
+import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -107,17 +108,24 @@ export default function CommentItem({
     <TooltipProvider>
       <div className={cn(isReply ? "ml-8 pl-4 border-l border-muted/40" : "")}>
         <div className="flex gap-3">
-          <Avatar className="w-8 h-8 mt-1">
-            <AvatarImage src={comment.author.image || ""} alt={comment.author.name || "Unknown"} />
-            <AvatarFallback className="text-xs">
-              {getAuthorInitials(comment.author.name)}
-            </AvatarFallback>
-          </Avatar>
+          <Link href={`/profile/${comment.author.id}`}>
+            <Avatar className="w-8 h-8 mt-1 hover:ring-2 hover:ring-primary/20 transition-all cursor-pointer">
+              <AvatarImage src={comment.author.image || ""} alt={comment.author.name || "Unknown"} />
+              <AvatarFallback className="text-xs">
+                {getAuthorInitials(comment.author.name)}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
 
           <div className="flex-1 min-w-0">
             <div className="bg-muted/30 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
-                <span className="font-medium text-sm">{comment.author.name || "Unknown User"}</span>
+                <Link
+                  href={`/profile/${comment.author.id}`}
+                  className="font-medium text-sm hover:text-primary transition-colors cursor-pointer"
+                >
+                  {comment.author.name || "Unknown User"}
+                </Link>
                 <span className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                 </span>
