@@ -1,10 +1,15 @@
 import { getUserProfileById } from "@/app/actions/profile";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarDays, BookOpen, FileQuestion, Trophy, Flame, Star, UserX } from "lucide-react";
+import { Trophy, Flame, Star, UserX } from "lucide-react";
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import PostsTab from "@/components/profile/posts-tab";
+import ClassesTab from "@/components/profile/classes-tab";
+import { getServerSession } from "@/lib/session";
 
 interface ProfilePageProps {
   params: Promise<{ userId: string }>;
@@ -12,6 +17,7 @@ interface ProfilePageProps {
 
 export default async function UserProfilePage({ params }: ProfilePageProps) {
   const { userId } = await params;
+  const session = await getServerSession();
 
   const result = await getUserProfileById(userId);
 
@@ -39,144 +45,105 @@ export default async function UserProfilePage({ params }: ProfilePageProps) {
   const user = result.data;
   const isOwnProfile = result.isOwnProfile;
 
+
   return (
-    <div className="container mx-auto py-8 px-4">
-      {/* Profile Header */}
-      <Card className="mb-6">
-        <CardContent className="p-6">
-          <div className="flex items-center space-x-4">
-            <Avatar className="h-20 w-20">
+    <div className="container mx-auto py-8 px-4 max-w-6xl">
+      {/* Profile Header - Instagram Style */}
+      <div className="mb-8">
+        <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-8">
+          {/* Profile Picture */}
+          <div className="flex-shrink-0">
+            <Avatar className="h-32 w-32 md:h-40 md:w-40">
               <AvatarImage src={user.image || ""} alt={user.name || "User"} />
-              <AvatarFallback>
+              <AvatarFallback className="text-2xl md:text-3xl">
                 {user.name?.charAt(0)?.toUpperCase() || user.email.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold">{user.name || "Anonymous User"}</h1>
-              <p className="text-muted-foreground">{user.email}</p>
-              <div className="flex items-center space-x-4 mt-2">
-                <Badge variant="secondary">{user.role}</Badge>
+          </div>
+
+          {/* Profile Info */}
+          <div className="flex-1 text-center md:text-left">
+            <div className="mb-4">
+              <h1 className="text-2xl md:text-3xl font-light mb-1">{user.name || "Anonymous User"}</h1>
+              <p className="text-muted-foreground text-sm mb-2">{user.email}</p>
+              <div className="flex items-center justify-center md:justify-start space-x-4 text-sm">
+                <Badge variant="secondary" className="px-2 py-1">{user.role}</Badge>
                 <div className="flex items-center space-x-1">
                   <Star className="h-4 w-4 text-yellow-500" />
-                  <span className="text-sm">Level {user.level}</span>
+                  <span>Level {user.level}</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <Trophy className="h-4 w-4 text-orange-500" />
-                  <span className="text-sm">{user.xp} XP</span>
+                  <span>{user.xp} XP</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <Flame className="h-4 w-4 text-red-500" />
-                  <span className="text-sm">{user.currentStreak} day streak</span>
+                  <span>{user.currentStreak} day streak</span>
                 </div>
               </div>
-              {!isOwnProfile && (
-                <p className="text-sm text-muted-foreground mt-2">
-                  Viewing {user.name || "this user's"} profile
-                </p>
-              )}
             </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <BookOpen className="h-5 w-5 text-blue-500" />
-              <div>
-                <p className="text-2xl font-bold">{user.joinedKelas.length}</p>
-                <p className="text-sm text-muted-foreground">Joined Classes</p>
+            {/* Bio */}
+            {user.bio && (
+              <div className="mb-4">
+                <p className="text-sm leading-relaxed max-w-md mx-auto md:mx-0 whitespace-pre-wrap">{user.bio}</p>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <FileQuestion className="h-5 w-5 text-green-500" />
-              <div>
-                <p className="text-2xl font-bold">{user.soals.length}</p>
-                <p className="text-sm text-muted-foreground">Questions Created</p>
+            )}
+
+            {/* Edit Profile Button */}
+            {isOwnProfile && (
+              <div className="mb-4">
+                <Link href="/profile/edit">
+                  <Button variant="outline" size="sm" className="px-4 py-1 text-sm font-medium border-gray-300 hover:border-gray-400">
+                    Edit Profile
+                  </Button>
+                </Link>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <BookOpen className="h-5 w-5 text-purple-500" />
-              <div>
-                <p className="text-2xl font-bold">{user.vocabularyItems.length}</p>
-                <p className="text-sm text-muted-foreground">Vocabulary Items</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <CalendarDays className="h-5 w-5 text-orange-500" />
-              <div>
-                <p className="text-2xl font-bold">{user.stats.totalActivities}</p>
-                <p className="text-sm text-muted-foreground">Total Activities</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            )}
+
+            {!isOwnProfile && (
+              <p className="text-sm text-muted-foreground">
+                Viewing {user.name || "this user's"} profile
+              </p>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Detailed Content Tabs */}
-      <Tabs defaultValue="classes" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue="posts" className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="posts">Posts</TabsTrigger>
           <TabsTrigger value="classes">Classes</TabsTrigger>
           <TabsTrigger value="vocabulary">Vocabulary</TabsTrigger>
           <TabsTrigger value="questions">Questions</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="posts" className="mt-6">
+          
+            
+           
+            
+              <PostsTab posts={user.authoredPosts} isOwnProfile={isOwnProfile} currentUserId={session?.user?.id} />
+         
+        </TabsContent>
+
         <TabsContent value="classes" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Joined Classes</CardTitle>
+              <CardTitle>
+                {user.role.toLowerCase() === "guru" ? "Created Classes" : "Joined Classes"}
+              </CardTitle>
               <CardDescription>
-                {isOwnProfile ? "Classes you've enrolled in" : `Classes ${user.name || 'this user'} has joined`}
+                {user.role.toLowerCase() === "guru"
+                  ? (isOwnProfile ? "Classes you've created" : `Classes ${user.name || 'this user'} has created`)
+                  : (isOwnProfile ? "Classes you've enrolled in" : `Classes ${user.name || 'this user'} has joined`)
+                }
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {user.joinedKelas.length === 0 ? (
-                <p className="text-muted-foreground">
-                  {isOwnProfile ? "No classes joined yet." : "No public classes to show."}
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {user.joinedKelas.map((kelas: any) => (
-                    <div key={kelas.id} className="flex items-center space-x-4 p-4 border rounded-lg">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={kelas.thumbnail || ""} alt={kelas.title} />
-                        <AvatarFallback>{kelas.title.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <h3 className="font-semibold">{kelas.title}</h3>
-                        <p className="text-sm text-muted-foreground">{kelas.description}</p>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <Badge variant="outline">{kelas.level}</Badge>
-                          <Badge variant="outline">{kelas.type}</Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {kelas._count.materis} materials
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-muted-foreground">
-                          Joined {new Date(kelas.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <ClassesTab user={user} isOwnProfile={isOwnProfile} />
             </CardContent>
           </Card>
         </TabsContent>

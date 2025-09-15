@@ -1,4 +1,4 @@
-import { LiveSessionComponent } from '@/components/live-session-detail'
+import { LiveSessionComponent } from '@/components/live-session/live-session-detail'
 import { notFound } from 'next/navigation'
 
 

@@ -108,6 +108,7 @@ model User {
   role                UserRoles              @default(MURID)
   emailVerified       Boolean                @default(false)
   image               String?
+  bio                 String?
   createdAt           DateTime               @default(now())
   updatedAt           DateTime               @updatedAt
   // Core user stats - simplified

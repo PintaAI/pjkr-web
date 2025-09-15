@@ -26,7 +26,7 @@ const postTypes = [
   { value: "SHARE", label: "Share", description: "Share something interesting" },
 ];
 
-export default function NewPostForm({ kelasId, kelasTitle = "Class", onPostCreated, onCancel }: NewPostFormProps) {
+export default function NewPostForm({ kelasId, kelasTitle = "Class", onPostCreated,}: NewPostFormProps) {
   const [content, setContent] = useState({ html: "", json: null });
   const [type, setType] = useState("DISCUSSION");
   const [tags, setTags] = useState<string[]>([]);

@@ -7,7 +7,7 @@ export default async function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="container mx-auto py-8">
+      <div className="container mx-auto py-8 max-w-6xl">
         <Card>
           <CardContent className="p-6">
             <p className="text-center text-muted-foreground">

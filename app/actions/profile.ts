@@ -25,6 +25,7 @@ export async function getUserProfile() {
         name: true,
         role: true,
         image: true,
+        bio: true,
         createdAt: true,
         updatedAt: true,
         currentStreak: true,
@@ -96,6 +97,26 @@ export async function getUserProfile() {
           },
           orderBy: { createdAt: "desc" },
         },
+        // Posts authored by user
+        authoredPosts: {
+          where: { isPublished: true },
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            type: true,
+            createdAt: true,
+            _count: {
+              select: {
+                likes: true,
+                comments: true,
+                shares: true,
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 10,
+        },
         // Activity logs for stats
         activityLogs: {
           select: {
@@ -155,6 +176,12 @@ export async function getUserProfile() {
       updatedAt: userWithRelations.updatedAt.toISOString(),
       joinedKelas: userWithRelations.joinedKelas.map((kelas: any) => ({
         ...kelas,
+        price: kelas.price ? Number(kelas.price) : null,
+        createdAt: kelas.createdAt.toISOString(),
+      })),
+      authoredKelas: userWithRelations.authoredKelas.map((kelas: any) => ({
+        ...kelas,
+        price: kelas.price ? Number(kelas.price) : null,
         createdAt: kelas.createdAt.toISOString(),
       })),
       vocabularyItems: userWithRelations.vocabularyItems.map((item: any) => ({
@@ -165,6 +192,11 @@ export async function getUserProfile() {
         ...soal,
         createdAt: soal.createdAt.toISOString(),
       })),
+       authoredPosts: userWithRelations.authoredPosts.map((post: any) => ({
+         ...post,
+         createdAt: post.createdAt.toISOString(),
+         userLiked: false, // For now, set to false since it's the author's own posts
+       })),
       activityLogs: userWithRelations.activityLogs.map((log: any) => ({
         ...log,
         createdAt: log.createdAt.toISOString(),
@@ -194,6 +226,48 @@ export async function getUserProfile() {
   }
 }
 
+export async function updateProfile(data: { name?: string; bio?: string; image?: string }) {
+  try {
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        error: "Authentication required",
+      };
+    }
+
+    const userId = session.user.id;
+
+    const updateData: any = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.bio !== undefined) updateData.bio = data.bio;
+    if (data.image !== undefined) updateData.image = data.image;
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        bio: true,
+        image: true,
+        email: true,
+      },
+    });
+
+    return {
+      success: true,
+      data: updatedUser,
+    };
+  } catch (error) {
+    console.error("Update profile error:", error);
+    return {
+      success: false,
+      error: "Failed to update profile",
+    };
+  }
+}
+
 export async function getUserProfileById(targetUserId: string) {
   try {
     const session = await getServerSession();
@@ -208,6 +282,7 @@ export async function getUserProfileById(targetUserId: string) {
         name: true,
         role: true,
         image: true,
+        bio: true,
         createdAt: true,
         updatedAt: true,
         currentStreak: true,
@@ -224,6 +299,36 @@ export async function getUserProfileById(targetUserId: string) {
             thumbnail: true,
             icon: true,
             type: true,
+            isPaidClass: true,
+            createdAt: true,
+            author: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
+            _count: {
+              select: {
+                materis: true,
+                members: true,
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        },
+        // Authored classes (only public ones)
+        authoredKelas: {
+          where: { isDraft: false },
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            level: true,
+            thumbnail: true,
+            icon: true,
+            type: true,
+            isPaidClass: true,
             createdAt: true,
             author: {
               select: {
@@ -289,6 +394,39 @@ export async function getUserProfileById(targetUserId: string) {
           },
           orderBy: { createdAt: "desc" },
         },
+        // Posts authored by user (only published ones)
+        authoredPosts: {
+          where: { isPublished: true },
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            htmlDescription: true,
+            type: true,
+            isPinned: true,
+            viewCount: true,
+            likeCount: true,
+            commentCount: true,
+            shareCount: true,
+            createdAt: true,
+            author: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
+            _count: {
+              select: {
+                likes: true,
+                comments: true,
+                shares: true,
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 10,
+        },
         // Activity logs for stats (limited for other users)
         activityLogs: {
           select: {
@@ -353,6 +491,10 @@ export async function getUserProfileById(targetUserId: string) {
         ...kelas,
         createdAt: kelas.createdAt.toISOString(),
       })),
+      authoredKelas: userWithRelations.authoredKelas.map((kelas: any) => ({
+        ...kelas,
+        createdAt: kelas.createdAt.toISOString(),
+      })),
       vocabularyItems: userWithRelations.vocabularyItems.map((item: any) => ({
         ...item,
         createdAt: item.createdAt.toISOString(),
@@ -360,6 +502,10 @@ export async function getUserProfileById(targetUserId: string) {
       soals: userWithRelations.soals.map((soal: any) => ({
         ...soal,
         createdAt: soal.createdAt.toISOString(),
+      })),
+      authoredPosts: userWithRelations.authoredPosts.map((post: any) => ({
+        ...post,
+        createdAt: post.createdAt.toISOString(),
       })),
       activityLogs: userWithRelations.activityLogs.map((log: any) => ({
         ...log,

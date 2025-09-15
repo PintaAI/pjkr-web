@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Architects_Daughter, Geist_Mono } from "next/font/google"; // Replaced Geist with Architects_Daughter
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-import { LayoutWrapper } from "@/components/layout-wrapper";
+import { ThemeProvider } from "@/components/theme/theme-provider";
+import { LayoutWrapper } from "@/components/layout/layout-wrapper";
 import { Toaster } from "sonner";
 
 // Instantiate Architects Daughter for --font-sans

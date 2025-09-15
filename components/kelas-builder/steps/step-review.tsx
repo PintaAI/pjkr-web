@@ -18,7 +18,7 @@ import {
   FileText,
   Eye
 } from "lucide-react";
-import KelasDetailPage from "@/components/kelas/kelas-detail-page";
+import KelasDetailWrapper from "@/components/kelas/kelas-detail-wrapper";
 import { useSession } from "@/lib/hooks/use-session";
 import { toast } from "sonner";
 
@@ -252,7 +252,7 @@ export function StepReview() {
         <CardContent className="p-4">
           <div className="border rounded-lg overflow-hidden max-h-[700px] overflow-y-auto">
             <div className="scale-75 mt-6 origin-top-left" style={{ width: '133.33%' }}>
-              <KelasDetailPage kelas={mockKelasData} />
+              <KelasDetailWrapper kelas={mockKelasData} />
             </div>
           </div>
         </CardContent>

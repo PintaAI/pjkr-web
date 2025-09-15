@@ -1,167 +1,300 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { useState, useEffect } from "react";
+import { KelasCard } from "../kelas/kelas-card";
+import { VocabItemCard } from "./vocab-collection-card";
+import { UserProfileCard } from "./user-profile-card";
+import { SoalItemCard } from "./soal-item-card";
 import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
-import {
-  BookOpen,
-  Brain,
-  Target,
-  Calendar,
-  Users,
-  MessageCircle,
-  Clock,
-} from 'lucide-react';
 
-// TODO: Implement Explore Page Features
-const exploreFeatures = [
-  {
-    id: 1,
-    title: "Content Discovery",
-    description: "Browse quizzes, vocabulary sets, and learning materials",
-    status: "pending",
-    icon: BookOpen,
-    estimatedTime: "2-3 days"
-  },
-  {
-    id: 2,
-    title: "Teacher Marketplace",
-    description: "Find and connect with Korean language teachers",
-    status: "pending", 
-    icon: Users,
-    estimatedTime: "3-4 days"
-  },
-  {
-    id: 3,
-    title: "Advanced Search",
-    description: "Search by difficulty, topic, and learning style",
-    status: "pending",
-    icon: Brain,
-    estimatedTime: "1-2 days"
-  },
-  {
-    id: 4,
-    title: "Category System",
-    description: "Organized content by vocabulary, grammar, conversation",
-    status: "pending",
-    icon: Target,
-    estimatedTime: "1 day"
-  },
-  {
-    id: 5,
-    title: "Schedule Integration",
-    description: "Book lessons and track learning schedule",
-    status: "pending",
-    icon: Calendar,
-    estimatedTime: "2-3 days"
-  },
-  {
-    id: 6,
-    title: "Community Features",
-    description: "Discussion forums and peer learning",
-    status: "pending",
-    icon: MessageCircle,
-    estimatedTime: "3-5 days"
-  }
-];
+import { Search, Filter, Sparkles } from "lucide-react";
+import { Input } from "../ui/input";
+import { motion,  } from "framer-motion";
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "completed": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-    case "in-progress": return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
-    case "pending": return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
-    default: return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
-  }
+// Define types for the content items
+type KelasContent = {
+  id: number;
+  title: string;
+  description: string;
+  type: "REGULAR" | "EVENT" | "GROUP" | "PRIVATE" | "FUN";
+  level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+  thumbnail: string | null;
+  isPaidClass: boolean;
+  price: number | null;
+  author: {
+    id: string;
+    name: string;
+    image: string | null;
+  };
+  _count: {
+    materis: number;
+    members: number;
+  };
 };
 
+type VocabContent = {
+  id: number;
+  korean: string;
+  indonesian: string;
+  type: "WORD" | "SENTENCE" | "IDIOM";
+  pos: "KATA_KERJA" | "KATA_BENDA" | "KATA_SIFAT" | "KATA_KETERANGAN" | null;
+  exampleSentences: string[];
+  audioUrl: string | null;
+  author: {
+    id: string;
+    name: string;
+    image: string;
+  };
+  collection: {
+    id: number;
+    title: string;
+  } | null;
+  difficulty: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+  rating: number;
+  totalLearners: number;
+};
+
+type UserContent = {
+  id: string;
+  name: string;
+  email: string;
+  image: string;
+  role: "GURU" | "MURID" | "ADMIN";
+  level: number;
+  xp: number;
+  currentStreak: number;
+  joinedKelasCount: number;
+  soalsCount: number;
+  vocabularyItemsCount: number;
+  totalActivities: number;
+  bio: string;
+};
+
+type SoalContent = {
+  id: number;
+  pertanyaan: string;
+  difficulty: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+  explanation?: string;
+  options?: string[];
+  correctOptionIndex: number;
+  author: {
+    id: string;
+    name: string;
+    image: string;
+  };
+  isActive: boolean;
+  collectionName: string;
+};
+
+type ContentItem =
+  | { type: 'kelas'; data: KelasContent; id: string }
+  | { type: 'vocab'; data: VocabContent; id: string }
+  | { type: 'user'; data: UserContent; id: string }
+  | { type: 'soal'; data: SoalContent; id: string };
+
 export default function ExplorePage() {
+  const [content, setContent] = useState<ContentItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [hideDescription, setHideDescription] = useState(false);
+
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        const response = await fetch('/api/explore');
+        const data = await response.json();
+        if (data.success) {
+          setContent(data.data);
+        } else {
+          setError('Failed to load content');
+        }
+      } catch (err) {
+        setError('Failed to load content');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContent();
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      setHideDescription(scrollY > 80);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState("all");
+
+  const filteredContent = content.filter((item): item is ContentItem => {
+    if (selectedFilter !== "all" && item.type !== selectedFilter) return false;
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      switch (item.type) {
+        case 'kelas':
+          return item.data.title.toLowerCase().includes(query) ||
+                 item.data.description.toLowerCase().includes(query) ||
+                 item.data.author.name.toLowerCase().includes(query);
+        case 'vocab':
+           return item.data.korean.toLowerCase().includes(query) ||
+                  item.data.indonesian.toLowerCase().includes(query) ||
+                  item.data.author.name.toLowerCase().includes(query) ||
+                  (item.data.collection?.title.toLowerCase().includes(query) ?? false);
+        case 'user':
+          return item.data.name.toLowerCase().includes(query) ||
+                 item.data.bio?.toLowerCase().includes(query) ||
+                 item.data.email.toLowerCase().includes(query);
+        case 'soal':
+          return item.data.pertanyaan.toLowerCase().includes(query) ||
+                 item.data.author.name.toLowerCase().includes(query) ||
+                 (item.data.explanation?.toLowerCase().includes(query) ?? false);
+        default:
+          return false;
+      }
+    }
+    return true;
+  });
+
+  const renderCard = (item: ContentItem) => {
+    switch (item.type) {
+      case 'kelas':
+        return <KelasCard key={item.id} data={item.data} className="mb-4" />;
+      case 'vocab':
+        return <VocabItemCard key={item.id} data={item.data} className="mb-4" />;
+      case 'user':
+        return <UserProfileCard key={item.id} data={item.data} className="mb-4" />;
+      case 'soal':
+        return <SoalItemCard key={item.id} data={item.data} className="mb-4" />;
+      default:
+        return null;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading explore content...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>Try Again</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto px-6 py-10 max-w-4xl">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="text-center space-y-4 mb-10">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-          Explore Page
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          Coming soon - Discover Korean learning content and connect with teachers
-        </p>
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="container mx-auto px-4 py-6">
+          <div className="text-center mb-6">
+            <div className="flex items-center justify-center gap-2">
+              <Sparkles className="h-8 w-8 text-primary" />
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+                Explore
+              </h1>
+            </div>
+            <motion.div
+              initial={false}
+              animate={{
+                height: hideDescription ? 0 : "auto",
+                opacity: hideDescription ? 0 : 1
+              }}
+              transition={{
+                duration: 0.2,
+                ease: "easeOut"
+              }}
+              style={{ overflow: "hidden" }}
+            >
+              <p className="text-lg mt-2 text-muted-foreground max-w-2xl mx-auto">
+                Discover Korean learning content, connect with teachers, and explore vocabulary collections
+              </p>
+            </motion.div>
+          </div>
+
+          {/* Search and Filters */}
+          <div className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search content, teachers, or topics..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant={selectedFilter === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedFilter("all")}
+              >
+                All
+              </Button>
+              <Button
+                variant={selectedFilter === "kelas" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedFilter("kelas")}
+              >
+                Classes
+              </Button>
+              <Button
+                variant={selectedFilter === "vocab" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedFilter("vocab")}
+              >
+                Vocabulary
+              </Button>
+              <Button
+                variant={selectedFilter === "user" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedFilter("user")}
+              >
+                People
+              </Button>
+              <Button
+                variant={selectedFilter === "soal" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedFilter("soal")}
+              >
+                Questions
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Implementation Status */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            Implementation Status
-          </CardTitle>
-          <CardDescription>
-            Current status of explore page features
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {exploreFeatures.map((feature) => {
-              const IconComponent = feature.icon;
-              return (
-                <div key={feature.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-muted/50 rounded-lg">
-                      <IconComponent className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium">{feature.title}</h3>
-                      <p className="text-sm text-muted-foreground">{feature.description}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge className={getStatusColor(feature.status)}>
-                      {feature.status}
-                    </Badge>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      {feature.estimatedTime}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Content Grid */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6">
+          {filteredContent.map(renderCard)}
+        </div>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>
-            What would you like to do?
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Button variant="outline" className="h-20 flex flex-col gap-2">
-              <BookOpen className="h-6 w-6" />
-              <span>Browse Content</span>
-              <span className="text-xs opacity-70">Coming soon</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex flex-col gap-2">
-              <Users className="h-6 w-6" />
-              <span>Find Teachers</span>
-              <span className="text-xs opacity-70">Coming soon</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex flex-col gap-2">
-              <Brain className="h-6 w-6" />
-              <span>Practice Skills</span>
-              <span className="text-xs opacity-70">Coming soon</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex flex-col gap-2">
-              <MessageCircle className="h-6 w-6" />
-              <span>Join Community</span>
-              <span className="text-xs opacity-70">Coming soon</span>
-            </Button>
+        {filteredContent.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-muted-foreground">
+              <Filter className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg">No content found matching your criteria</p>
+              <p className="text-sm">Try adjusting your search or filters</p>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
     </div>
   );
 }

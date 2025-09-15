@@ -2,16 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { StatsCard } from "@/components/ui/stats-card";
-import { Plus, Users, Calendar, Lock, Search } from "lucide-react";
+import { StatsCard } from "@/components/dashboard/stats-card";
+import { Plus, Users, Search } from "lucide-react";
 import { BsCreditCard2Front } from "react-icons/bs";
 import { getGuruSoalSets } from "@/app/actions/kelas/soal-set";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { SoalSetForm } from "./soal-set-form";
+import { SoalCard } from "./soal-card";
 
 const SoalFilters = ({
   searchTerm,
@@ -298,52 +299,11 @@ export function ManageSoals({ embedded = false, soalSets: initialSoalSets }: Man
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredSoalSets.map((soalSet) => (
-            <Card key={soalSet.id} className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer py-0" onClick={() => handleEditSoal(soalSet)}>
-              {/* Media */}
-              <div className="relative">
-                <div className="relative w-full aspect-[16/9] bg-muted/40">
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary to-secondary">
-                    <BsCreditCard2Front className="h-12 w-12 text-primary-foreground" />
-                  </div>
-                  {/* gradient overlay */}
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
-
-                  {/* badges */}
-                  <div className="absolute top-2 left-2 flex gap-2">
-                    {soalSet.isPrivate && (
-                      <Badge variant="secondary" className="h-6 px-2 text-[10px]">
-                        Private
-                      </Badge>
-                    )}
-                    {soalSet.isDraft && (
-                      <Badge variant="secondary" className="h-6 px-2 text-[10px]">
-                        Draft
-                      </Badge>
-                    )}
-                  </div>
-
-                  {/* overlay: info at bottom */}
-                  <div className="absolute bottom-2 left-2 right-2">
-                    <div className="flex items-center gap-3 text-xs text-white/90">
-                      <span className="inline-flex items-center gap-1">
-                        <BsCreditCard2Front className="h-4 w-4" />
-                        {soalSet.soals.length} questions
-                      </span>
-                      <span>{new Date(soalSet.createdAt).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <CardContent className="sm:px-4 pt-0 pb-3 sm:pb-4">
-                <h3 className="text-sm sm:text-base font-semibold leading-snug line-clamp-2">
-                  {soalSet.nama}
-                </h3>
-                <p className="mt-1 text-xs sm:text-sm text-muted-foreground line-clamp-2">
-                  {soalSet.deskripsi || "No description available"}
-                </p>
-              </CardContent>
-            </Card>
+            <SoalCard
+              key={soalSet.id}
+              soalSet={soalSet}
+              onClick={() => handleEditSoal(soalSet)}
+            />
           ))}
         </div>
       )}

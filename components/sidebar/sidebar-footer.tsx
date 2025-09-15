@@ -19,7 +19,7 @@ import {
 import { signOut } from "@/lib/auth-client"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { ThemeToggle } from "@/components/theme/theme-toggle"
 
 interface AppSidebarFooterProps {
   session: ReturnType<typeof import("@/lib/hooks/use-session").useSession>
@@ -71,7 +71,11 @@ export function AppSidebarFooter({ session }: AppSidebarFooterProps) {
                 size="lg"
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               >
-                <Avatar className="h-8 w-8 rounded-lg">
+                <Avatar
+                  className="h-8 w-8 rounded-lg"
+                  userId={user.id as string}
+                  clickable={true}
+                >
                   <AvatarImage src={user.image as string} alt={user.name || "User"} />
                   <AvatarFallback className="rounded-lg">
                     {user.name
@@ -94,7 +98,11 @@ export function AppSidebarFooter({ session }: AppSidebarFooterProps) {
             >
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                  <Avatar className="h-8 w-8 rounded-lg">
+                  <Avatar
+                    className="h-8 w-8 rounded-lg"
+                    userId={user.id as string}
+                    clickable={true}
+                  >
                     <AvatarImage src={user.image as string} alt={user.name || "User"} />
                     <AvatarFallback className="rounded-lg">
                       {user.name
@@ -110,7 +118,7 @@ export function AppSidebarFooter({ session }: AppSidebarFooterProps) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/profile')}>
                 <User />
                 Account
               </DropdownMenuItem>

@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { StatsCard } from "@/components/ui/stats-card";
+import { StatsCard } from "@/components/dashboard/stats-card";
 import {
   Users,
   Settings,

@@ -36,6 +36,12 @@ const steps = [
     icon: FileText,
   },
   {
+    id: 'resources',
+    title: 'Koneksi Sumber Belajar',
+    description: 'Hubungkan kosakata dan soal ke kelas',
+    icon: BookOpen,
+  },
+  {
     id: 'review',
     title: 'Tinjau & Publikasikan',
     description: 'Tinjau dan publikasikan kursus',
@@ -57,6 +63,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
     prevStep,
     saveMeta,
     saveMateris,
+    saveResources,
     calculateOverallProgress,
     clearError,
     reset
@@ -96,8 +103,11 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
         } else {
           return { hasRequiredData: false, message: 'At least 1 lesson required' };
         }
-        
-        
+
+      case 'resources':
+        // Resources step is optional
+        return { hasRequiredData: true, message: 'Optional: Connect vocabulary and question sets' };
+
       case 'review':
         const metaComplete = meta.title.trim() !== '' && meta.description;
         const contentComplete = materis.length > 0;
@@ -130,6 +140,9 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
           break;
         case 'content':
           await saveMateris();
+          break;
+        case 'resources':
+          await saveResources();
           break;
         case 'review':
           await saveAllUnsavedContent();

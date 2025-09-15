@@ -35,7 +35,11 @@ export const createProgress: StateCreator<
       case 'content':
         if (state.materis.length === 0) return 0;
         return Math.min(100, (state.materis.length / 5) * 100); // Assuming 5 lessons is target
-        
+
+      case 'resources':
+        // Resources step is optional, so always consider it complete
+        return 100;
+
       case 'review':
         // Review step progress based on completion of previous steps
         const metaComplete = state.meta.title.trim() !== '' && state.meta.description;
@@ -52,7 +56,7 @@ export const createProgress: StateCreator<
 
   calculateOverallProgress: (): number => {
     const state = get();
-    const steps: BuilderStep[] = ['meta', 'content', 'review'];
+    const steps: BuilderStep[] = ['meta', 'content', 'resources', 'review'];
     
     const totalProgress = steps.reduce((sum, step) => {
       return sum + state.calculateStepProgress(step);

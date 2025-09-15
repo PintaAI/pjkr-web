@@ -18,21 +18,6 @@ interface Author {
   image: string | null;
 }
 
-interface Comment {
-  id: number;
-  content: string;
-  htmlContent?: string | null;
-  likeCount: number;
-  replyCount: number;
-  createdAt: Date;
-  isEdited: boolean;
-  author: Author;
-  replies?: Comment[];
-  _count: {
-    likes: number;
-    replies: number;
-  };
-}
 
 interface Post {
   id: number;
@@ -165,23 +150,20 @@ export default function PostThread({ post, currentUserId }: PostThreadProps) {
     <>
       <Card
         id={`post-${post.id}`}
-        className="overflow-hidden border-b rounded-none shadow-none m-0 cursor-pointer rounded-t-lg hover:bg-muted/50 transition-colors"
+        className="overflow-hidden border-b  shadow-none m-0 cursor-pointer mb-2 hover:bg-muted/50 transition-colors"
         onClick={() => setIsDetailSheetOpen(true)}
       >
         <CardContent>
           {/* Post Header - Twitter-like */}
           <div className="flex gap-3">
-            {/* Avatar - Clickable */}
-            <Link
-              href={`/profile/${post.author.id}`}
-              onClick={(e) => e.stopPropagation()}
-              className="shrink-0"
+            <Avatar
+              className="w-10 h-10 shrink-0"
+              userId={post.author.id}
+              clickable={true}
             >
-              <Avatar className="w-10 h-10 hover:ring-2 hover:ring-primary/20 transition-all cursor-pointer">
-                <AvatarImage src={post.author.image || ""} alt={post.author.name || "Unknown"} />
-                <AvatarFallback>{getAuthorInitials(post.author.name)}</AvatarFallback>
-              </Avatar>
-            </Link>
+              <AvatarImage src={post.author.image || ""} alt={post.author.name || "Unknown"} />
+              <AvatarFallback>{getAuthorInitials(post.author.name)}</AvatarFallback>
+            </Avatar>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
@@ -197,6 +179,9 @@ export default function PostThread({ post, currentUserId }: PostThreadProps) {
                 <span className="text-sm text-muted-foreground">
                   {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
                 </span>
+                <Badge variant="outline" className={cn("text-xs", getTypeColor(post.type))}>
+                  {post.type}
+                </Badge>
               </div>
 
               {/* Badges */}
@@ -207,11 +192,8 @@ export default function PostThread({ post, currentUserId }: PostThreadProps) {
                     Pinned
                   </Badge>
                 )}
-                <Badge variant="outline" className={cn("text-xs", getTypeColor(post.type))}>
-                  {post.type}
-                </Badge>
                 {post.viewCount > 0 && (
-                  <span className="inline-flex items-center text-xs text-muted-foreground ml-auto">
+                  <span className="inline-flex items-center text-xs text-muted-foreground">
                     <Eye className="w-3.5 h-3.5 mr-1" />
                     {post.viewCount}
                   </span>

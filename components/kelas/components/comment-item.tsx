@@ -108,14 +108,16 @@ export default function CommentItem({
     <TooltipProvider>
       <div className={cn(isReply ? "ml-8 pl-4 border-l border-muted/40" : "")}>
         <div className="flex gap-3">
-          <Link href={`/profile/${comment.author.id}`}>
-            <Avatar className="w-8 h-8 mt-1 hover:ring-2 hover:ring-primary/20 transition-all cursor-pointer">
-              <AvatarImage src={comment.author.image || ""} alt={comment.author.name || "Unknown"} />
-              <AvatarFallback className="text-xs">
-                {getAuthorInitials(comment.author.name)}
-              </AvatarFallback>
-            </Avatar>
-          </Link>
+          <Avatar
+            className="w-8 h-8 mt-1"
+            userId={comment.author.id}
+            clickable={true}
+          >
+            <AvatarImage src={comment.author.image || ""} alt={comment.author.name || "Unknown"} />
+            <AvatarFallback className="text-xs">
+              {getAuthorInitials(comment.author.name)}
+            </AvatarFallback>
+          </Avatar>
 
           <div className="flex-1 min-w-0">
             <div className="bg-muted/30 rounded-lg p-3">

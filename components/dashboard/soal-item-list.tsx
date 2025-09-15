@@ -102,7 +102,7 @@ export function SoalItemList({ items, onEdit, onDelete, onAdd, onQuickAdd }: Soa
             <HelpCircle className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-sm font-semibold mb-2">No questions yet</h3>
             <p className="text-xs text-muted-foreground text-center">
-              Click "Add Question" or use the quick add above to get started.
+              tambahkan soal dengan mengklik tombol Add Question di atas atau gunakan fitur quick add.
             </p>
           </CardContent>
         </Card>

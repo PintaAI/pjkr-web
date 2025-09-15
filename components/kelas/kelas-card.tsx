@@ -34,7 +34,6 @@ export type MinimalKelas = {
   level: Difficulty;
   thumbnail: string | null;
   isPaidClass: boolean;
-  price: number | null;
   author: {
     id: string;
     name: string | null;
@@ -117,7 +116,7 @@ export function KelasCard({
 
   return (
     <Card
-      className={`group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer py-0 ${className}`}
+      className={`group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer py-0  ${className}`}
       onClick={handleView}
     >
       {/* Media */}
@@ -133,8 +132,8 @@ export function KelasCard({
               priority={false}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-muted">
-              <BookOpen className="h-12 w-12 text-muted-foreground" />
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary to-secondary">
+              <BookOpen className="h-12 w-12 text-primary-foreground" />
             </div>
           )}
           {/* gradient overlay (flip upwards to support footer overlay) */}
@@ -264,7 +263,11 @@ export function KelasCard({
             <div className="flex items-center gap-3">
               {/* Author */}
               <div className="flex min-w-0 items-center gap-2">
-                <Avatar className="h-7 w-7">
+                <Avatar
+                  className="h-7 w-7"
+                  userId={data.author.id}
+                  clickable={true}
+                >
                   <AvatarImage src={data.author.image || ""} />
                   <AvatarFallback className="text-xs">
                     {data.author.name?.charAt(0) || "U"}
@@ -298,9 +301,12 @@ export function KelasCard({
         <h3 className="text-sm sm:text-base font-semibold leading-snug line-clamp-2">
           {data.title}
         </h3>
-        <p className="mt-1 text-xs sm:text-sm text-muted-foreground line-clamp-2">
-          {data.description || "No description available"}
-        </p>
+        <p
+          className="mt-1 text-xs sm:text-sm text-muted-foreground line-clamp-2"
+          dangerouslySetInnerHTML={{
+            __html: data.description || "No description available"
+          }}
+        />
 
       </CardContent>
     </Card>

@@ -1,10 +1,10 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
-import { StatsCard } from "./ui/stats-card";
-import DailyVocab from "./home/daily-vocab";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
+import { StatsCard } from "../dashboard/stats-card";
+import DailyVocab from "./daily-vocab";
 import {
   BookOpen,
   Users,
@@ -19,7 +19,7 @@ import {
   Brain,
   Headphones
 } from 'lucide-react';
-import { SearchComponent } from "./ui/search";
+import { SearchComponent } from "../ui/search";
 
 interface User {
   id: string;

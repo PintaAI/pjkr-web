@@ -10,7 +10,7 @@ interface KelasColorExtractorProps {
 }
 
 export const KelasColorExtractor = ({ thumbnailUrl, onColorsExtracted }: KelasColorExtractorProps) => {
-  const { colors, isExtracting, handleColorExtraction } = useKelasColors(thumbnailUrl)
+  const { colors,  handleColorExtraction } = useKelasColors(thumbnailUrl)
 
   // Call the callback when colors are extracted
   React.useEffect(() => {

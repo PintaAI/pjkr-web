@@ -1,4 +1,4 @@
-import Homescreen from "@/components/homescreen";
+import Homescreen from "@/components/home/homescreen";
 import { getServerSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";

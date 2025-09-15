@@ -11,7 +11,7 @@ import { saveVocabularySet } from "@/app/actions/kelas/vocabulary";
 import { VocabularyType, PartOfSpeech } from "@prisma/client";
 import { VocabItemList } from "./vocab-item-list";
 import { VocabItemForm } from "./vocab-item-form";
-import { IconPicker, IconRenderer } from "@/components/ui/icon-picker";
+import { IconPicker, } from "@/components/shared/icon-picker";
 
 
 interface VocabItem {

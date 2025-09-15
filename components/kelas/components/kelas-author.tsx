@@ -18,7 +18,11 @@ export default function KelasAuthor({ author }: KelasAuthorProps) {
 
   return (
     <div className="relative flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
-      <Avatar className="w-10 h-10">
+      <Avatar
+        className="w-10 h-10"
+        userId={author.id}
+        clickable={true}
+      >
         <AvatarImage src={author.image || ""} alt={author.name || "Unknown"} />
         <AvatarFallback
           className="text-sm"

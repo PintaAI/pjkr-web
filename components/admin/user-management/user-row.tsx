@@ -28,7 +28,11 @@ export function UserRow({ user, isSelected, onSelect, onEdit, onDelete, onToggle
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-3">
-          <Avatar className="h-8 w-8">
+          <Avatar
+            className="h-8 w-8"
+            userId={user.id}
+            clickable={true}
+          >
             <AvatarImage src={user.image || ""} alt={user.name || ""} />
             <AvatarFallback>
               {user.name ? user.name.split(' ').map(n => n[0]).join('') : user.email[0].toUpperCase()}

@@ -2,20 +2,38 @@
 
 import * as React from "react"
 import * as AvatarPrimitive from "@radix-ui/react-avatar"
+import { useRouter } from "next/navigation"
 
 import { cn } from "@/lib/utils"
 
+interface AvatarProps extends React.ComponentProps<typeof AvatarPrimitive.Root> {
+  userId?: string
+  clickable?: boolean
+}
+
 function Avatar({
   className,
+  userId,
+  clickable = false,
   ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Root>) {
+}: AvatarProps) {
+  const router = useRouter()
+
+  const handleClick = () => {
+    if (clickable && userId) {
+      router.push(`/profile/${userId}`)
+    }
+  }
+
   return (
     <AvatarPrimitive.Root
       data-slot="avatar"
       className={cn(
         "relative flex size-8 shrink-0 overflow-hidden rounded-full",
+        clickable && "cursor-pointer hover:opacity-80 transition-opacity",
         className
       )}
+      onClick={handleClick}
       {...props}
     />
   )

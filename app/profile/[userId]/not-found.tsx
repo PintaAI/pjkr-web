@@ -16,7 +16,7 @@ export default function ProfileNotFound() {
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <p className="text-muted-foreground">
-              The user profile you're looking for doesn't exist or may have been removed.
+              user tidak ditemukan. Mungkin sudah dihapus atau URL-nya salah.
             </p>
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
               <Button asChild variant="outline">

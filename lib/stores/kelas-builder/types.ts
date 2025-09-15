@@ -29,11 +29,42 @@ export interface MateriData {
 }
 
 // The steps in the builder UI
-export type BuilderStep = 'meta' | 'content' | 'review';
+export type BuilderStep = 'meta' | 'content' | 'resources' | 'review';
 
 export type ActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: string };
+
+// Vocabulary set structure
+export interface VocabularySet {
+  id: number;
+  title: string;
+  description: string | null;
+  icon: string | null;
+  isPublic: boolean;
+  userId: string | null;
+  kelasId: number | null;
+  items: Array<{
+    id: number;
+    korean: string;
+    indonesian: string;
+    type: string;
+  }>;
+  kelas: {
+    id: number;
+    title: string;
+    level: string;
+  } | null;
+  user: {
+    id: string;
+    name: string | null;
+  } | null;
+}
+
+// Resources data structures
+export interface ResourcesData {
+  connectedVocabSets: VocabularySet[];
+}
 
 // The complete state of the Zustand store, combining all slices
 export interface KelasBuilderState {
@@ -51,6 +82,7 @@ export interface KelasBuilderState {
   // Slices
   meta: KelasMetaData;
   materis: MateriData[];
+  resources: ResourcesData;
   currentStep: BuilderStep;
   stepDirtyFlags: Record<BuilderStep, boolean>;
 
@@ -74,6 +106,13 @@ export interface KelasBuilderState {
   reorderMateris: (fromId: number | string, toId: number | string) => void;
   toggleMateriDraft: (id: number | string) => Promise<void>;
   saveMateris: () => Promise<void>;
+
+  // Resources
+  updateResources: (resources: Partial<ResourcesData>) => void;
+  addVocabConnection: (vocabSetId: number, vocabSetData: any) => void;
+  removeVocabConnection: (vocabSetId: number) => void;
+  saveResources: () => Promise<void>;
+  loadResources: () => Promise<void>;
  
   // Global Actions
   createDraft: (initialMeta: KelasMetaData) => Promise<void>;

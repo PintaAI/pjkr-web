@@ -201,7 +201,7 @@ export function VocabItemList({ items, onEdit, onDelete, onAdd, onQuickAdd }: Vo
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-                  No vocabulary items yet. Click "Add Item" to get started.
+                  No vocabulary items yet. Click Add Item to get started.
                 </TableCell>
               </TableRow>
             )}

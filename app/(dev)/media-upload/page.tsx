@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { MediaUpload } from '@/components/ui/media-upload';
-import { CloudinaryImage } from '@/components/ui/cloudinary-image';
+import { CloudinaryImage } from '@/components/media/cloudinary-image';
 import { useMediaUpload } from '@/lib/hooks/use-media-upload';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

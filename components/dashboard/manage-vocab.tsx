@@ -2,16 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { StatsCard } from "@/components/ui/stats-card";
-import { Plus, BookOpen, Users, Calendar, Edit, Search } from "lucide-react";
+import { StatsCard } from "@/components/dashboard/stats-card";
+import { Plus, BookOpen, Users, Search } from "lucide-react";
 import { getGuruVocabularySets } from "@/app/actions/kelas/vocabulary";
 import { VocabCollectionForm } from "./vocab-collection-form";
-import { IconRenderer } from "@/components/ui/icon-picker";
+
+import { VocabCard } from "./vocab-card";
 
 const VocabFilters = ({
   searchTerm,
@@ -300,51 +301,11 @@ export function ManageVocab({ embedded = false, vocabSets: initialVocabSets }: M
             </Card>
 
             {filteredVocabSets.map((vocabSet) => (
-              <Card key={vocabSet.id} className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer py-0" onClick={() => handleEditVocab(vocabSet)}>
-                {/* Media */}
-                <div className="relative">
-                  <div className="relative w-full aspect-[16/9] bg-muted/40">
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary to-secondary">
-                      {vocabSet.icon ? (
-                        <IconRenderer icon={vocabSet.icon} className="h-12 w-12 text-primary-foreground" />
-                      ) : (
-                        <BookOpen className="h-12 w-12 text-primary-foreground" />
-                      )}
-                    </div>
-                    {/* gradient overlay */}
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
-
-                    {/* badges */}
-                    <div className="absolute top-2 left-2 flex gap-2">
-                      {vocabSet.isPublic && (
-                        <Badge variant="secondary" className="h-6 px-2 text-[10px]">
-                          Public
-                        </Badge>
-                      )}
-                    </div>
-
-                    {/* overlay: info at bottom */}
-                    <div className="absolute bottom-2 left-2 right-2">
-                      <div className="flex items-center gap-3 text-xs text-white/90">
-                        <span className="inline-flex items-center gap-1">
-                          <BookOpen className="h-4 w-4" />
-                          {vocabSet.items.length} items
-                        </span>
-                        <span>{new Date(vocabSet.createdAt).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <CardContent className="sm:px-4 pt-0 pb-3 sm:pb-4">
-                  <h3 className="text-sm sm:text-base font-semibold leading-snug line-clamp-2">
-                    {vocabSet.title}
-                  </h3>
-                  <p className="mt-1 text-xs sm:text-sm text-muted-foreground line-clamp-2">
-                    {vocabSet.description || "No description available"}
-                  </p>
-                </CardContent>
-              </Card>
+              <VocabCard
+                key={vocabSet.id}
+                vocabSet={vocabSet}
+                onClick={() => handleEditVocab(vocabSet)}
+              />
             ))}
           </div>
         )}

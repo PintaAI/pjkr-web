@@ -278,13 +278,14 @@ export default function PostDetailSheet({ post, currentUserId, isOpen, onOpenCha
           <Card className="border-0 shadow-none">
             <CardContent className="p-0">
               <div className="flex gap-3">
-                {/* Avatar - Clickable */}
-                <Link href={`/profile/${post.author.id}`}>
-                  <Avatar className="w-10 h-10 shrink-0 hover:ring-2 hover:ring-primary/20 transition-all cursor-pointer">
-                    <AvatarImage src={post.author.image || ""} alt={post.author.name || "Unknown"} />
-                    <AvatarFallback>{getAuthorInitials(post.author.name)}</AvatarFallback>
-                  </Avatar>
-                </Link>
+                <Avatar
+                  className="w-10 h-10 shrink-0"
+                  userId={post.author.id}
+                  clickable={true}
+                >
+                  <AvatarImage src={post.author.image || ""} alt={post.author.name || "Unknown"} />
+                  <AvatarFallback>{getAuthorInitials(post.author.name)}</AvatarFallback>
+                </Avatar>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">

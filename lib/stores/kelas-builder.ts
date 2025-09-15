@@ -7,6 +7,7 @@ import { createProgress, type Progress } from './kelas-builder/progress';
 import { createNavigation, type Navigation } from './kelas-builder/navigation';
 import { createMeta, type Meta, initialMeta } from './kelas-builder/meta';
 import { createContent, type Content } from './kelas-builder/content';
+import { createResources, type Resources, initialResources } from './kelas-builder/resources';
 
 import {
   createDraftKelas,
@@ -24,7 +25,8 @@ type Store = KelasBuilderState &
   Progress &
   Navigation &
   Meta &
-  Content;
+  Content &
+  Resources;
 
 export const useKelasBuilderStore = create<Store>()(
   devtools(
@@ -40,6 +42,7 @@ export const useKelasBuilderStore = create<Store>()(
         ...createNavigation(set, get, store),
         ...createMeta(set, get, store),
         ...createContent(set, get, store),
+        ...createResources(set, get, store),
 
         // Global Actions
         createDraft: async (initialMeta: KelasMetaData) => {
@@ -105,6 +108,9 @@ export const useKelasBuilderStore = create<Store>()(
                 isLoading: false,
                 currentStep: 'meta',
               });
+              
+              // Load resources after setting the draft
+              await get().loadResources();
               toast.success('Class loaded successfully');
             } else {
               throw new Error(result.error || 'Failed to load draft');
@@ -199,9 +205,11 @@ export const useKelasBuilderStore = create<Store>()(
             error: null,
             meta: initialMeta,
             materis: [],
+            resources: initialResources,
             stepDirtyFlags: {
               meta: false,
               content: false,
+              resources: false,
               review: false,
             },
             optimisticUpdates: {},
