@@ -48,7 +48,7 @@ export default function PostThread({ post, currentUserId }: PostThreadProps) {
   const [isLiking, setIsLiking] = useState(false);
   const [liked, setLiked] = useState(post.userLiked || false);
   const [localLikeCount, setLocalLikeCount] = useState(post._count.likes);
-  const [localCommentCount, setLocalCommentCount] = useState(post._count.comments);
+  const [localCommentCount] = useState(post._count.comments);
   const [expanded, setExpanded] = useState(false);
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false);
 

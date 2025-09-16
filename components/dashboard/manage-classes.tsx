@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BookOpen,
   Users,
@@ -84,24 +83,23 @@ const useClassManagement = (initialClasses: any[]) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<KelasType | "ALL">("ALL");
   const [filterLevel, setFilterLevel] = useState<Difficulty | "ALL">("ALL");
+  const [filterStatus, setFilterStatus] = useState<"ALL" | "PUBLISHED" | "DRAFT">("ALL");
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
   const [isPublishing, setIsPublishing] = useState<number | null>(null);
   const [isUnpublishing, setIsUnpublishing] = useState<number | null>(null);
 
-
-  // Derived state
-  const draftClasses = classes.filter(cls => cls.isDraft);
-  const publishedClasses = classes.filter(cls => !cls.isDraft);
-
   // Filter functions
-  const filteredClasses = (classList: KelasItem[]) => {
-    return classList.filter(cls => {
+  const filteredClasses = () => {
+    return classes.filter(cls => {
       const matchesSearch = cls.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            cls.description?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesType = filterType === "ALL" || cls.type === filterType;
       const matchesLevel = filterLevel === "ALL" || cls.level === filterLevel;
-      
-      return matchesSearch && matchesType && matchesLevel;
+      const matchesStatus = filterStatus === "ALL" ||
+                           (filterStatus === "PUBLISHED" && !cls.isDraft) ||
+                           (filterStatus === "DRAFT" && cls.isDraft);
+
+      return matchesSearch && matchesType && matchesLevel && matchesStatus;
     });
   };
 
@@ -170,11 +168,11 @@ const useClassManagement = (initialClasses: any[]) => {
     setFilterType,
     filterLevel,
     setFilterLevel,
+    filterStatus,
+    setFilterStatus,
     isDeleting,
     isPublishing,
     isUnpublishing,
-    draftClasses,
-    publishedClasses,
     filteredClasses,
     handleDeleteClass,
     handlePublishClass,
@@ -217,7 +215,9 @@ const ClassFilters = ({
   filterType,
   setFilterType,
   filterLevel,
-  setFilterLevel
+  setFilterLevel,
+  filterStatus,
+  setFilterStatus
 }: {
   searchTerm: string;
   setSearchTerm: (value: string) => void;
@@ -225,6 +225,8 @@ const ClassFilters = ({
   setFilterType: (value: KelasType | "ALL") => void;
   filterLevel: Difficulty | "ALL";
   setFilterLevel: (value: Difficulty | "ALL") => void;
+  filterStatus: "ALL" | "PUBLISHED" | "DRAFT";
+  setFilterStatus: (value: "ALL" | "PUBLISHED" | "DRAFT") => void;
 }) => (
   <div className="flex flex-col sm:flex-row gap-4 mt-4 mb-8">
     <div className="relative flex-1">
@@ -236,7 +238,7 @@ const ClassFilters = ({
         className="pl-10"
       />
     </div>
-    
+
     <Select value={filterType} onValueChange={(value) => setFilterType(value as KelasType | "ALL")}>
       <SelectTrigger className="w-full sm:w-48">
         <SelectValue placeholder="Class Type" />
@@ -260,6 +262,17 @@ const ClassFilters = ({
             {level.label}
           </SelectItem>
         ))}
+      </SelectContent>
+    </Select>
+
+    <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as "ALL" | "PUBLISHED" | "DRAFT")}>
+      <SelectTrigger className="w-full sm:w-48">
+        <SelectValue placeholder="Status" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="ALL">All Classes</SelectItem>
+        <SelectItem value="PUBLISHED">Published</SelectItem>
+        <SelectItem value="DRAFT">Draft</SelectItem>
       </SelectContent>
     </Select>
   </div>
@@ -294,102 +307,47 @@ const StatsCards = ({ stats }: { stats: ReturnType<typeof calculateStats> }) => 
   </div>
 );
 
-const EmptyState = ({ type, onCreateClass }: { type: "draft" | "published"; onCreateClass: () => void }) => (
-  <Card className="text-center py-12">
-    <CardContent>
-      <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-      <h3 className="text-lg font-semibold mb-2">
-        No {type} classes yet
-      </h3>
-      <p className="text-muted-foreground mb-4">
-        {type === "draft"
-          ? "Start creating your first class to share your knowledge with students."
-          : "Publish your draft classes to make them available to students."
-        }
-      </p>
-      {type === "draft" && (
-        <Button onClick={onCreateClass}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create New Class
-        </Button>
-      )}
-    </CardContent>
-  </Card>
-);
 
-const ClassTabs = ({
-  draftClasses,
-  publishedClasses,
-  filteredDrafts,
-  filteredPublished,
+
+const ClassGrid = ({
+  filteredClasses,
   onCreateClass,
   onDeleteClass,
   onPublishClass,
   onUnpublishClass
 }: {
-  draftClasses: any[];
-  publishedClasses: any[];
-  filteredDrafts: KelasItem[];
-  filteredPublished: KelasItem[];
+  filteredClasses: KelasItem[];
   onCreateClass: () => void;
   onDeleteClass: (id: number) => void;
   onPublishClass: (id: number) => void;
   onUnpublishClass: (id: number) => void;
 }) => (
-  <Tabs defaultValue="published" className="w-full">
-    <TabsList>
-      <TabsTrigger value="published">
-        Published ({publishedClasses.length})
-      </TabsTrigger>
-      <TabsTrigger value="drafts">
-        Drafts ({draftClasses.length})
-      </TabsTrigger>
-    </TabsList>
-
-    <TabsContent value="drafts">
-      {filteredDrafts.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredDrafts.map((cls) => (
-            <ClassCard
-              key={cls.id}
-              cls={cls}
-              actions={{
-                onView: (id: number) => (window.location.href = `/kelas/${id}`),
-                onEdit: (id: number) => (window.location.href = `/dashboard/guru/kelas-builder?edit=${id}`),
-                onDelete: (id: number) => onDeleteClass(id),
-                onPublish: (id: number) => onPublishClass(id),
-                onUnpublish: (id: number) => onUnpublishClass(id),
-              }}
-            />
-          ))}
-        </div>
-      ) : (
-        <EmptyState type="draft" onCreateClass={onCreateClass} />
-      )}
-    </TabsContent>
-
-    <TabsContent value="published">
-      {filteredPublished.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredPublished.map((cls) => (
-            <ClassCard
-              key={cls.id}
-              cls={cls}
-              actions={{
-                onView: (id: number) => (window.location.href = `/kelas/${id}`),
-                onEdit: (id: number) => (window.location.href = `/dashboard/guru/kelas-builder?edit=${id}`),
-                onDelete: (id: number) => onDeleteClass(id),
-                onPublish: (id: number) => onPublishClass(id),
-                onUnpublish: (id: number) => onUnpublishClass(id),
-              }}
-            />
-          ))}
-        </div>
-      ) : (
-        <EmptyState type="published" onCreateClass={onCreateClass} />
-      )}
-    </TabsContent>
-  </Tabs>
+  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <Card className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer border-dashed border-2" onClick={onCreateClass}>
+      <CardContent className="flex flex-col items-center justify-center h-48">
+        <Plus className="h-12 w-12 text-muted-foreground mb-4" />
+        <h3 className="text-sm sm:text-base font-semibold leading-snug text-center">
+          Create New Class
+        </h3>
+        <p className="mt-1 text-xs sm:text-sm text-muted-foreground text-center">
+          Start building a new class
+        </p>
+      </CardContent>
+    </Card>
+    {filteredClasses.map((cls) => (
+      <ClassCard
+        key={cls.id}
+        cls={cls}
+        actions={{
+          onView: (id: number) => (window.location.href = `/kelas/${id}`),
+          onEdit: (id: number) => (window.location.href = `/dashboard/guru/kelas-builder?edit=${id}`),
+          onDelete: (id: number) => onDeleteClass(id),
+          onPublish: (id: number) => onPublishClass(id),
+          onUnpublish: (id: number) => onUnpublishClass(id),
+        }}
+      />
+    ))}
+  </div>
 );
 
 export function ManageClasses({ classes: initialClasses, embedded = false }: Omit<ManageClassesProps, 'user'>) {
@@ -431,19 +389,36 @@ export function ManageClasses({ classes: initialClasses, embedded = false }: Omi
         setFilterType={management.setFilterType}
         filterLevel={management.filterLevel}
         setFilterLevel={management.setFilterLevel}
+        filterStatus={management.filterStatus}
+        setFilterStatus={management.setFilterStatus}
       />
 
-      {/* Classes Tabs */}
-      <ClassTabs
-        draftClasses={management.draftClasses}
-        publishedClasses={management.publishedClasses}
-        filteredDrafts={management.filteredClasses(management.draftClasses)}
-        filteredPublished={management.filteredClasses(management.publishedClasses)}
-        onCreateClass={handleCreateClass}
-        onDeleteClass={management.handleDeleteClass}
-        onPublishClass={management.handlePublishClass}
-        onUnpublishClass={management.handleUnpublishClass}
-      />
+      {/* Classes Grid */}
+      {management.filteredClasses().length > 0 ? (
+        <ClassGrid
+          filteredClasses={management.filteredClasses()}
+          onCreateClass={handleCreateClass}
+          onDeleteClass={management.handleDeleteClass}
+          onPublishClass={management.handlePublishClass}
+          onUnpublishClass={management.handleUnpublishClass}
+        />
+      ) : (
+        <Card className="text-center py-12">
+          <CardContent>
+            <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">
+              No classes found
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              Try adjusting your search or filters, or create your first class.
+            </p>
+            <Button onClick={handleCreateClass}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create New Class
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

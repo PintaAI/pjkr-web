@@ -1,8 +1,6 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
 import { StatsCard } from "../dashboard/stats-card";
 import DailyVocab from "./daily-vocab";
 import {
@@ -10,9 +8,8 @@ import {
   Users,
 
   Trophy,
-  Star,
+
   Zap,
-  Clock,
 
   Target,
   Flame,
@@ -194,51 +191,6 @@ export default function Homescreen({ user }: HomescreenProps) {
         <div className="space-y-6">
           <DailyVocab user={user} take={5}/>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>
-                Your latest learning activity
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {mockData.upcomingActivities.map((activity, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      {activity.type === "Assignment" && <BookOpen className="h-4 w-4 text-primary" />}
-                      {activity.type === "Quiz" && <Brain className="h-4 w-4 text-primary" />}
-                      {activity.type === "Review" && <Star className="h-4 w-4 text-primary" />}
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium text-sm">{activity.title}</p>
-                        <Badge
-                          variant={
-                            activity.priority === "high"
-                              ? "destructive"
-                              : activity.priority === "medium"
-                              ? "default"
-                              : "secondary"
-                          }
-                          className="text-xs"
-                        >
-                          {activity.type}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        <span>{activity.time}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Button variant="outline" className="w-full mt-4">
-                View Schedule
-              </Button>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

@@ -177,7 +177,7 @@ export async function GET() {
       author: {
         id: soal.author.id,
         name: soal.author.name,
-        image: soal.author.image || '/api/placeholder/40/40'
+        image: soal.author.image 
       },
       isActive: soal.isActive,
       collectionName: soal.koleksiSoal.nama,

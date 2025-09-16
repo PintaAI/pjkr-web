@@ -127,7 +127,7 @@ export function ManageSoals({ embedded = false, soalSets: initialSoalSets }: Man
           } else {
             setError(result.error || "Failed to load soal sets");
           }
-        } catch (err) {
+        } catch {
           setError("Failed to load soal sets");
         } finally {
           setLoading(false);
@@ -298,6 +298,17 @@ export function ManageSoals({ embedded = false, soalSets: initialSoalSets }: Man
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <Card className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer border-dashed border-2" onClick={handleCreateSoal}>
+            <CardContent className="flex flex-col items-center justify-center h-48">
+              <Plus className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-sm sm:text-base font-semibold leading-snug text-center">
+                Create New Set
+              </h3>
+              <p className="mt-1 text-xs sm:text-sm text-muted-foreground text-center">
+                Add a new soal set
+              </p>
+            </CardContent>
+          </Card>
           {filteredSoalSets.map((soalSet) => (
             <SoalCard
               key={soalSet.id}

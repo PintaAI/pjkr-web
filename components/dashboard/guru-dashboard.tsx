@@ -11,7 +11,8 @@ import {
   PlusCircle,
   Calendar,
   Wrench,
-  FileQuestion
+  FileQuestion,
+  BarChart3
 } from "lucide-react";
 import Link from "next/link";
 
@@ -20,6 +21,7 @@ import { SearchComponent } from "@/components/ui/search";
 import { ManageClasses } from "@/components/dashboard/manage-classes";
 import { ManageVocab } from "@/components/dashboard/manage-vocab";
 import { ManageSoals } from "@/components/dashboard/manage-soals";
+import { GuruDashboardStatistics } from "@/components/dashboard/guru-dashboard-statistics";
 import { getGuruVocabularySets } from "@/app/actions/kelas/vocabulary";
 import { getGuruSoalSets } from "@/app/actions/kelas/soal-set";
 import { useEffect, useState } from "react";
@@ -245,6 +247,10 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
             <FileQuestion className="w-4 h-4 mr-2" />
             Manage Soals
           </TabsTrigger>
+          <TabsTrigger value="statistics" className="flex-1">
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Statistics
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="tools">
@@ -306,6 +312,10 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
 
         <TabsContent value="soals">
           <ManageSoals embedded={true} soalSets={soalSets} />
+        </TabsContent>
+
+        <TabsContent value="statistics">
+          <GuruDashboardStatistics />
         </TabsContent>
       </Tabs>
 

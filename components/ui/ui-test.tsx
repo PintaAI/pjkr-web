@@ -1,3 +1,4 @@
+import { ThemeToggle } from "../theme/theme-toggle"
 import { Avatar, AvatarFallback } from "./avatar"
 import { 
   Breadcrumb, 
@@ -35,7 +36,7 @@ import { Skeleton } from "./skeleton"
 import { Switch } from "./switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs"
-import { ThemeToggle } from "@/components/theme-toggle"
+
 import { 
   Heart, 
   Star, 

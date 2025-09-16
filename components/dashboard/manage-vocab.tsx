@@ -124,7 +124,7 @@ export function ManageVocab({ embedded = false, vocabSets: initialVocabSets }: M
       } else {
         setError(result.error || "Failed to load vocabulary sets");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to load vocabulary sets");
     } finally {
       setLoading(false);

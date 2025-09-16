@@ -92,31 +92,34 @@ type ContentItem =
   | { type: 'user'; data: UserContent; id: string }
   | { type: 'soal'; data: SoalContent; id: string };
 
-export default function ExplorePage() {
-  const [content, setContent] = useState<ContentItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [hideDescription, setHideDescription] = useState(false);
+interface ExplorePageProps {
+   initialData?: ContentItem[];
+}
 
-  useEffect(() => {
-    const fetchContent = async () => {
-      try {
-        const response = await fetch('/api/explore');
-        const data = await response.json();
-        if (data.success) {
-          setContent(data.data);
-        } else {
-          setError('Failed to load content');
-        }
-      } catch (err) {
-        setError('Failed to load content');
-      } finally {
-        setLoading(false);
-      }
-    };
+export default function ExplorePage({ initialData = [] }: ExplorePageProps) {
+   const [content, setContent] = useState<ContentItem[]>(initialData);
+   const [error, setError] = useState<string | null>(null);
+   const [hideDescription, setHideDescription] = useState(false);
 
-    fetchContent();
-  }, []);
+   useEffect(() => {
+     if (initialData.length === 0) {
+       const fetchContent = async () => {
+         try {
+           const response = await fetch('/api/explore');
+           const data = await response.json();
+           if (data.success) {
+             setContent(data.data);
+           } else {
+             setError('Failed to load content');
+           }
+         } catch {
+           setError('Failed to load content');
+         }
+       };
+
+       fetchContent();
+     }
+   }, [initialData.length]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -175,27 +178,6 @@ export default function ExplorePage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading explore content...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-500 mb-4">{error}</p>
-          <Button onClick={() => window.location.reload()}>Try Again</Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">

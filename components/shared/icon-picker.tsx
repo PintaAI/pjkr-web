@@ -2,10 +2,11 @@
 
 import * as FaIcons from "react-icons/fa";
 import { useIconPicker } from "../../hooks/use-icon-picker";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./dialog";
-import { Input } from "./input";
-import { Button } from "./button";
+
 import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 
 // IconRenderer Component
 export const IconRenderer = ({
