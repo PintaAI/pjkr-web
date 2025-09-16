@@ -5,49 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, } from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatsCard } from "@/components/dashboard/stats-card";
-import { Plus, BookOpen, Users, Search } from "lucide-react";
+import { Plus, BookOpen, Users } from "lucide-react";
 import { getGuruVocabularySets } from "@/app/actions/kelas/vocabulary";
 import { VocabCollectionForm } from "./vocab-collection-form";
 
+import { SearchFilters } from "@/components/ui/search-filters";
 import { VocabCard } from "./vocab-card";
 
-const VocabFilters = ({
-  searchTerm,
-  setSearchTerm,
-  filterPublic,
-  setFilterPublic
-}: {
-  searchTerm: string;
-  setSearchTerm: (value: string) => void;
-  filterPublic: "ALL" | "PUBLIC" | "PRIVATE";
-  setFilterPublic: (value: "ALL" | "PUBLIC" | "PRIVATE") => void;
-}) => (
-  <div className="flex flex-col sm:flex-row gap-4 mt-4 mb-8">
-    <div className="relative flex-1">
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-      <Input
-        placeholder="Search vocabulary sets..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="pl-10"
-      />
-    </div>
-    
-    <Select value={filterPublic} onValueChange={(value) => setFilterPublic(value as "ALL" | "PUBLIC" | "PRIVATE")}>
-      <SelectTrigger className="w-full sm:w-48">
-        <SelectValue placeholder="Visibility" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="ALL">All Sets</SelectItem>
-        <SelectItem value="PUBLIC">Public</SelectItem>
-        <SelectItem value="PRIVATE">Private</SelectItem>
-      </SelectContent>
-    </Select>
-  </div>
-);
 
 const VocabStatsCards = ({ stats }: { stats: { totalSets: number; totalItems: number; publicSets: number; privateSets: number } }) => (
   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -176,8 +141,10 @@ export function ManageVocab({ embedded = false, vocabSets: initialVocabSets }: M
     setEditingVocabSet(null);
   };
 
-  if (loading) {
-    return (
+
+
+  return (
+    <>
       <div className={embedded ? "" : "container mx-auto px-6 py-8 max-w-6xl"}>
         {!embedded && (
           <>
@@ -193,121 +160,90 @@ export function ManageVocab({ embedded = false, vocabSets: initialVocabSets }: M
                 Create Vocabulary Set
               </Button>
             </div>
-
-            {/* Stats Cards */}
-            <VocabStatsCards stats={{ totalSets, totalItems, publicSets, privateSets }} />
+            {!error && <VocabStatsCards stats={{ totalSets, totalItems, publicSets, privateSets }} />}
           </>
         )}
 
         {/* Filters */}
-        <VocabFilters
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          filterPublic={filterPublic}
-          setFilterPublic={setFilterPublic}
-        />
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={embedded ? "" : "container mx-auto px-6 py-8 max-w-6xl"}>
-        {!embedded && (
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Manage Vocabulary</h1>
-              <p className="text-muted-foreground">
-                View and manage your vocabulary sets
-              </p>
-            </div>
-            <Button onClick={handleCreateVocab}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Vocabulary Set
-            </Button>
-          </div>
-        )}
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-red-500">{error}</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <div className={embedded ? "" : "container mx-auto px-6 py-8 max-w-6xl"}>
-        {!embedded && (
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Manage Vocabulary</h1>
-              <p className="text-muted-foreground">
-                View and manage your vocabulary sets
-              </p>
-            </div>
-            <Button onClick={handleCreateVocab}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Vocabulary Set
-            </Button>
-          </div>
-        )}
-
-        {/* Filters */}
-        <VocabFilters
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          filterPublic={filterPublic}
-          setFilterPublic={setFilterPublic}
+        <SearchFilters
+          placeholder="Search vocabulary sets..."
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          filters={[
+            {
+              key: "public",
+              type: "select",
+              label: "Visibility",
+              value: filterPublic,
+              options: [
+                { value: "ALL", label: "All Sets" },
+                { value: "PUBLIC", label: "Public" },
+                { value: "PRIVATE", label: "Private" },
+              ],
+              onChange: (value) => setFilterPublic(value as "ALL" | "PUBLIC" | "PRIVATE"),
+            },
+          ]}
         />
 
-        {filteredVocabSets.length === 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Vocabulary Sets</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">No vocabulary sets found matching your filters. Try adjusting your search or filters.</p>
-            </CardContent>
-          </Card>
-        ) : (
+        {loading && (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {/* Create New Card */}
-            <Card className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer border-dashed border-2" onClick={handleCreateVocab}>
-              <CardContent className="flex flex-col items-center justify-center h-48">
-                <Plus className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-sm sm:text-base font-semibold leading-snug text-center">
-                  Create New Collection
-                </h3>
-                <p className="mt-1 text-xs sm:text-sm text-muted-foreground text-center">
-                  Add a new vocabulary set
-                </p>
-              </CardContent>
-            </Card>
-
-            {filteredVocabSets.map((vocabSet) => (
-              <VocabCard
-                key={vocabSet.id}
-                vocabSet={vocabSet}
-                onClick={() => handleEditVocab(vocabSet)}
-              />
+            {[...Array(6)].map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader>
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                </CardContent>
+              </Card>
             ))}
           </div>
+        )}
+
+        {error && (
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-red-500">{error}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {!loading && !error && (
+          filteredVocabSets.length === 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Vocabulary Sets</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">No vocabulary sets found matching your filters. Try adjusting your search or filters.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {/* Create New Card */}
+              <Card className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer border-dashed border-2" onClick={handleCreateVocab}>
+                <CardContent className="flex flex-col items-center justify-center h-48">
+                  <Plus className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-sm sm:text-base font-semibold leading-snug text-center">
+                    Create New Collection
+                  </h3>
+                  <p className="mt-1 text-xs sm:text-sm text-muted-foreground text-center">
+                    Add a new vocabulary set
+                  </p>
+                </CardContent>
+              </Card>
+
+              {filteredVocabSets.map((vocabSet) => (
+                <VocabCard
+                  key={vocabSet.id}
+                  vocabSet={vocabSet}
+                  onClick={() => handleEditVocab(vocabSet)}
+                />
+              ))}
+            </div>
+          )
         )}
       </div>
 

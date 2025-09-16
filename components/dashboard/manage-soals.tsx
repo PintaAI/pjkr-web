@@ -4,50 +4,15 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatsCard } from "@/components/dashboard/stats-card";
-import { Plus, Users, Search } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 import { BsCreditCard2Front } from "react-icons/bs";
 import { getGuruSoalSets } from "@/app/actions/kelas/soal-set";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { SoalSetForm } from "./soal-set-form";
+import { SearchFilters } from "@/components/ui/search-filters";
 import { SoalCard } from "./soal-card";
 
-const SoalFilters = ({
-  searchTerm,
-  setSearchTerm,
-  filterStatus,
-  setFilterStatus
-}: {
-  searchTerm: string;
-  setSearchTerm: (value: string) => void;
-  filterStatus: "ALL" | "DRAFT" | "PUBLISHED";
-  setFilterStatus: (value: "ALL" | "DRAFT" | "PUBLISHED") => void;
-}) => (
-  <div className="flex flex-col sm:flex-row gap-4 mt-4 mb-8">
-    <div className="relative flex-1">
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-      <Input
-        placeholder="Search soal sets..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="pl-10"
-      />
-    </div>
-
-    <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as "ALL" | "DRAFT" | "PUBLISHED")}>
-      <SelectTrigger className="w-full sm:w-48">
-        <SelectValue placeholder="Status" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="ALL">All Sets</SelectItem>
-        <SelectItem value="PUBLISHED">Published</SelectItem>
-        <SelectItem value="DRAFT">Draft</SelectItem>
-      </SelectContent>
-    </Select>
-  </div>
-);
 
 const SoalStatsCards = ({ stats }: { stats: { totalSets: number; totalQuestions: number; publishedSets: number; draftSets: number } }) => (
   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -187,137 +152,109 @@ export function ManageSoals({ embedded = false, soalSets: initialSoalSets }: Man
     setEditingSoalSet(null);
   };
 
-  if (loading) {
-    return (
+
+
+  return (
+    <>
       <div className={embedded ? "" : "container mx-auto px-6 py-8 max-w-6xl"}>
         {!embedded && (
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Manage Soals</h1>
-              <p className="text-muted-foreground">
-                View and manage your question sets and assessments
-              </p>
+          <>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">Manage Soals</h1>
+                <p className="text-muted-foreground">
+                  View and manage your question sets and assessments
+                </p>
+              </div>
+              <Button onClick={handleCreateSoal}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Soal Set
+              </Button>
             </div>
-            <Button onClick={handleCreateSoal}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Soal Set
-            </Button>
-          </div>
+            {!error && <SoalStatsCards stats={{ totalSets, totalQuestions, publishedSets, draftSets }} />}
+          </>
         )}
 
         {/* Filters */}
-        <SoalFilters
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          filterStatus={filterStatus}
-          setFilterStatus={setFilterStatus}
+        <SearchFilters
+          placeholder="Search soal sets..."
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          filters={[
+            {
+              key: "status",
+              type: "select",
+              label: "Status",
+              value: filterStatus,
+              options: [
+                { value: "ALL", label: "All Sets" },
+                { value: "PUBLISHED", label: "Published" },
+                { value: "DRAFT", label: "Draft" },
+              ],
+              onChange: (value) => setFilterStatus(value as "ALL" | "DRAFT" | "PUBLISHED"),
+            },
+          ]}
         />
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={embedded ? "" : "container mx-auto px-6 py-8 max-w-6xl"}>
-        {!embedded && (
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Manage Soals</h1>
-              <p className="text-muted-foreground">
-                View and manage your question sets and assessments
-              </p>
-            </div>
-            <Button onClick={handleCreateSoal}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Soal Set
-            </Button>
+        {loading && (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader>
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         )}
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-red-500">{error}</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
-  return (
-    <div className={embedded ? "" : "container mx-auto px-6 py-8 max-w-6xl"}>
-      {!embedded && (
-        <>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Manage Soals</h1>
-              <p className="text-muted-foreground">
-                View and manage your question sets and assessments
-              </p>
-            </div>
-            <Button onClick={handleCreateSoal}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Soal Set
-            </Button>
-          </div>
-
-          {/* Stats Cards */}
-          <SoalStatsCards stats={{ totalSets, totalQuestions, publishedSets, draftSets }} />
-        </>
-      )}
-
-      {/* Filters */}
-      <SoalFilters
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        filterStatus={filterStatus}
-        setFilterStatus={setFilterStatus}
-      />
-
-      {filteredSoalSets.length === 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Soal Sets</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">No soal sets found matching your filters. Try adjusting your search or filters.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Card className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer border-dashed border-2" onClick={handleCreateSoal}>
-            <CardContent className="flex flex-col items-center justify-center h-48">
-              <Plus className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-sm sm:text-base font-semibold leading-snug text-center">
-                Create New Set
-              </h3>
-              <p className="mt-1 text-xs sm:text-sm text-muted-foreground text-center">
-                Add a new soal set
-              </p>
+        {error && (
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-red-500">{error}</p>
             </CardContent>
           </Card>
-          {filteredSoalSets.map((soalSet) => (
-            <SoalCard
-              key={soalSet.id}
-              soalSet={soalSet}
-              onClick={() => handleEditSoal(soalSet)}
-            />
-          ))}
-        </div>
-      )}
+        )}
+
+        {!loading && !error && (
+          filteredSoalSets.length === 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Soal Sets</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">No soal sets found matching your filters. Try adjusting your search or filters.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <Card className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer border-dashed border-2" onClick={handleCreateSoal}>
+                <CardContent className="flex flex-col items-center justify-center h-48">
+                  <Plus className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-sm sm:text-base font-semibold leading-snug text-center">
+                    Create New Set
+                  </h3>
+                  <p className="mt-1 text-xs sm:text-sm text-muted-foreground text-center">
+                    Add a new soal set
+                  </p>
+                </CardContent>
+              </Card>
+              {filteredSoalSets.map((soalSet) => (
+                <SoalCard
+                  key={soalSet.id}
+                  soalSet={soalSet}
+                  onClick={() => handleEditSoal(soalSet)}
+                />
+              ))}
+            </div>
+          )
+        )}
+      </div>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent className="w-full sm:max-w-2xl overflow-y-auto m-0">
@@ -333,6 +270,6 @@ export function ManageSoals({ embedded = false, soalSets: initialSoalSets }: Man
           />
         </SheetContent>
       </Sheet>
-    </div>
+    </>
   );
 }

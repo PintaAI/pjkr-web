@@ -4,12 +4,9 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/dashboard/stats-card";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   BookOpen,
   Users,
-  Search,
   Plus,
   Eye,
 } from "lucide-react";
@@ -17,6 +14,7 @@ import { KelasType, Difficulty } from "@prisma/client";
 import { deleteDraftKelas, publishKelas, unpublishKelas } from "@/app/actions/kelas";
 import { KelasCard, GuruKelas } from "@/components/kelas/kelas-card";
 import { toast } from "sonner";
+import { SearchFilters } from "@/components/ui/search-filters";
 
 // Types
 interface KelasItem extends GuruKelas {
@@ -209,74 +207,6 @@ const ClassCard = ({ cls, actions }: { cls: KelasItem; actions: any }) => (
   />
 );
 
-const ClassFilters = ({
-  searchTerm,
-  setSearchTerm,
-  filterType,
-  setFilterType,
-  filterLevel,
-  setFilterLevel,
-  filterStatus,
-  setFilterStatus
-}: {
-  searchTerm: string;
-  setSearchTerm: (value: string) => void;
-  filterType: KelasType | "ALL";
-  setFilterType: (value: KelasType | "ALL") => void;
-  filterLevel: Difficulty | "ALL";
-  setFilterLevel: (value: Difficulty | "ALL") => void;
-  filterStatus: "ALL" | "PUBLISHED" | "DRAFT";
-  setFilterStatus: (value: "ALL" | "PUBLISHED" | "DRAFT") => void;
-}) => (
-  <div className="flex flex-col sm:flex-row gap-4 mt-4 mb-8">
-    <div className="relative flex-1">
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-      <Input
-        placeholder="Search classes..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="pl-10"
-      />
-    </div>
-
-    <Select value={filterType} onValueChange={(value) => setFilterType(value as KelasType | "ALL")}>
-      <SelectTrigger className="w-full sm:w-48">
-        <SelectValue placeholder="Class Type" />
-      </SelectTrigger>
-      <SelectContent>
-        {FILTER_TYPES.map((type) => (
-          <SelectItem key={type.value} value={type.value}>
-            {type.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-
-    <Select value={filterLevel} onValueChange={(value) => setFilterLevel(value as Difficulty | "ALL")}>
-      <SelectTrigger className="w-full sm:w-48">
-        <SelectValue placeholder="Difficulty" />
-      </SelectTrigger>
-      <SelectContent>
-        {FILTER_LEVELS.map((level) => (
-          <SelectItem key={level.value} value={level.value}>
-            {level.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-
-    <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as "ALL" | "PUBLISHED" | "DRAFT")}>
-      <SelectTrigger className="w-full sm:w-48">
-        <SelectValue placeholder="Status" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="ALL">All Classes</SelectItem>
-        <SelectItem value="PUBLISHED">Published</SelectItem>
-        <SelectItem value="DRAFT">Draft</SelectItem>
-      </SelectContent>
-    </Select>
-  </div>
-);
 
 const StatsCards = ({ stats }: { stats: ReturnType<typeof calculateStats> }) => (
   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -382,15 +312,40 @@ export function ManageClasses({ classes: initialClasses, embedded = false }: Omi
       )}
 
       {/* Filters */}
-      <ClassFilters
-        searchTerm={management.searchTerm}
-        setSearchTerm={management.setSearchTerm}
-        filterType={management.filterType}
-        setFilterType={management.setFilterType}
-        filterLevel={management.filterLevel}
-        setFilterLevel={management.setFilterLevel}
-        filterStatus={management.filterStatus}
-        setFilterStatus={management.setFilterStatus}
+      <SearchFilters
+        placeholder="Search classes..."
+        searchValue={management.searchTerm}
+        onSearchChange={management.setSearchTerm}
+        filters={[
+          {
+            key: "type",
+            type: "select",
+            label: "Class Type",
+            value: management.filterType,
+            options: FILTER_TYPES,
+            onChange: (value) => management.setFilterType(value as KelasType | "ALL"),
+          },
+          {
+            key: "level",
+            type: "select",
+            label: "Difficulty",
+            value: management.filterLevel,
+            options: FILTER_LEVELS,
+            onChange: (value) => management.setFilterLevel(value as Difficulty | "ALL"),
+          },
+          {
+            key: "status",
+            type: "select",
+            label: "Status",
+            value: management.filterStatus,
+            options: [
+              { value: "ALL", label: "All Classes" },
+              { value: "PUBLISHED", label: "Published" },
+              { value: "DRAFT", label: "Draft" },
+            ],
+            onChange: (value) => management.setFilterStatus(value as "ALL" | "PUBLISHED" | "DRAFT"),
+          },
+        ]}
       />
 
       {/* Classes Grid */}
