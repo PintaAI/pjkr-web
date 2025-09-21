@@ -1,20 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { StatsCard } from "@/components/dashboard/stats-card";
-import {
-  BookOpen,
-  Users,
-  Plus,
-  Eye,
-} from "lucide-react";
 import { KelasType, Difficulty } from "@prisma/client";
 import { deleteDraftKelas, publishKelas, unpublishKelas } from "@/app/actions/kelas";
 import { KelasCard, GuruKelas } from "@/components/kelas/kelas-card";
 import { toast } from "sonner";
-import { SearchFilters } from "@/components/ui/search-filters";
+import { ManageLayout } from "./manage-layout";
 
 // Types
 interface KelasItem extends GuruKelas {
@@ -36,7 +27,6 @@ interface User {
 interface ManageClassesProps {
   classes: any[];
   user?: User;
-  embedded?: boolean;
 }
 
 // Constants
@@ -178,22 +168,6 @@ const useClassManagement = (initialClasses: any[]) => {
   };
 };
 
-// Stats calculation helper
-const calculateStats = (classes: any[]) => {
-  const totalStudents = classes.reduce((total, cls) => total + cls._count.members, 0);
-  const totalMaterials = classes.reduce((total, cls) => total + cls._count.materis, 0);
-  const publishedCount = classes.filter(cls => !cls.isDraft).length;
-  const draftCount = classes.filter(cls => cls.isDraft).length;
-
-  return {
-    totalClasses: classes.length,
-    totalStudents,
-    totalMaterials,
-    publishedCount,
-    draftCount,
-  };
-};
-
 // Components
 const ClassCard = ({ cls, actions }: { cls: KelasItem; actions: any }) => (
   <KelasCard
@@ -208,172 +182,79 @@ const ClassCard = ({ cls, actions }: { cls: KelasItem; actions: any }) => (
 );
 
 
-const StatsCards = ({ stats }: { stats: ReturnType<typeof calculateStats> }) => (
-  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-    <StatsCard
-      title="Total Classes"
-      value={stats.totalClasses}
-      description={`${stats.publishedCount} published, ${stats.draftCount} drafts`}
-      icon={<BookOpen className="h-4 w-4" />}
-    />
-    <StatsCard
-      title="Total Students"
-      value={stats.totalStudents}
-      description="Across all classes"
-      icon={<Users className="h-4 w-4" />}
-    />
-    <StatsCard
-      title="Published Classes"
-      value={stats.publishedCount}
-      description="Live for students"
-      icon={<Eye className="h-4 w-4" />}
-    />
-    <StatsCard
-      title="Total Materials"
-      value={stats.totalMaterials}
-      description="Learning materials"
-      icon={<BookOpen className="h-4 w-4" />}
-    />
-  </div>
-);
 
 
-
-const ClassGrid = ({
-  filteredClasses,
-  onCreateClass,
-  onDeleteClass,
-  onPublishClass,
-  onUnpublishClass
-}: {
-  filteredClasses: KelasItem[];
-  onCreateClass: () => void;
-  onDeleteClass: (id: number) => void;
-  onPublishClass: (id: number) => void;
-  onUnpublishClass: (id: number) => void;
-}) => (
-  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-    <Card className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer border-dashed border-2" onClick={onCreateClass}>
-      <CardContent className="flex flex-col items-center justify-center h-48">
-        <Plus className="h-12 w-12 text-muted-foreground mb-4" />
-        <h3 className="text-sm sm:text-base font-semibold leading-snug text-center">
-          Create New Class
-        </h3>
-        <p className="mt-1 text-xs sm:text-sm text-muted-foreground text-center">
-          Start building a new class
-        </p>
-      </CardContent>
-    </Card>
-    {filteredClasses.map((cls) => (
-      <ClassCard
-        key={cls.id}
-        cls={cls}
-        actions={{
-          onView: (id: number) => (window.location.href = `/kelas/${id}`),
-          onEdit: (id: number) => (window.location.href = `/dashboard/guru/kelas-builder?edit=${id}`),
-          onDelete: (id: number) => onDeleteClass(id),
-          onPublish: (id: number) => onPublishClass(id),
-          onUnpublish: (id: number) => onUnpublishClass(id),
-        }}
-      />
-    ))}
-  </div>
-);
-
-export function ManageClasses({ classes: initialClasses, embedded = false }: Omit<ManageClassesProps, 'user'>) {
+export function ManageClasses({ classes: initialClasses }: Omit<ManageClassesProps, 'user'>) {
   const management = useClassManagement(initialClasses);
-  const stats = calculateStats(management.classes);
 
   const handleCreateClass = () => {
     window.location.href = "/dashboard/guru/kelas-builder";
   };
 
   return (
-    <div className={embedded ? "" : "container mx-auto px-6 py-8 max-w-6xl"}>
-      {!embedded && (
-        <>
-          {/* Header */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Managemen Kelas</h1>
-              <p className="text-muted-foreground">
-                Manage your drafted and published classes
-              </p>
-            </div>
-            <Button onClick={handleCreateClass}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create New Class
-            </Button>
-          </div>
-
-          {/* Stats Cards */}
-          <StatsCards stats={stats} />
-        </>
-      )}
-
-      {/* Filters */}
-      <SearchFilters
-        placeholder="Search classes..."
-        searchValue={management.searchTerm}
-        onSearchChange={management.setSearchTerm}
-        filters={[
-          {
-            key: "type",
-            type: "select",
-            label: "Class Type",
-            value: management.filterType,
-            options: FILTER_TYPES,
-            onChange: (value) => management.setFilterType(value as KelasType | "ALL"),
-          },
-          {
-            key: "level",
-            type: "select",
-            label: "Difficulty",
-            value: management.filterLevel,
-            options: FILTER_LEVELS,
-            onChange: (value) => management.setFilterLevel(value as Difficulty | "ALL"),
-          },
-          {
-            key: "status",
-            type: "select",
-            label: "Status",
-            value: management.filterStatus,
-            options: [
-              { value: "ALL", label: "All Classes" },
-              { value: "PUBLISHED", label: "Published" },
-              { value: "DRAFT", label: "Draft" },
-            ],
-            onChange: (value) => management.setFilterStatus(value as "ALL" | "PUBLISHED" | "DRAFT"),
-          },
-        ]}
-      />
-
-      {/* Classes Grid */}
-      {management.filteredClasses().length > 0 ? (
-        <ClassGrid
-          filteredClasses={management.filteredClasses()}
-          onCreateClass={handleCreateClass}
-          onDeleteClass={management.handleDeleteClass}
-          onPublishClass={management.handlePublishClass}
-          onUnpublishClass={management.handleUnpublishClass}
-        />
-      ) : (
-        <Card className="text-center py-12">
-          <CardContent>
-            <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">
-              No classes found
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              Try adjusting your search or filters, or create your first class.
-            </p>
-            <Button onClick={handleCreateClass}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create New Class
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+    <ManageLayout
+      title="Manage Classes"
+      description="Manage your drafted and published classes"
+      placeholder="Search classes..."
+      searchValue={management.searchTerm}
+      onSearchChange={management.setSearchTerm}
+      filters={[
+        {
+          key: "type",
+          type: "select",
+          label: "Class Type",
+          value: management.filterType,
+          options: FILTER_TYPES,
+          onChange: (value: string) => management.setFilterType(value as KelasType | "ALL"),
+        },
+        {
+          key: "level",
+          type: "select",
+          label: "Difficulty",
+          value: management.filterLevel,
+          options: FILTER_LEVELS,
+          onChange: (value: string) => management.setFilterLevel(value as Difficulty | "ALL"),
+        },
+        {
+          key: "status",
+          type: "select",
+          label: "Status",
+          value: management.filterStatus,
+          options: [
+            { value: "ALL", label: "All Classes" },
+            { value: "PUBLISHED", label: "Published" },
+            { value: "DRAFT", label: "Draft" },
+          ],
+          onChange: (value: string) => management.setFilterStatus(value as "ALL" | "PUBLISHED" | "DRAFT"),
+        },
+      ]}
+      loading={false}
+      error={null}
+      items={management.filteredClasses()}
+      renderItem={(cls) => {
+        const actions = {
+          onView: (id: number) => (window.location.href = `/kelas/${id}`),
+          onEdit: (id: number) => (window.location.href = `/dashboard/guru/kelas-builder?edit=${id}`),
+          onDelete: (id: number) => management.handleDeleteClass(id),
+          onPublish: (id: number) => management.handlePublishClass(id),
+          onUnpublish: (id: number) => management.handleUnpublishClass(id),
+        };
+        return (
+          <ClassCard
+            key={cls.id}
+            cls={cls}
+            actions={actions}
+          />
+        );
+      }}
+      createNewCard={{
+        onClick: handleCreateClass,
+        title: "Create New Class",
+        subtitle: "Start building a new class",
+      }}
+      emptyTitle="Your Classes"
+      emptyMessage="No classes found matching your filters. Try adjusting your search or filters."
+      singleFilter={true}
+    />
   );
 }

@@ -40,7 +40,7 @@ export function SoalCard({ soalSet, onClick, compact = false }: SoalCardProps) {
   if (compact) {
     return (
       <Card
-        className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer py-0 w-full max-h-[200px]"
+        className="group overflow-hidden hover:shadow-lg  hover:-translate-y-1 transition-all cursor-pointer py-0 w-full max-h-[200px]"
         onClick={onClick}
       >
         {/* Media */}
@@ -63,7 +63,7 @@ export function SoalCard({ soalSet, onClick, compact = false }: SoalCardProps) {
 
   return (
     <Card
-      className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer py-0"
+      className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer bg-gradient-to-br from-card to-muted/20 py-0"
       onClick={onClick}
     >
       {/* Media */}

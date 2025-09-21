@@ -277,3 +277,76 @@ export async function checkKelasAccess(kelasId: string, userId?: string) {
     };
   }
 }
+
+export async function getMateriDetail(materiId: string, kelasId: string) {
+  try {
+    const session = await getServerSession();
+    const userId = session?.user?.id;
+    const materiIdNum = parseInt(materiId);
+    const kelasIdNum = parseInt(kelasId);
+
+    if (isNaN(materiIdNum) || isNaN(kelasIdNum)) {
+      return {
+        success: false,
+        error: "Invalid materi or kelas ID",
+        data: null,
+      };
+    }
+
+    const materi = await prisma.materi.findFirst({
+      where: {
+        id: materiIdNum,
+        kelasId: kelasIdNum,
+        isDraft: false, // Only show published materis
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        jsonDescription: true,
+        htmlDescription: true,
+        order: true,
+        isDemo: true,
+        createdAt: true,
+        kelas: {
+          select: {
+            id: true,
+            title: true,
+            authorId: true,
+            thumbnail: true,
+          },
+        },
+      },
+    });
+
+    if (!materi) {
+      return {
+        success: false,
+        error: "Materi not found",
+        data: null,
+      };
+    }
+
+    // Check if user has access to this materi
+    const accessCheck = await checkKelasAccess(kelasId, userId);
+    if (!accessCheck.success || !accessCheck.hasAccess) {
+      return {
+        success: false,
+        error: "Access denied",
+        data: null,
+      };
+    }
+
+    return {
+      success: true,
+      data: materi,
+    };
+  } catch (error) {
+    console.error("Get materi detail error:", error);
+    return {
+      success: false,
+      error: "Failed to fetch materi details",
+      data: null,
+    };
+  }
+}

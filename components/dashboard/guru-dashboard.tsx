@@ -22,57 +22,12 @@ import { ManageClasses } from "@/components/dashboard/manage-classes";
 import { ManageVocab } from "@/components/dashboard/manage-vocab";
 import { ManageSoals } from "@/components/dashboard/manage-soals";
 import { GuruDashboardStatistics } from "@/components/dashboard/guru-dashboard-statistics";
+import { VocabSheet, VocabSet } from "@/components/dashboard/vocab-sheet";
+import { SoalSheet, SoalSet } from "@/components/dashboard/soal-sheet";
 import { getGuruVocabularySets } from "@/app/actions/kelas/vocabulary";
 import { getGuruSoalSets } from "@/app/actions/kelas/soal-set";
 import { useEffect, useState } from "react";
 
-const teachingTools = [
-  {
-    href: "/dashboard/guru/kelas-builder",
-    icon: <PlusCircle className="h-6 w-6 text-emerald-500" />,
-    badge: { text: "Available", variant: "default", className: "bg-emerald-100 text-emerald-800" },
-    title: "Kelas Builder",
-    description: "Create comprehensive Korean language classes with guided steps",
-    footerLeft: "Build Classes",
-    footerRight: "Step-by-step",
-  },
-  {
-    href: "/dashboard/guru/teach/white-board",
-    icon: <BookOpen className="h-6 w-6 text-blue-600" />,
-    badge: { text: "New", variant: "outline", className: "" },
-    title: "Whiteboard",
-    description: "Open a collaborative whiteboard (Excalidraw)",
-    footerLeft: "Interactive Tool",
-    footerRight: "Excalidraw",
-  },
-  {
-    href: "/dashboard/guru/teach/live-session",
-    icon: <Calendar className="h-6 w-6 text-purple-600" />,
-    badge: { text: "Coming Soon", variant: "outline", className: "" },
-    title: "Live Session",
-    description: "Start or join a real-time class session",
-    footerLeft: "Realtime",
-    footerRight: "Soon",
-  },
-  {
-    href: "/dashboard/guru/vocabulary/create",
-    icon: <PlusCircle className="h-6 w-6 text-teal-600" />,
-    badge: { text: "Available", variant: "default", className: "bg-teal-100 text-teal-800" },
-    title: "Create Vocabulary Set",
-    description: "Build and manage custom vocabulary sets for your classes",
-    footerLeft: "Vocabulary",
-    footerRight: "Set Builder",
-  },
-  {
-    href: "/dashboard/guru/soal/create",
-    icon: <PlusCircle className="h-6 w-6 text-rose-600" />,
-    badge: { text: "New", variant: "outline", className: "" },
-    title: "Create Soal Set",
-    description: "Create question sets for latihan or tryout assessments",
-    footerLeft: "Assessment",
-    footerRight: "Soal Builder",
-  },
-];
 
 type UserRoles = "GURU" | "MURID" | "ADMIN";
 
@@ -101,54 +56,7 @@ interface RecentClass {
   createdAt: Date;
 }
 
-interface VocabSet {
-  id: number;
-  title: string;
-  description: string | null;
-  icon: string | null;
-  isPublic: boolean;
-  createdAt: Date;
-  items: Array<{
-    id: number;
-    korean: string;
-    indonesian: string;
-    type: string;
-  }>;
-  kelas: {
-    id: number;
-    title: string;
-    level: string;
-  } | null;
-  user: {
-    id: string;
-    name: string | null;
-  } | null;
-}
 
-interface SoalSet {
-  id: number;
-  nama: string;
-  deskripsi: string | null;
-  isPrivate: boolean;
-  isDraft: boolean;
-  createdAt: Date;
-  soals: Array<{
-    id: number;
-    pertanyaan: string;
-    difficulty: string | null;
-  }>;
-  user: {
-    id: string;
-    name: string | null;
-  } | null;
-  kelasKoleksiSoals: Array<{
-    kelas: {
-      id: number;
-      title: string;
-      level: string;
-    };
-  }>;
-}
 
 interface GuruDashboardProps {
   stats: GuruStats;
@@ -163,24 +71,90 @@ interface GuruDashboardProps {
 export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
   const [vocabSets, setVocabSets] = useState<VocabSet[]>([]);
   const [soalSets, setSoalSets] = useState<SoalSet[]>([]);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [soalSheetOpen, setSoalSheetOpen] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      const vocabResult = await getGuruVocabularySets();
+      if (vocabResult.success && vocabResult.data) {
+        setVocabSets(vocabResult.data);
+      }
+      const soalResult = await getGuruSoalSets();
+      if (soalResult.success && soalResult.data) {
+        setSoalSets(soalResult.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch data:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const vocabResult = await getGuruVocabularySets();
-        if (vocabResult.success && vocabResult.data) {
-          setVocabSets(vocabResult.data);
-        }
-        const soalResult = await getGuruSoalSets();
-        if (soalResult.success && soalResult.data) {
-          setSoalSets(soalResult.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch data:", error);
-      }
-    };
     fetchData();
   }, []);
+
+  const handleVocabSuccess = () => {
+    setSheetOpen(false);
+    fetchData();
+  };
+
+  const handleSoalSuccess = () => {
+    setSoalSheetOpen(false);
+    fetchData();
+  };
+
+  const teachingTools = [
+    {
+      href: "/dashboard/guru/kelas-builder",
+      isLink: true,
+      icon: <PlusCircle className="h-6 w-6 text-emerald-500" />,
+      badge: { text: "Available", variant: "default", className: "bg-emerald-100 text-emerald-800" },
+      title: "Kelas Builder",
+      description: "Create comprehensive Korean language classes with guided steps",
+      footerLeft: "Build Classes",
+      footerRight: "Step-by-step",
+    },
+    {
+      href: "/dashboard/guru/teach/white-board",
+      isLink: true,
+      icon: <BookOpen className="h-6 w-6 text-blue-600" />,
+      badge: { text: "New", variant: "outline", className: "" },
+      title: "Whiteboard",
+      description: "Open a collaborative whiteboard (Excalidraw)",
+      footerLeft: "Interactive Tool",
+      footerRight: "Excalidraw",
+    },
+    {
+      href: "/dashboard/guru/teach/live-session",
+      isLink: true,
+      icon: <Calendar className="h-6 w-6 text-purple-600" />,
+      badge: { text: "Coming Soon", variant: "outline", className: "" },
+      title: "Live Session",
+      description: "Start or join a real-time class session",
+      footerLeft: "Realtime",
+      footerRight: "Soon",
+    },
+    {
+      onClick: () => setSheetOpen(true),
+      isLink: false,
+      icon: <PlusCircle className="h-6 w-6 text-teal-600" />,
+      badge: { text: "Available", variant: "default", className: "bg-teal-100 text-teal-800" },
+      title: "Create Vocabulary Set",
+      description: "Build and manage custom vocabulary sets for your classes",
+      footerLeft: "Vocabulary",
+      footerRight: "Set Builder",
+    },
+    {
+      onClick: () => setSoalSheetOpen(true),
+      isLink: false,
+      icon: <PlusCircle className="h-6 w-6 text-rose-600" />,
+      badge: { text: "Available", variant: "default", className: "bg-teal-100 text-teal-800" },
+      title: "Create Soal Set",
+      description: "Create question sets for latihan or tryout assessments",
+      footerLeft: "Assessment",
+      footerRight: "Soal Builder",
+    },
+  ];
 
   return (
     <div className="container mx-auto px-6 py-8 max-w-6xl">
@@ -255,18 +229,50 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
 
         <TabsContent value="tools">
           {/* Teaching Tools */}
-          <Card>
+          <Card className="bg-gradient-to-br from-card to-muted/20 mt-4">
             <CardHeader>
-              <CardTitle>Alat untuk Mengajar</CardTitle>
+              <CardTitle className="text-xl">Alat untuk Mengajar</CardTitle>
               <CardDescription>
                 Manage your classes and content
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {teachingTools.map((tool,) => (
-                  <Link href={tool.href} key={tool.title}>
-                    <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
+                {teachingTools.map((tool) => (
+                  tool.isLink ? (
+                    <Link href={tool.href!} key={tool.title}>
+                      <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between">
+                            {tool.icon}
+                            {tool.badge && (
+                              <Badge
+                                variant={tool.badge.variant as "default" | "secondary" | "outline" | "destructive" | undefined}
+                                className={`text-xs ${tool.badge.className}`}
+                              >
+                                {tool.badge.text}
+                              </Badge>
+                            )}
+                          </div>
+                          <CardTitle className="text-lg">{tool.title}</CardTitle>
+                          <CardDescription>
+                            {tool.description}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">{tool.footerLeft}</span>
+                            <span className="font-medium">
+                              {tool.footerRight === "stats.totalClasses"
+                                ? stats.totalClasses
+                                : tool.footerRight}
+                            </span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ) : (
+                    <Card onClick={tool.onClick} key={tool.title} className="cursor-pointer hover:shadow-md transition-shadow h-full">
                       <CardHeader className="pb-3">
                         <div className="flex items-center justify-between">
                           {tool.icon}
@@ -295,7 +301,7 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
                         </div>
                       </CardContent>
                     </Card>
-                  </Link>
+                  )
                 ))}
               </div>
             </CardContent>
@@ -303,15 +309,15 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
         </TabsContent>
 
         <TabsContent value="classes">
-          <ManageClasses classes={classes} embedded={true} />
+          <ManageClasses classes={classes} />
         </TabsContent>
 
         <TabsContent value="vocabulary">
-          <ManageVocab embedded={true} vocabSets={vocabSets} />
+          <ManageVocab vocabSets={vocabSets} />
         </TabsContent>
 
         <TabsContent value="soals">
-          <ManageSoals embedded={true} soalSets={soalSets} />
+          <ManageSoals soalSets={soalSets} />
         </TabsContent>
 
         <TabsContent value="statistics">
@@ -319,6 +325,21 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
         </TabsContent>
       </Tabs>
 
+      <VocabSheet
+        isOpen={sheetOpen}
+        onOpenChange={setSheetOpen}
+        vocabSet={null}
+        onSuccess={handleVocabSuccess}
+        onCancel={() => setSheetOpen(false)}
+      />
+
+      <SoalSheet
+        isOpen={soalSheetOpen}
+        onOpenChange={setSoalSheetOpen}
+        soalSet={null}
+        onSuccess={handleSoalSuccess}
+        onCancel={() => setSoalSheetOpen(false)}
+      />
     </div>
   );
 }

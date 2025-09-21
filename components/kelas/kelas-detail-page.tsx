@@ -246,6 +246,7 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
               showMaterials={showMaterials}
               setShowMaterials={setShowMaterials}
               hasTeasedMaterials={hasTeasedMaterials}
+              kelasId={kelas.id}
             />
           </div>
         </div>

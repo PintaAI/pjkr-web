@@ -26,9 +26,11 @@ export function AppSidebar({ session: passedSession, ...props }: AppSidebarProps
   return (
     <Sidebar collapsible="icon" {...props}>
       <AppSidebarHeader />
-      <SidebarContent className="group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:items-center">
-        <SidebarNav items={sidebarData.navMain} title="Apps" />
-        <SidebarDevTools projects={sidebarData.projects} session={session} />
+      <SidebarContent>
+        <div className="relative flex flex-col gap-2 transition-all duration-300 ease-in-out group-data-[state=expanded]:top-0 group-data-[state=expanded]:translate-y-0 group-data-[state=collapsed]:top-1/2 group-data-[state=collapsed]:-translate-y-1/2">
+          <SidebarNav items={sidebarData.navMain} title="Menu" />
+          <SidebarDevTools projects={sidebarData.projects} session={session} />
+        </div>
       </SidebarContent>
       <AppSidebarFooter session={session} />
       <SidebarRail />

@@ -1,78 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, } from "@/components/ui/sheet";
-import { StatsCard } from "@/components/dashboard/stats-card";
-import { Plus, BookOpen, Users } from "lucide-react";
 import { getGuruVocabularySets } from "@/app/actions/kelas/vocabulary";
-import { VocabCollectionForm } from "./vocab-collection-form";
-
-import { SearchFilters } from "@/components/ui/search-filters";
+import { VocabSet, VocabSheet } from "./vocab-sheet";
 import { VocabCard } from "./vocab-card";
+import { ManageLayout } from "./manage-layout";
 
 
-const VocabStatsCards = ({ stats }: { stats: { totalSets: number; totalItems: number; publicSets: number; privateSets: number } }) => (
-  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-    <StatsCard
-      title="Total Sets"
-      value={stats.totalSets}
-      description={`${stats.publicSets} public, ${stats.privateSets} private`}
-      icon={<BookOpen className="h-4 w-4" />}
-    />
-    <StatsCard
-      title="Total Items"
-      value={stats.totalItems}
-      description="Vocabulary items"
-      icon={<BookOpen className="h-4 w-4" />}
-    />
-    <StatsCard
-      title="Public Sets"
-      value={stats.publicSets}
-      description="Available to all"
-      icon={<Users className="h-4 w-4" />}
-    />
-    <StatsCard
-      title="Private Sets"
-      value={stats.privateSets}
-      description="For your use only"
-      icon={<BookOpen className="h-4 w-4" />}
-    />
-  </div>
-);
 
 interface ManageVocabProps {
-  embedded?: boolean;
   vocabSets?: VocabSet[];
 }
 
-interface VocabSet {
-  id: number;
-  title: string;
-  description: string | null;
-  icon: string | null;
-  isPublic: boolean;
-  createdAt: Date;
-  items: Array<{
-    id: number;
-    korean: string;
-    indonesian: string;
-    type: string;
-  }>;
-  kelas: {
-    id: number;
-    title: string;
-    level: string;
-  } | null;
-  user: {
-    id: string;
-    name: string | null;
-  } | null;
-}
 
-export function ManageVocab({ embedded = false, vocabSets: initialVocabSets }: ManageVocabProps) {
+export function ManageVocab({ vocabSets: initialVocabSets }: ManageVocabProps) {
   const [vocabSets, setVocabSets] = useState<VocabSet[]>(initialVocabSets || []);
   const [loading, setLoading] = useState(!initialVocabSets || (initialVocabSets && initialVocabSets.length === 0));
   const [error, setError] = useState<string | null>(null);
@@ -144,123 +85,51 @@ export function ManageVocab({ embedded = false, vocabSets: initialVocabSets }: M
 
 
   return (
-    <>
-      <div className={embedded ? "" : "container mx-auto px-6 py-8 max-w-6xl"}>
-        {!embedded && (
-          <>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight">Manage Vocabulary</h1>
-                <p className="text-muted-foreground">
-                  View and manage your vocabulary sets
-                </p>
-              </div>
-              <Button onClick={handleCreateVocab}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Vocabulary Set
-              </Button>
-            </div>
-            {!error && <VocabStatsCards stats={{ totalSets, totalItems, publicSets, privateSets }} />}
-          </>
-        )}
-
-        {/* Filters */}
-        <SearchFilters
-          placeholder="Search vocabulary sets..."
-          searchValue={searchTerm}
-          onSearchChange={setSearchTerm}
-          filters={[
-            {
-              key: "public",
-              type: "select",
-              label: "Visibility",
-              value: filterPublic,
-              options: [
-                { value: "ALL", label: "All Sets" },
-                { value: "PUBLIC", label: "Public" },
-                { value: "PRIVATE", label: "Private" },
-              ],
-              onChange: (value) => setFilterPublic(value as "ALL" | "PUBLIC" | "PRIVATE"),
-            },
-          ]}
+    <ManageLayout
+      title="Manage Vocabulary"
+      description="Manage your vocabulary sets and flashcards"
+      placeholder="Search vocabulary sets..."
+      searchValue={searchTerm}
+      onSearchChange={setSearchTerm}
+      filters={[
+        {
+          key: "public",
+          type: "select",
+          label: "Visibility",
+          value: filterPublic,
+          options: [
+            { value: "ALL", label: "All Sets" },
+            { value: "PUBLIC", label: "Public" },
+            { value: "PRIVATE", label: "Private" },
+          ],
+          onChange: (value: string) => setFilterPublic(value as "ALL" | "PUBLIC" | "PRIVATE"),
+        },
+      ]}
+      loading={loading}
+      error={error}
+      items={filteredVocabSets}
+      renderItem={(vocabSet) => (
+        <VocabCard
+          key={vocabSet.id}
+          vocabSet={vocabSet}
+          onClick={() => handleEditVocab(vocabSet)}
         />
-
-        {loading && (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader>
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {error && (
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-red-500">{error}</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {!loading && !error && (
-          filteredVocabSets.length === 0 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Vocabulary Sets</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">No vocabulary sets found matching your filters. Try adjusting your search or filters.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {/* Create New Card */}
-              <Card className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer border-dashed border-2" onClick={handleCreateVocab}>
-                <CardContent className="flex flex-col items-center justify-center h-48">
-                  <Plus className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-sm sm:text-base font-semibold leading-snug text-center">
-                    Create New Collection
-                  </h3>
-                  <p className="mt-1 text-xs sm:text-sm text-muted-foreground text-center">
-                    Add a new vocabulary set
-                  </p>
-                </CardContent>
-              </Card>
-
-              {filteredVocabSets.map((vocabSet) => (
-                <VocabCard
-                  key={vocabSet.id}
-                  vocabSet={vocabSet}
-                  onClick={() => handleEditVocab(vocabSet)}
-                />
-              ))}
-            </div>
-          )
-        )}
-      </div>
-
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto m-0 ">
-          <SheetHeader >
-            <SheetTitle className="text-center">
-              {editingVocabSet ? "Edit Vocabulary Set" : "Create Vocabulary Set"}
-            </SheetTitle>
-          </SheetHeader>
-          <VocabCollectionForm
-            vocabSet={editingVocabSet}
-            onSuccess={handleFormSuccess}
-            onCancel={handleFormCancel}
-          />
-        </SheetContent>
-      </Sheet>
-    </>
+      )}
+      createNewCard={{
+        onClick: handleCreateVocab,
+        title: "Create New Collection",
+        subtitle: "Add a new vocabulary set",
+      }}
+      emptyTitle="Your Vocabulary Sets"
+      emptyMessage="No vocabulary sets found matching your filters. Try adjusting your search or filters."
+    >
+      <VocabSheet
+        isOpen={sheetOpen}
+        onOpenChange={setSheetOpen}
+        vocabSet={editingVocabSet}
+        onSuccess={handleFormSuccess}
+        onCancel={handleFormCancel}
+      />
+    </ManageLayout>
   );
 }

@@ -70,7 +70,7 @@ export function VocabCard({ vocabSet, onClick, compact = false }: VocabCardProps
 
   return (
     <Card
-      className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer py-0"
+      className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all bg-gradient-to-br from-card to-muted/20 cursor-pointer py-0"
       onClick={onClick}
     >
       {/* Media */}

@@ -114,27 +114,10 @@ export function GuruDashboardStatistics() {
 
   return (
     <div className="space-y-6">
-      {/* Header / Controls */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Statistics Overview</span>
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-        </div>
-        <div className="w-40">
-          <Select value={range} onValueChange={(v) => setRange(v as "6m" | "12m")}>
-            <SelectTrigger className="h-8">
-              <SelectValue placeholder="Range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="6m">Last 6 months</SelectItem>
-              <SelectItem value="12m">Last 12 months</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
         <StatsCard
           title="Total Views"
           value={1250}

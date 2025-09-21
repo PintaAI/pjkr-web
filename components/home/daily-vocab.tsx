@@ -288,32 +288,6 @@ const DailyVocab = ({ user, take = 5 }: DailyVocabProps) => {
           />
         </div>
 
-        {/* Navigation & index */}
-        <div className="flex items-center justify-between gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-6 px-2 text-[10px]"
-            onClick={prev}
-            disabled={vocabulary.length <= 1 || autoFlipping}
-          >
-            <ChevronLeft className="h-3 w-3" />
-            Prev
-          </Button>
-          <div className="text-muted-foreground font-medium text-[10px]">
-            {currentIndex + 1}/{vocabulary.length}
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-6 px-2 text-[10px]"
-            onClick={next}
-            disabled={vocabulary.length <= 1 || autoFlipping}
-          >
-            Next
-            <ChevronRight className="h-3 w-3 ml-0.5" />
-          </Button>
-        </div>
 
 
         {/* Flip Card (click to flip) */ }
@@ -323,6 +297,26 @@ const DailyVocab = ({ user, take = 5 }: DailyVocabProps) => {
           role="button"
           aria-pressed={showBack}
         >
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute left-0 inset-y-0 h-full px-1 text-[10px] flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            onClick={(e) => { e.stopPropagation(); prev(); }}
+            disabled={vocabulary.length <= 1 || autoFlipping}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span className="text-[8px]">Prev</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute right-0 inset-y-0 h-full px-1 text-[10px] flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            onClick={(e) => { e.stopPropagation(); next(); }}
+            disabled={vocabulary.length <= 1 || autoFlipping}
+          >
+            <ChevronRight className="h-4 w-4" />
+            <span className="text-[8px]">Next</span>
+          </Button>
           <div
             className={clsx(
               "absolute inset-0 transition-transform duration-500 [transform-style:preserve-3d] rounded-lg border",

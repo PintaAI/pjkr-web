@@ -10,6 +10,19 @@ export {
   reorderMateris,
 } from './kelas';
 
+// Export explore actions and types
+export {
+  getExploreData,
+} from './explore';
+
+export type {
+  TransformedKelas,
+  TransformedVocab,
+  TransformedUser,
+  TransformedSoal,
+  ExploreContentItem,
+} from './explore';
+
 // Type exports for better developer experience
 export type {
   KelasType,

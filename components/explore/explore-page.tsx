@@ -9,7 +9,7 @@ import { Button } from "../ui/button";
 
 import { Search, Filter, Sparkles } from "lucide-react";
 import { Input } from "../ui/input";
-import { motion,  } from "framer-motion";
+import { motion } from "framer-motion";
 
 // Define types for the content items
 type KelasContent = {
@@ -180,14 +180,14 @@ export default function ExplorePage({ initialData = [] }: ExplorePageProps) {
 
 
   return (
-    <div className="min-h-screen ">
+    <div className="min-h-screen">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container mx-auto px-4 py-6">
+      <div className="sticky top-0 z-10 bg-background/75  border-b shadow-md -mx-4 lg:-mx-6 -mt-4 lg:-mt-6">
+        <div>
           <div className="text-center mb-6">
             <div className="flex items-center justify-center gap-2">
               <Sparkles className="h-8 w-8 text-primary" />
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight mt-6">
                 Explore
               </h1>
             </div>
@@ -210,14 +210,14 @@ export default function ExplorePage({ initialData = [] }: ExplorePageProps) {
           </div>
 
           {/* Search and Filters */}
-          <div className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto">
+          <div className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto mb-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 bg-background transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search content, teachers, or topics..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 bg-background"
               />
             </div>
             <div className="flex gap-2">
@@ -262,7 +262,7 @@ export default function ExplorePage({ initialData = [] }: ExplorePageProps) {
       </div>
 
       {/* Content Grid */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto py-8">
         <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6">
           {filteredContent.map(renderCard)}
         </div>

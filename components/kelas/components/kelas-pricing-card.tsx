@@ -281,12 +281,11 @@ export default function KelasPricingCard({
                 <Button
                   onClick={handleApplyPromoCode}
                   disabled={isApplyingPromo || !promoCode.trim()}
-                  size="sm"
+                  
                   className="text-xs"
                   style={{
-                    backgroundColor: colors?.primaryDark || colors?.primary || undefined,
-                    borderColor: colors?.primaryDark || colors?.primary || undefined,
-                    color: 'white'
+                    backgroundColor: colors?.primary || undefined,
+                    borderColor: colors?.primary || undefined
                   }}
                 >
                   {isApplyingPromo ? "..." : "Apply"}
