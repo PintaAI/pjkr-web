@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Plus, Trash2 } from "lucide-react";
+import { BsStars } from "react-icons/bs";
 import { VocabularyType } from "@prisma/client";
 import {
   ColumnDef,
@@ -37,9 +38,12 @@ interface VocabItemListProps {
   onDelete: (index: number) => void;
   onAdd: () => void;
   onQuickAdd: (korean: string, indonesian: string) => void;
+  onGenerate?: () => Promise<void>;
+  generating: boolean;
+  title: string;
 }
 
-export function VocabItemList({ items, onEdit, onDelete, onAdd, onQuickAdd }: VocabItemListProps) {
+export function VocabItemList({ items, onEdit, onDelete, onAdd, onQuickAdd, onGenerate, generating, title }: VocabItemListProps) {
   const [quickKorean, setQuickKorean] = useState("");
   const [quickIndonesian, setQuickIndonesian] = useState("");
   const koreanRef = useRef<HTMLInputElement>(null);
@@ -139,10 +143,21 @@ export function VocabItemList({ items, onEdit, onDelete, onAdd, onQuickAdd }: Vo
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Vocabulary Items</h3>
-        <Button type="button" onClick={onAdd} size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Item
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            onClick={onGenerate}
+            disabled={generating || !title.trim()}
+            variant="outline"
+            size="sm"
+          >
+            {generating ? "Generating..." : (<><BsStars className="h-4 w-4 mr-2" />Generate with AI</>)}
+          </Button>
+          <Button type="button" onClick={onAdd} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Item
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-2 mb-4">
@@ -174,7 +189,7 @@ export function VocabItemList({ items, onEdit, onDelete, onAdd, onQuickAdd }: Vo
         </Button>
       </div>
 
-      <div className="h-[calc(100vh-520px)] overflow-auto rounded-xl border">
+      <div className="h-[calc(100vh-650px)] overflow-auto rounded-xl border">
         <Table>
           <TableHeader className="bg-primary/90">
             {table.getHeaderGroups().map((headerGroup) => (

@@ -53,7 +53,7 @@ export function VocabItemCard({ data, className = "" }: VocabItemCardProps) {
 
   return (
     <Card className={`group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer p-4 relative bg-gradient-to-br from-card to-muted/20 ${className}`}>
-      <div className={`absolute inset-y-0 left-0 w-1 ${data.difficulty === "BEGINNER" ? "bg-gradient-to-b from-success to-card" : data.difficulty === "INTERMEDIATE" ? "bg-gradient-to-b from-secondary to-card" : "bg-gradient-to-b from-destructive to-card"}`} />
+      <div className={`absolute inset-y-0 left-0 w-1 ${data.difficulty === "BEGINNER" ? "bg-gradient-to-b from-primary to-card" : data.difficulty === "INTERMEDIATE" ? "bg-gradient-to-b from-secondary to-card" : "bg-gradient-to-b from-destructive to-card"}`} />
       <CardContent className="p-0 space-y-3 pl-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">

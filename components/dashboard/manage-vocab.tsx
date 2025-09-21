@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getGuruVocabularySets } from "@/app/actions/kelas/vocabulary";
+import { getGuruVocabularySets, deleteVocabularySet } from "@/app/actions/kelas/vocabulary";
 import { VocabSet, VocabSheet } from "./vocab-sheet";
 import { VocabCard } from "./vocab-card";
 import { ManageLayout } from "./manage-layout";
@@ -82,6 +82,20 @@ export function ManageVocab({ vocabSets: initialVocabSets }: ManageVocabProps) {
     setEditingVocabSet(null);
   };
 
+  const handleDelete = async (vocabSetId: number) => {
+    try {
+      const result = await deleteVocabularySet(vocabSetId);
+      if (result.success) {
+        // Refresh the list
+        await fetchVocabSets();
+      } else {
+        setError(result.error || "Failed to delete vocabulary set");
+      }
+    } catch (error) {
+      setError("Failed to delete vocabulary set");
+    }
+  };
+
 
 
   return (
@@ -113,6 +127,7 @@ export function ManageVocab({ vocabSets: initialVocabSets }: ManageVocabProps) {
           key={vocabSet.id}
           vocabSet={vocabSet}
           onClick={() => handleEditVocab(vocabSet)}
+          onDelete={(id) => handleDelete(id)}
         />
       )}
       createNewCard={{

@@ -11,7 +11,7 @@ import {
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
 import { motion } from "framer-motion";
-import { useKelasColorsContext } from "@/lib/contexts/kelas-colors-context";
+import { useKelasColors } from "@/lib/hooks/use-kelas-colors";
 import { NovelReadonly } from "@/components/novel/novel-readonly";
 import Image from "next/image";
 import { Badge } from "../ui/badge";
@@ -40,7 +40,7 @@ interface MateriDetailPageProps {
 }
 
 export default function MateriDetailPage({ materi }: MateriDetailPageProps) {
-  const { colors } = useKelasColorsContext();
+  const { colors, isExtracting, handleColorExtraction } = useKelasColors(materi.kelas.thumbnail);
 
 
   return (

@@ -1,8 +1,5 @@
 "use client"
 
-import React, { useState } from "react"
-import { KelasColorsProvider } from "@/lib/contexts/kelas-colors-context"
-import { KelasColorExtractor } from "./kelas-color-extractor"
 import KelasDetailPage from "./kelas-detail-page"
 
 // Import the Kelas interface from KelasDetailPage
@@ -93,27 +90,6 @@ interface KelasDetailWrapperProps {
 }
 
 export default function KelasDetailWrapper({ kelas }: KelasDetailWrapperProps) {
-  const [extractedColors, setExtractedColors] = useState<any>(null)
-  const [isExtracting, setIsExtracting] = useState(false)
-
-  const handleColorsExtracted = (colors: any) => {
-    setExtractedColors(colors)
-    setIsExtracting(false)
-  }
-
-  React.useEffect(() => {
-    if (kelas.thumbnail) {
-      setIsExtracting(true)
-    }
-  }, [kelas.thumbnail])
-
-  return (
-    <KelasColorsProvider colors={extractedColors} isExtracting={isExtracting}>
-      <KelasColorExtractor
-        thumbnailUrl={kelas.thumbnail}
-        onColorsExtracted={handleColorsExtracted}
-      />
-      <KelasDetailPage kelas={kelas} />
-    </KelasColorsProvider>
-  )
+  // No longer need wrapper complexity - the hook handles color extraction directly
+  return <KelasDetailPage kelas={kelas} />
 }

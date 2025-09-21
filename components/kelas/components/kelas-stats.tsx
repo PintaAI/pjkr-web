@@ -1,7 +1,7 @@
 "use client";
 
 import { Users, BookOpen, FileText } from "lucide-react";
-import { useKelasColorsContext } from "@/lib/contexts/kelas-colors-context";
+
 
 interface KelasStatsProps {
   stats: {
@@ -13,61 +13,37 @@ interface KelasStatsProps {
 }
 
 export default function KelasStats({ stats }: KelasStatsProps) {
-  const { colors } = useKelasColorsContext()
+ 
 
   return (
     <div className="grid grid-cols-4 gap-3">
       <div className="text-center p-3 bg-card rounded-lg shadow-sm">
-        <Users
-          className="w-4 h-4 mx-auto mb-1"
-          style={{ color: colors?.primary || 'hsl(var(--primary))' }}
-        />
-        <div
-          className="text-lg font-semibold"
-          style={{ color: colors?.secondary || 'hsl(var(--primary))' }}
-        >
+        <Users className="w-4 h-4 mx-auto mb-1 text-primary" />
+        <div className="text-lg font-semibold text-secondary">
           {stats.members}
         </div>
         <div className="text-xs text-muted-foreground">Murid</div>
       </div>
 
       <div className="text-center p-3 bg-card rounded-lg shadow-sm">
-        <BookOpen
-          className="w-4 h-4 mx-auto mb-1"
-          style={{ color: colors?.primary || 'hsl(var(--primary))' }}
-        />
-        <div
-          className="text-lg font-semibold"
-          style={{ color: colors?.secondary || 'hsl(var(--primary))' }}
-        >
+        <BookOpen className="w-4 h-4 mx-auto mb-1 text-primary" />
+        <div className="text-lg font-semibold text-secondary">
           {stats.materis}
         </div>
         <div className="text-xs text-muted-foreground">Materi</div>
       </div>
 
       <div className="text-center p-3 bg-card rounded-lg shadow-sm">
-        <FileText
-          className="w-4 h-4 mx-auto mb-1"
-          style={{ color: colors?.primary || 'hsl(var(--primary))' }}
-        />
-        <div
-          className="text-lg font-semibold"
-          style={{ color: colors?.secondary || 'hsl(var(--primary))' }}
-        >
+        <FileText className="w-4 h-4 mx-auto mb-1 text-primary" />
+        <div className="text-lg font-semibold text-secondary">
           {stats.kelasKoleksiSoals}
         </div>
         <div className="text-xs text-muted-foreground">Paket Soal</div>
       </div>
 
       <div className="text-center p-3 bg-card rounded-lg shadow-sm">
-        <BookOpen
-          className="w-4 h-4 mx-auto mb-1"
-          style={{ color: colors?.primary || 'hsl(var(--primary))' }}
-        />
-        <div
-          className="text-lg font-semibold"
-          style={{ color: colors?.secondary || 'hsl(var(--primary))' }}
-        >
+        <BookOpen className="w-4 h-4 mx-auto mb-1 text-primary" />
+        <div className="text-lg font-semibold text-secondary">
           {stats.vocabularySets}
         </div>
         <div className="text-xs text-muted-foreground">koleksi kosa-kata</div>

@@ -12,7 +12,8 @@ import {
   BookOpen,
   UserCheck,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  Database
 } from "lucide-react";
 import Link from "next/link";
 import { AuthButton } from "../auth/auth-button";
@@ -202,6 +203,29 @@ export function AdminDashboard({ user, dashboardData }: AdminDashboardProps) {
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Active Users</span>
                         <span className="font-medium">{stats.activeUsers}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+
+                <Link href="/dashboard/admin/storage">
+                  <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <Database className="h-6 w-6 text-blue-500" />
+                        <Badge variant="outline" className="text-xs">
+                          Cloudinary
+                        </Badge>
+                      </div>
+                      <CardTitle className="text-lg">Storage Management</CardTitle>
+                      <CardDescription>
+                        Monitor usage, manage files, and optimize storage
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Storage Stats</span>
+                        <span className="font-medium">Loading...</span>
                       </div>
                     </CardContent>
                   </Card>

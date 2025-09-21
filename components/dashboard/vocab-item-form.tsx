@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { VocabularyType, PartOfSpeech } from "@prisma/client";
 import { Plus, Trash2 } from "lucide-react";
+import { useMediaUpload } from "@/lib/hooks/use-media-upload";
 
 interface VocabItem {
   id?: number | string;
@@ -34,6 +35,15 @@ export function VocabItemForm({ item, onSave, onCancel }: VocabItemFormProps) {
     exampleSentences: item?.exampleSentences && item.exampleSentences.length > 0
       ? item.exampleSentences
       : [""],
+  });
+
+  const [generating, setGenerating] = useState(false);
+
+  const { uploadFiles } = useMediaUpload({
+    allowedTypes: ['audio'],
+    onError: (error) => {
+      console.error('Upload error:', error);
+    },
   });
 
   const updateExampleSentence = (index: number, value: string) => {
@@ -65,6 +75,47 @@ export function VocabItemForm({ item, onSave, onCancel }: VocabItemFormProps) {
       exampleSentences: filteredSentences.length > 0 ? filteredSentences : [""],
     };
     onSave(finalItem);
+  };
+
+  const handleGenerateAudio = async () => {
+    if (!formData.korean.trim()) {
+      console.warn('Korean text is required for audio generation');
+      return;
+    }
+
+    setGenerating(true);
+
+    try {
+      const response = await fetch('/api/tts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: formData.korean }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`TTS generation failed: ${response.statusText}`);
+      }
+
+      const audioBlob = await response.blob();
+      const audioFile = new File([audioBlob], `${formData.korean}-audio.mp3`, {
+        type: audioBlob.type || 'audio/mpeg',
+      });
+
+      const uploadedFiles = await uploadFiles([audioFile]);
+
+      if (uploadedFiles && uploadedFiles.length > 0) {
+        setFormData((prev) => ({ ...prev, audioUrl: uploadedFiles[0].url }));
+      } else {
+        throw new Error('No file uploaded');
+      }
+    } catch (error) {
+      console.error('Audio generation or upload failed:', error);
+      // Could add user notification here
+    } finally {
+      setGenerating(false);
+    }
   };
 
   return (
@@ -127,13 +178,26 @@ export function VocabItemForm({ item, onSave, onCancel }: VocabItemFormProps) {
       </div>
 
       <div>
-        <Label htmlFor="audioUrl">Audio URL</Label>
-        <Input
-          id="audioUrl"
-          value={formData.audioUrl || ""}
-          onChange={(e) => setFormData({ ...formData, audioUrl: e.target.value })}
-          placeholder="Audio URL (optional)"
-        />
+        <Label>Audio</Label>
+        {!formData.audioUrl && (
+          <Button
+            type="button"
+            onClick={handleGenerateAudio}
+            disabled={!formData.korean.trim() || generating}
+            className="w-full"
+          >
+            {generating ? "Generating Audio..." : "Generate Audio"}
+          </Button>
+        )}
+        {formData.audioUrl && (
+          <div className="mt-2">
+            <audio
+              controls
+              src={formData.audioUrl}
+              className="w-full"
+            />
+          </div>
+        )}
       </div>
 
       <div>

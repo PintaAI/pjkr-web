@@ -3,7 +3,6 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useKelasColorsContext } from "@/lib/contexts/kelas-colors-context";
 import Link from "next/link";
 
 interface Materi {
@@ -30,25 +29,13 @@ export default function KelasMaterialsList({
   hasTeasedMaterials,
   kelasId
 }: KelasMaterialsListProps) {
-  const { colors } = useKelasColorsContext()
-
   if (materis.length === 0) return null;
 
   return (
     <div className="hidden lg:block lg:absolute lg:top-full lg:left-0 lg:w-64 mt-1 lg:border-border backdrop-blur-sm">
       <button
         onClick={() => setShowMaterials(!showMaterials)}
-        className={` p-2 border rounded-lg flex items-center justify-between w-full text-left text-sm font-medium transition-colors ${!hasTeasedMaterials ? 'animate-pulse' : ''}`}
-        style={{
-          color: colors?.primary || 'hsl(var(--primary))',
-          borderColor: colors?.primary || 'hsl(var(--border))'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.color = colors?.primaryDark || 'hsl(var(--primary) / 0.8)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.color = colors?.primary || 'hsl(var(--primary))';
-        }}
+        className={`p-2 border border-primary rounded-lg flex items-center justify-between w-full text-left text-sm font-medium transition-colors text-primary hover:text-primary/80 ${!hasTeasedMaterials ? 'animate-pulse' : ''}`}
       >
         <span className="flex items-center gap-2">
           <FileText className="w-4 h-4" />
@@ -70,12 +57,7 @@ export default function KelasMaterialsList({
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="overflow-hidden"
           >
-            <ScrollArea
-              className="mt-3 h-64 border rounded-lg p-2"
-              style={{
-                borderColor: colors?.primary || 'hsl(var(--border))'
-              }}
-            >
+            <ScrollArea className="mt-3 h-64 border border-primary rounded-lg p-2">
               <div className="space-y-2 ">
                 {materis.map((materi, index) => (
                   <motion.div
@@ -85,22 +67,13 @@ export default function KelasMaterialsList({
                     transition={{ duration: 0.2, delay: index * 0.05 }}
                   >
                     <Link href={`/kelas/${kelasId}/materi/${materi.id}`}>
-                      <div
-                        className="p-3 rounded-lg bg-muted/40 border text-sm hover:bg-muted/60 transition-colors cursor-pointer"
-                        style={{
-                          borderColor: colors?.primary ? `${colors.primary}50` : 'hsl(var(--border) / 0.5)'
-                        }}
-                      >
+                      <div className="p-3 rounded-lg bg-muted/40 border border-primary/50 text-sm hover:bg-muted/60 transition-colors cursor-pointer">
                         <div className="font-medium text-foreground mb-2">{materi.title}</div>
                         <div className="text-muted-foreground text-xs line-clamp-2 mb-1">{materi.description}</div>
                         {materi.isDemo && (
                           <Badge
                             variant="outline"
-                            className="text-xs"
-                            style={{
-                              color: colors?.secondary || 'hsl(var(--foreground))',
-                              borderColor: colors?.secondary || 'hsl(var(--border))'
-                            }}
+                            className="text-xs text-secondary border-secondary"
                           >
                             Demo
                           </Badge>

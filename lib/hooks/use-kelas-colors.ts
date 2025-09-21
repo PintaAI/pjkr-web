@@ -23,12 +23,23 @@ export const useKelasColors = (thumbnailUrl: string | null) => {
       const primaryDark = colorUtils.generateVariations(primary).darker
       const secondaryDark = colorUtils.generateVariations(secondary).darker
 
-      setColors({
+      const extractedColorsObj = {
         primary,
         secondary,
         primaryDark,
         secondaryDark
-      })
+      }
+
+      setColors(extractedColorsObj)
+
+      // Override global CSS variables to make all Tailwind classes use extracted colors
+      const root = document.documentElement
+      
+      // Use hex colors directly - Tailwind can handle them
+      root.style.setProperty('--primary', primary)
+      root.style.setProperty('--secondary', secondary)
+      root.style.setProperty('--primary-foreground', '#ffffff')
+      root.style.setProperty('--secondary-foreground', colorUtils.getContrastColor(secondary))
     }
     setIsExtracting(false)
   }
@@ -37,6 +48,13 @@ export const useKelasColors = (thumbnailUrl: string | null) => {
     if (thumbnailUrl) {
       setIsExtracting(true)
       setColors(null)
+    } else {
+      // Reset to default colors when no thumbnail
+      const root = document.documentElement
+      root.style.removeProperty('--primary')
+      root.style.removeProperty('--secondary')
+      root.style.removeProperty('--primary-foreground')
+      root.style.removeProperty('--secondary-foreground')
     }
   }, [thumbnailUrl])
 

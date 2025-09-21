@@ -14,7 +14,8 @@ import VocabularyTab from "./tabs/vocabulary-tab";
 import { useState, useRef,} from "react";
 import { useAnimation } from "framer-motion";
 import React from "react";
-import { useKelasColorsContext } from "@/lib/contexts/kelas-colors-context";
+import { useKelasColors } from "@/lib/hooks/use-kelas-colors";
+import { ColorExtractor } from "react-color-extractor";
 
 // Import modular components
 import KelasHeader from "./components/kelas-header";
@@ -112,7 +113,9 @@ interface KelasDetailPageProps {
 export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
   const router = useRouter();
   const { user, isLoading } = useSession();
-  const { colors } = useKelasColorsContext();
+  
+  // Initialize color extraction from thumbnail
+  const { colors, isExtracting, handleColorExtraction } = useKelasColors(kelas.thumbnail);
 
   // Use the enrollment hook
   const enrollment = useKelasEnrollment(kelas.id);
@@ -189,6 +192,18 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
 
   return (
     <div className="w-full max-w-7xl mx-auto -mt-6">
+      {/* Hidden Color Extractor - extracts colors from thumbnail */}
+      {kelas.thumbnail && (
+        <div className="hidden">
+          <ColorExtractor
+            src={kelas.thumbnail}
+            getColors={handleColorExtraction}
+            maxColors={5}
+            format="hex"
+          />
+        </div>
+      )}
+
       {/* Header */}
       <KelasHeader
         kelas={{
@@ -257,54 +272,30 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger
                 value="detail"
-                className="flex items-center gap-2"
-                style={{
-                  color: colors?.primary || undefined
-                }}
+                className="flex items-center gap-2 text-primary"
               >
-                <FileText
-                  className="w-4 h-4"
-                  style={{ color: colors?.primary || undefined }}
-                />
+                <FileText className="w-4 h-4 text-primary" />
                 Detail
               </TabsTrigger>
               <TabsTrigger
                 value="live-session"
-                className="flex items-center gap-2"
-                style={{
-                  color: colors?.primary || undefined
-                }}
+                className="flex items-center gap-2 text-primary"
               >
-                <Video
-                  className="w-4 h-4"
-                  style={{ color: colors?.primary || undefined }}
-                />
+                <Video className="w-4 h-4 text-primary" />
                 Live Session
               </TabsTrigger>
               <TabsTrigger
                 value="discussion"
-                className="flex items-center gap-2"
-                style={{
-                  color: colors?.primary || undefined
-                }}
+                className="flex items-center gap-2 text-primary"
               >
-                <MessageSquare
-                  className="w-4 h-4"
-                  style={{ color: colors?.primary || undefined }}
-                />
+                <MessageSquare className="w-4 h-4 text-primary" />
                 Discussion
               </TabsTrigger>
               <TabsTrigger
                 value="vocabulary"
-                className="flex items-center gap-2"
-                style={{
-                  color: colors?.primary || undefined
-                }}
+                className="flex items-center gap-2 text-primary"
               >
-                <GraduationCap
-                  className="w-4 h-4"
-                  style={{ color: colors?.primary || undefined }}
-                />
+                <GraduationCap className="w-4 h-4 text-primary" />
                 Vocabulary
               </TabsTrigger>
             </TabsList>
@@ -350,48 +341,20 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
 
         {/* Running Text Ads Placeholder */}
         <div className="mt-8 mb-6">
-          <Card
-            className="border-dashed border-2"
-            style={{
-              background: colors
-                ? `linear-gradient(90deg, ${colors.primary}10, ${colors.secondary}10)`
-                : 'linear-gradient(90deg, hsl(var(--blue-50)), hsl(var(--indigo-50)))'
-            }}
-          >
+          <Card className="border-dashed border-2 bg-gradient-to-r from-primary/10 to-secondary/10">
             <CardContent className="p-6">
-              <div
-                className="flex items-center justify-center gap-3"
-                style={{ color: colors?.primary || 'hsl(var(--blue-600))' }}
-              >
-                <Megaphone
-                  className="w-6 h-6"
-                  style={{ color: colors?.primary || 'hsl(var(--blue-600))' }}
-                />
+              <div className="flex items-center justify-center gap-3 text-primary">
+                <Megaphone className="w-6 h-6 text-primary" />
                 <div className="text-center">
                   <h3 className="font-medium text-lg mb-1">Advertisement Space</h3>
-                  <p
-                    className="text-sm"
-                    style={{ color: colors?.secondary || 'hsl(var(--blue-500))' }}
-                  >
+                  <p className="text-sm text-secondary">
                     Running text ads will be displayed here
                   </p>
                 </div>
-                <div
-                  className="flex items-center gap-1 text-xs"
-                  style={{ color: colors?.secondary || 'hsl(var(--blue-400))' }}
-                >
-                  <div
-                    className="w-2 h-2 rounded-full animate-pulse"
-                    style={{ backgroundColor: colors?.primary || 'hsl(var(--blue-400))' }}
-                  ></div>
-                  <div
-                    className="w-2 h-2 rounded-full animate-pulse"
-                    style={{ animationDelay: '0.2s', backgroundColor: colors?.secondary || 'hsl(var(--blue-400))' }}
-                  ></div>
-                  <div
-                    className="w-2 h-2 rounded-full animate-pulse"
-                    style={{ animationDelay: '0.4s', backgroundColor: colors?.primary || 'hsl(var(--blue-400))' }}
-                  ></div>
+                <div className="flex items-center gap-1 text-xs text-secondary">
+                  <div className="w-2 h-2 rounded-full animate-pulse bg-primary"></div>
+                  <div className="w-2 h-2 rounded-full animate-pulse bg-secondary" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 rounded-full animate-pulse bg-primary" style={{ animationDelay: '0.4s' }}></div>
                 </div>
               </div>
             </CardContent>

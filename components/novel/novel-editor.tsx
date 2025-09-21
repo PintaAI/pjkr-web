@@ -29,6 +29,7 @@ import { TextButtons } from "./selectors/text-buttons";
 import { slashCommand, suggestionItems } from "./slash-command";
 import { uploadFn } from "./image-upload";
 import { LinkSelector } from "./selectors/link-selector";
+import { TopToolbar } from "./top-toolbar";
 import hljs from "highlight.js";
 
 const extensions = [...defaultExtensions, slashCommand];
@@ -39,6 +40,7 @@ interface NovelEditorProps {
   onSave?: (data: { json: any; html: string }) => void;
   className?: string;
   saveStatus?: "Saved" | "Unsaved" | "Saving...";
+  showTopToolbar?: boolean;
 }
 
 /* Defaults preserve original sizing when props not supplied */
@@ -47,6 +49,7 @@ const NovelEditor = ({
   onSave,
   initialContent: propInitialContent,
   className,
+  showTopToolbar = false,
 }: NovelEditorProps) => {
   const [initialContent, setInitialContent] = useState<null | JSONContent>(null);
   const [openNode, setOpenNode] = useState(false);
@@ -108,7 +111,7 @@ const NovelEditor = ({
           }}
           onUpdate={({ editor }) => {
             debouncedUpdates(editor);
-            
+
             // Call the onUpdate prop if provided
             if (onUpdate) {
               const json = editor.getJSON();
@@ -116,6 +119,7 @@ const NovelEditor = ({
               onUpdate({ json, html });
             }
           }}
+          slotBefore={showTopToolbar ? <TopToolbar /> : undefined}
           slotAfter={<ImageResizer />}
         >
           <EditorCommand className="z-50 h-auto max-h-[330px] overflow-y-auto rounded-md border border-muted bg-background px-1 py-2 shadow-md transition-all">

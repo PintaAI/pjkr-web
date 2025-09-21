@@ -29,8 +29,8 @@ function Avatar({
     <AvatarPrimitive.Root
       data-slot="avatar"
       className={cn(
-        "relative flex size-8 shrink-0 overflow-hidden rounded-full",
-        clickable && "cursor-pointer hover:opacity-80 transition-opacity",
+        "relative flex size-8 shrink-0 overflow-hidden rounded-full ring-2 ring-primary/20 hover:ring-primary/40 transition-all duration-200",
+        clickable && "cursor-pointer hover:opacity-80 hover:scale-105",
         className
       )}
       onClick={handleClick}
@@ -60,7 +60,7 @@ function AvatarFallback({
     <AvatarPrimitive.Fallback
       data-slot="avatar-fallback"
       className={cn(
-        "bg-muted flex size-full items-center justify-center rounded-full uppercase",
+        "bg-gradient-to-br from-primary/20 to-secondary/20 text-primary border border-primary/30 flex size-full items-center justify-center rounded-full uppercase font-semibold text-sm",
         className
       )}
       {...props}

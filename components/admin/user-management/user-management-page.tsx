@@ -9,7 +9,7 @@ import { RefreshCw, UserPlus, UserCheck, CheckCircle, Shield, Trash2, Users, Arr
 import { UserManagementData } from "./types";
 import {  filterUsers, sortUsers } from "./utils";
 import { useUserManagement } from "./use-user-management";
-import { StatsCard } from "./stats-card";
+import { StatsCard } from "@/components/dashboard/stats-card";
 import { UserFilters } from "./user-filters";
 import { UserRow } from "./user-row";
 import { UserDialogs } from "./user-dialogs";
@@ -115,26 +115,26 @@ export function UserManagementPage({ initialData }: UserManagementPageProps) {
             <StatsCard
               title="Total Users"
               value={databaseStats.totalUsers}
-              subtitle={`+${databaseStats.newUsersThisWeek} this week`}
-              icon={UserCheck}
+              description={`+${databaseStats.newUsersThisWeek} this week`}
+              icon={<UserCheck className="h-4 w-4" />}
             />
             <StatsCard
               title="Active Users"
               value={databaseStats.activeUsers}
-              subtitle={`${Math.round((databaseStats.activeUsers / databaseStats.totalUsers) * 100)}% of total`}
-              icon={CheckCircle}
+              description={`${Math.round((databaseStats.activeUsers / databaseStats.totalUsers) * 100)}% of total`}
+              icon={<CheckCircle className="h-4 w-4" />}
             />
             <StatsCard
               title="Teachers"
               value={databaseStats.teacherCount}
-              subtitle={`${Math.round((databaseStats.teacherCount / databaseStats.totalUsers) * 100)}% of total`}
-              icon={Shield}
+              description={`${Math.round((databaseStats.teacherCount / databaseStats.totalUsers) * 100)}% of total`}
+              icon={<Shield className="h-4 w-4" />}
             />
             <StatsCard
               title="Students"
               value={databaseStats.studentCount}
-              subtitle={`${Math.round((databaseStats.studentCount / databaseStats.totalUsers) * 100)}% of total`}
-              icon={UserCheck}
+              description={`${Math.round((databaseStats.studentCount / databaseStats.totalUsers) * 100)}% of total`}
+              icon={<UserCheck className="h-4 w-4" />}
             />
           </>
         )}

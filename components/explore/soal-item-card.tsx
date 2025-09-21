@@ -28,7 +28,7 @@ interface SoalItemCardProps {
 }
 
 const difficultyStyles = {
-  BEGINNER: "bg-success/15 text-success",
+  BEGINNER: "bg-primary/15 text-primary",
   INTERMEDIATE: "bg-secondary text-secondary-foreground",
   ADVANCED: "bg-destructive/10 text-destructive",
 } as const;
@@ -39,7 +39,7 @@ export function SoalItemCard({ data, className = "" }: SoalItemCardProps) {
 
   return (
     <Card className={`group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer p-4 relative bg-gradient-to-br from-card to-muted/20 ${className}`}>
-      <div className={`absolute inset-x-0 top-0 h-1 ${data.difficulty === "BEGINNER" ? "bg-gradient-to-r from-success to-card" : data.difficulty === "INTERMEDIATE" ? "bg-gradient-to-r from-secondary to-card" : "bg-gradient-to-r from-destructive to-card"}`} />
+      <div className={`absolute inset-x-0 top-0 h-1 ${data.difficulty === "BEGINNER" ? "bg-gradient-to-r from-primary to-card" : data.difficulty === "INTERMEDIATE" ? "bg-gradient-to-r from-secondary to-card" : "bg-gradient-to-r from-destructive to-card"}`} />
       <div className="absolute top-4 -right-3 bg-primary text-primary-foreground px-6  text-xs font-semibold transform -translate-y-1 translate-x-1 rotate-45 shadow-xl">
         Soal
       </div>

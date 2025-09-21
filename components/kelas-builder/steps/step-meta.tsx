@@ -341,6 +341,7 @@ export function StepMeta() {
                           form.setValue("htmlDescription", data.html, { shouldTouch: true, shouldDirty: true });
                         }}
                         saveStatus={isLoading ? "Saving..." : "Saved"}
+                        showTopToolbar={true}
                       />
                     </FormControl>
                     <FormDescription>

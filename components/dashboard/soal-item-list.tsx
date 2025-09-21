@@ -4,8 +4,7 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Edit, Plus, Trash2, HelpCircle } from "lucide-react";
+import { Plus, Trash2, HelpCircle, Sparkles } from "lucide-react";
 import { Difficulty } from "@prisma/client";
 
 interface SoalItem {
@@ -25,9 +24,12 @@ interface SoalItemListProps {
   onDelete: (index: number) => void;
   onAdd: () => void;
   onQuickAdd: (pertanyaan: string) => void;
+  onGenerate?: () => void;
+  generating?: boolean;
+  title?: string;
 }
 
-export function SoalItemList({ items, onEdit, onDelete, onAdd, onQuickAdd }: SoalItemListProps) {
+export function SoalItemList({ items, onEdit, onDelete, onAdd, onQuickAdd, onGenerate, generating, title }: SoalItemListProps) {
   const [quickPertanyaan, setQuickPertanyaan] = useState("");
   const pertanyaanRef = useRef<HTMLInputElement>(null);
 
@@ -38,50 +40,56 @@ export function SoalItemList({ items, onEdit, onDelete, onAdd, onQuickAdd }: Soa
     pertanyaanRef.current?.focus();
   };
 
-  const getDifficultyBadge = (difficulty?: Difficulty | null) => {
-    if (!difficulty) return <Badge variant="secondary" className="text-xs">Not set</Badge>;
-
-    let variant: "default" | "secondary" | "destructive" | "outline" = "secondary";
-    let className = "text-xs";
-
+  const getDifficultyColor = (difficulty?: Difficulty | null) => {
     switch (difficulty) {
       case "BEGINNER":
-        variant = "default";
-        className += " bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-        break;
+        return "bg-success/10 border-success/30 text-success";
       case "INTERMEDIATE":
-        variant = "secondary";
-        className += " bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-        break;
+        return "bg-secondary/20 border-secondary/40 text-secondary-foreground";
       case "ADVANCED":
-        variant = "destructive";
-        className += " bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
-        break;
+        return "bg-destructive/10 border-destructive/30 text-destructive";
       default:
-        variant = "secondary";
+        return "bg-muted border-border text-muted-foreground";
     }
-
-    return (
-      <Badge variant={variant} className={className}>
-        {difficulty.toLowerCase()}
-      </Badge>
-    );
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Questions</h3>
-        <Button type="button" onClick={onAdd} size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Question
-        </Button>
+        <div>
+          <h3 className="text-xl font-semibold text-foreground">Questions</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            {items.length} question{items.length !== 1 ? 's' : ''} created
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {onGenerate && (
+            <Button
+              type="button"
+              onClick={onGenerate}
+              disabled={generating || !title?.trim()}
+              variant="outline"
+              className="border-border hover:bg-accent shadow-sm transition-all duration-200"
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              {generating ? "Generating..." : "Generate Question"}
+            </Button>
+          )}
+          <Button
+            type="button"
+            onClick={onAdd}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Question
+          </Button>
+        </div>
       </div>
 
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-3">
         <Input
           ref={pertanyaanRef}
-          placeholder="Enter question text"
+          placeholder="Type your question here..."
           value={quickPertanyaan}
           onChange={(e) => setQuickPertanyaan(e.target.value)}
           onKeyDown={(e) => {
@@ -89,72 +97,87 @@ export function SoalItemList({ items, onEdit, onDelete, onAdd, onQuickAdd }: Soa
               handleQuickAdd();
             }
           }}
-          className="flex-1"
+          className="flex-1 border-border focus:border-primary focus:ring-primary/20"
         />
-        <Button onClick={handleQuickAdd} disabled={!quickPertanyaan.trim()}>
-          Add
+        <Button 
+          onClick={handleQuickAdd} 
+          disabled={!quickPertanyaan.trim()}
+          variant="outline"
+          className="border-border hover:bg-accent"
+        >
+          <Plus className="h-4 w-4" />
         </Button>
       </div>
 
       {items.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center h-48">
-            <HelpCircle className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-sm font-semibold mb-2">No questions yet</h3>
-            <p className="text-xs text-muted-foreground text-center">
-              tambahkan soal dengan mengklik tombol Add Question di atas atau gunakan fitur quick add.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center justify-center py-16 px-4 border-2 border-dashed border-border rounded-xl bg-muted/50">
+          <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mb-4">
+            <HelpCircle className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-medium text-foreground mb-2">No questions yet</h3>
+          <p className="text-sm text-muted-foreground text-center max-w-sm">
+            Create your first question using the form above or click the Add Question button to get started.
+          </p>
+        </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {items.map((item, index) => (
-            <Card key={item.id || index} className="group hover:shadow-lg transition-all">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-muted-foreground">#{index + 1}</span>
-                    {getDifficultyBadge(item.difficulty)}
+        <div className="space-y-3">
+          {items.map((item, index) => {
+            const totalOptions = item.opsis?.length || 0;
+            
+            return (
+              <div
+                key={item.id || index}
+                className={`group relative border rounded-xl p-5 transition-all duration-200 cursor-pointer hover:shadow-lg hover:scale-[1.01] ${getDifficultyColor(item.difficulty)}`}
+                onClick={() => onEdit(index)}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-8 h-8 bg-card rounded-full flex items-center justify-center text-sm font-semibold shadow-sm border border-border flex-shrink-0">
+                      {index + 1}
+                    </div>
+                    <div 
+                      className="text-base leading-relaxed text-foreground font-medium flex-1 min-w-0"
+                      dangerouslySetInnerHTML={{ __html: item.pertanyaan }}
+                    />
                   </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  
+                  {items.length > 1 && (
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => onEdit(index)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity bg-card/80 hover:bg-destructive/10 hover:text-destructive flex-shrink-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(index);
+                      }}
                     >
-                      <Edit className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
-                    {items.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onDelete(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 text-sm">
+                    <Badge 
+                      variant="secondary" 
+                      className="text-xs font-medium bg-card/80 backdrop-blur-sm border-0"
+                    >
+                      {item.difficulty?.toLowerCase() || 'not set'}
+                    </Badge>
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      <div className="w-2 h-2 bg-current rounded-full"></div>
+                      {totalOptions} option{totalOptions !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  
+                  <div className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                    Click to edit
                   </div>
                 </div>
-
-                <h4 className="text-sm font-medium leading-relaxed mb-3 line-clamp-3">
-                  {item.pertanyaan}
-                </h4>
-
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>
-                    {item.opsis?.length || 0} options
-                    {item.opsis && item.opsis.filter(o => o.isCorrect).length > 0 && (
-                      <span className="ml-1">
-                        ({item.opsis.filter(o => o.isCorrect).length} correct)
-                      </span>
-                    )}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

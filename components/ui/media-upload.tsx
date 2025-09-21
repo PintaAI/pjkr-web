@@ -119,8 +119,16 @@ export function MediaUpload({
         const result = await response.json();
         setUploadProgress(((index + 1) / validFiles.length) * 100);
         
+        // Handle new API response structure
+        const fileData = result.success ? result.data : result;
+        
         return {
-          ...result,
+          url: fileData.url,
+          publicId: fileData.publicId,
+          format: fileData.format,
+          width: fileData.width,
+          height: fileData.height,
+          bytes: fileData.bytes,
           type: getUploadType(file),
         };
       });
@@ -140,13 +148,21 @@ export function MediaUpload({
   const handleRemove = async (publicId: string) => {
     if (disabled) return;
     
+    // Find the file to get its resource_type
+    const fileToRemove = uploadedFiles.find(f => f.publicId === publicId);
+    const resourceType = fileToRemove?.type === 'image' ? 'image' :
+                        fileToRemove?.type === 'video' ? 'video' : 'raw';
+    
     try {
       const response = await fetch('/api/upload', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ publicId }),
+        body: JSON.stringify({
+          publicId,
+          resource_type: resourceType
+        }),
       });
 
       if (response.ok) {

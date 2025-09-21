@@ -4,10 +4,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Difficulty } from "@prisma/client";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, CheckCircle2 } from "lucide-react";
+import NovelEditor from "@/components/novel/novel-editor";
 
 interface OpsiItem {
   id?: number | string;
@@ -33,7 +33,7 @@ export function SoalItemForm({ item, onSave, onCancel }: SoalItemFormProps) {
   const [formData, setFormData] = useState<SoalItem>({
     id: item?.id,
     pertanyaan: item?.pertanyaan || "",
-    difficulty: item?.difficulty || null,
+    difficulty: item?.difficulty || Difficulty.BEGINNER,
     explanation: item?.explanation || "",
     opsis: item?.opsis && item.opsis.length > 0
       ? item.opsis
@@ -45,9 +45,21 @@ export function SoalItemForm({ item, onSave, onCancel }: SoalItemFormProps) {
         ],
   });
 
+  const [questionContent, setQuestionContent] = useState<{ json: any; html: string } | null>(null);
+  const [explanationContent, setExplanationContent] = useState<{ json: any; html: string } | null>(null);
+
   const updateOpsi = (index: number, field: keyof OpsiItem, value: string | boolean) => {
     const updatedOpsis = [...formData.opsis!];
-    updatedOpsis[index] = { ...updatedOpsis[index], [field]: value };
+    
+    // If setting as correct, make all other options incorrect (radio button behavior)
+    if (field === 'isCorrect' && value === true) {
+      updatedOpsis.forEach((opsi, i) => {
+        opsi.isCorrect = i === index;
+      });
+    } else {
+      updatedOpsis[index] = { ...updatedOpsis[index], [field]: value };
+    }
+    
     setFormData({ ...formData, opsis: updatedOpsis });
   };
 
@@ -65,6 +77,16 @@ export function SoalItemForm({ item, onSave, onCancel }: SoalItemFormProps) {
     }
   };
 
+  const handleQuestionUpdate = (data: { json: any; html: string }) => {
+    setQuestionContent(data);
+    setFormData({ ...formData, pertanyaan: data.html });
+  };
+
+  const handleExplanationUpdate = (data: { json: any; html: string }) => {
+    setExplanationContent(data);
+    setFormData({ ...formData, explanation: data.html });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Filter out empty options
@@ -76,105 +98,192 @@ export function SoalItemForm({ item, onSave, onCancel }: SoalItemFormProps) {
     onSave(finalItem);
   };
 
+  // Convert HTML to JSON for initial content if editing
+  const getInitialContent = (content?: string) => {
+    if (content) {
+      // For now, we'll use a simple text node. In a real implementation,
+      // you might want to parse HTML back to JSON or store JSON separately
+      return {
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              {
+                type: "text",
+                text: content.replace(/<[^>]*>/g, ''), // Strip HTML for initial text
+              },
+            ],
+          },
+        ],
+      };
+    }
+    return null;
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <Label htmlFor="pertanyaan">Question *</Label>
-        <Textarea
-          id="pertanyaan"
-          value={formData.pertanyaan}
-          onChange={(e) => setFormData({ ...formData, pertanyaan: e.target.value })}
-          placeholder="Enter the question text"
-          required
-          rows={3}
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="difficulty">Difficulty</Label>
-          <select
-            id="difficulty"
-            className="w-full px-3 py-2 border border-input bg-background rounded-md"
-            value={formData.difficulty || ""}
-            onChange={(e) => setFormData({
-              ...formData,
-              difficulty: e.target.value as Difficulty || null
-            })}
-          >
-            <option value="">Select difficulty</option>
-            <option value={Difficulty.BEGINNER}>Beginner</option>
-            <option value={Difficulty.INTERMEDIATE}>Intermediate</option>
-            <option value={Difficulty.ADVANCED}>Advanced</option>
-          </select>
-        </div>
-      </div>
-
-      <div>
-        <Label htmlFor="explanation">Explanation (Optional)</Label>
-        <Textarea
-          id="explanation"
-          value={formData.explanation || ""}
-          onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
-          placeholder="Provide an explanation for the correct answer"
-          rows={2}
-        />
-      </div>
-
-      <div>
-        <Label>Answer Options</Label>
-        <div className="space-y-3 mt-2">
-          {formData.opsis!.map((opsi, index) => (
-            <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id={`correct-${index}`}
-                  checked={opsi.isCorrect}
-                  onCheckedChange={(checked) => updateOpsi(index, 'isCorrect', checked as boolean)}
-                />
-                <Label htmlFor={`correct-${index}`} className="text-sm font-medium">
-                  Correct
-                </Label>
-              </div>
-              <Input
-                value={opsi.opsiText}
-                onChange={(e) => updateOpsi(index, 'opsiText', e.target.value)}
-                placeholder={`Option ${index + 1}`}
-                className="flex-1"
-              />
-              {formData.opsis!.length > 2 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeOpsi(index)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
+    <div className="w-full">
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Question Section */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-lg font-medium text-foreground flex items-center gap-2">
+              Question
+              <span className="text-destructive">*</span>
+            </Label>
+            
+            {/* Compact Difficulty Selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Difficulty:</span>
+              <Select
+                value={formData.difficulty || ""}
+                onValueChange={(value) => setFormData({
+                  ...formData,
+                  difficulty: value as Difficulty || null
+                })}
+              >
+                <SelectTrigger className="w-32 h-8 text-xs border-0 bg-muted/50 focus:bg-background focus:border focus:border-primary/20 transition-all">
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={Difficulty.BEGINNER}>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <span className="text-xs">Beginner</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value={Difficulty.INTERMEDIATE}>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                      <span className="text-xs">Intermediate</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value={Difficulty.ADVANCED}>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                      <span className="text-xs">Advanced</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          ))}
+          </div>
+          
+          <NovelEditor
+            initialContent={getInitialContent(item?.pertanyaan)}
+            onUpdate={handleQuestionUpdate}
+            className="min-h-[120px] border-0 bg-muted/30 rounded-xl focus-within:bg-background focus-within:border focus-within:border-primary/20 transition-all"
+          />
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={addOpsi}
-          className="mt-3"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Option
-        </Button>
-      </div>
 
-      <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit">
-          {item ? "Update" : "Add"} Question
-        </Button>
-      </div>
-    </form>
+        {/* Answer Options Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label className="text-lg font-medium text-foreground">Answer Options</Label>
+            <span className="text-sm text-muted-foreground">Select one correct answer</span>
+          </div>
+          
+          <div className="space-y-3">
+            {formData.opsis!.map((opsi, index) => {
+              const optionLetter = String.fromCharCode(65 + index); // A, B, C, D...
+              
+              return (
+                <div
+                  key={index}
+                  className={`group relative flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-200 ${
+                    opsi.isCorrect
+                      ? 'border-primary bg-primary/5 shadow-sm'
+                      : 'border-transparent bg-muted/30 hover:bg-muted/50 hover:border-border'
+                  }`}
+                >
+                  {/* Option Letter & Radio Button */}
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <div
+                      className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-medium transition-all cursor-pointer ${
+                        opsi.isCorrect
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-muted-foreground/30 text-muted-foreground hover:border-primary/50'
+                      }`}
+                      onClick={() => updateOpsi(index, 'isCorrect', !opsi.isCorrect)}
+                    >
+                      {opsi.isCorrect ? <CheckCircle2 className="w-4 h-4" /> : optionLetter}
+                    </div>
+                  </div>
+
+                  {/* Option Text Input */}
+                  <div className="flex-1 relative">
+                    <Input
+                      value={opsi.opsiText}
+                      onChange={(e) => updateOpsi(index, 'opsiText', e.target.value)}
+                      placeholder={`Enter option ${optionLetter}`}
+                      className={`w-full border-0 bg-transparent text-base placeholder:text-muted-foreground/60 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-200 ${
+                        opsi.isCorrect ? 'font-medium' : ''
+                      } ${
+                        formData.opsis!.length > 2 ? 'group-hover:pr-10' : ''
+                      }`}
+                    />
+                  </div>
+
+                  {/* Delete Button */}
+                  {formData.opsis!.length > 2 && (
+                    <div className="w-0 group-hover:w-8 overflow-hidden transition-all duration-200 flex-shrink-0">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeOpsi(index)}
+                        className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Add Option Button */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addOpsi}
+            className="w-full h-11 border-2 border-dashed border-muted-foreground/30 bg-transparent hover:border-primary/50 hover:bg-muted/30 text-muted-foreground hover:text-foreground transition-all"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Another Option
+          </Button>
+        </div>
+
+        {/* Explanation Section */}
+        <div className="space-y-3">
+          <Label className="text-lg font-medium text-foreground">Explanation</Label>
+          <p className="text-sm text-muted-foreground">Provide additional context or reasoning for the correct answer</p>
+          <NovelEditor
+            initialContent={getInitialContent(item?.explanation)}
+            onUpdate={handleExplanationUpdate}
+            className="min-h-[100px] border-0 bg-muted/30 rounded-xl focus-within:bg-background focus-within:border focus-within:border-primary/20 transition-all"
+          />
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-3 pt-6 border-t border-border/50">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            className="h-11 px-6"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            className="h-11 px-6 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200"
+          >
+            {item ? "Update Question" : "Create Question"}
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }
