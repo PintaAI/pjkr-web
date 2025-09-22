@@ -137,7 +137,9 @@ export default function MateriDetailPage({ materi }: MateriDetailPageProps) {
       {/* Content */}
       <Card>
         <CardContent>
-          {materi.htmlDescription ? (
+          {materi.jsonDescription ? (
+            <NovelReadonly content={materi.jsonDescription} />
+          ) : materi.htmlDescription ? (
             <NovelReadonly html={materi.htmlDescription} />
           ) : (
             <div className="text-muted-foreground">

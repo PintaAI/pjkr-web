@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from 'next/navigation';
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,9 +51,9 @@ const steps = [
 ];
 
 export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
+  const router = useRouter();
   const {
     currentStep,
-    isLoading,
     error,
     draftId,
     meta,
@@ -165,12 +166,12 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
               size="sm"
               onClick={() => {
                 reset();
-                window.location.href = '/dashboard';
+                router.back();
               }}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to Dashboard
+              Back
             </Button>
           </div>
 
@@ -188,7 +189,6 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                   variant="default"
                   size="sm"
                   onClick={handleSave}
-                  disabled={isLoading}
                   className="flex items-center gap-2"
                 >
                   <Save className="h-4 w-4" />
@@ -331,7 +331,6 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                   variant="outline"
                   size="sm"
                   onClick={prevStep}
-                  disabled={isLoading}
                   className="flex items-center gap-2 hover:bg-muted/50"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -363,7 +362,6 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                   <Button
                     size="sm"
                     onClick={async () => await nextStep()}
-                    disabled={isLoading}
                     className="flex items-center gap-2 bg-primary hover:bg-primary/90"
                   >
                     Next

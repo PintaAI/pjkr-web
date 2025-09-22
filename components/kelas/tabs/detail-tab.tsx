@@ -15,7 +15,9 @@ export default function DetailTab({ htmlDescription, jsonDescription }: DetailTa
       <CardContent >
         {(htmlDescription || jsonDescription) ? (
           <>
-            {htmlDescription ? (
+            {jsonDescription && typeof jsonDescription === 'object' && jsonDescription.type ? (
+              <NovelReadonly content={jsonDescription} className="prose-sm" />
+            ) : htmlDescription ? (
               <NovelReadonly html={htmlDescription} className="prose-sm" />
             ) : jsonDescription ? (
               <div className="prose prose-sm max-w-none dark:prose-invert space-y-2">

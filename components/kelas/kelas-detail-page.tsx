@@ -1,6 +1,6 @@
 "use client";
 
-import { Video, MessageSquare, GraduationCap, Megaphone, FileText } from "lucide-react";
+import { Video, MessageSquare, GraduationCap, Megaphone, FileText, BookOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { KelasType, Difficulty } from "@prisma/client";
 import { useSession } from "@/lib/hooks/use-session";
@@ -23,6 +23,7 @@ import KelasStats from "./components/kelas-stats";
 import KelasAuthor from "./components/kelas-author";
 import KelasPricingCard from "./components/kelas-pricing-card";
 import KelasMaterialsList from "./components/kelas-materials-list";
+import { MateriCard } from "./components/materi-card";
 
 interface Author {
   id: string;
@@ -48,14 +49,28 @@ interface LiveSession {
   scheduledEnd: Date | null;
 }
 
-interface VocabularySet {
+interface VocabSet {
   id: number;
   title: string;
   description: string | null;
   icon: string | null;
-  _count: {
-    items: number;
-  };
+  isPublic: boolean;
+  createdAt: Date;
+  user: {
+    id: string;
+    name: string | null;
+  } | null;
+  kelas: {
+    id: number;
+    title: string;
+    level: string;
+  } | null;
+  items: Array<{
+    id: number;
+    korean: string;
+    indonesian: string;
+    type: string;
+  }>;
 }
 
 interface Post {
@@ -94,7 +109,7 @@ interface Kelas {
   author: Author;
   materis: Materi[];
   liveSessions: LiveSession[];
-  vocabularySets: VocabularySet[];
+  vocabularySets: VocabSet[];
   posts: Post[];
   _count: {
     members: number;
@@ -268,21 +283,21 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
 
         {/* Tabs Section */}
         <div className="pt-6">
-          <Tabs defaultValue="detail" className="w-full">
+          <Tabs defaultValue="information" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger
-                value="detail"
+                value="information"
                 className="flex items-center gap-2 text-primary"
               >
                 <FileText className="w-4 h-4 text-primary" />
-                Detail
+                Information
               </TabsTrigger>
               <TabsTrigger
-                value="live-session"
+                value="materi"
                 className="flex items-center gap-2 text-primary"
               >
-                <Video className="w-4 h-4 text-primary" />
-                Live Session
+                <BookOpen className="w-4 h-4 text-primary" />
+                Materi & Live Class
               </TabsTrigger>
               <TabsTrigger
                 value="discussion"
@@ -300,18 +315,37 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
               </TabsTrigger>
             </TabsList>
 
-            {/* Detail Tab */}
-            <TabsContent value="detail" className="mt-6">
+            {/* Information Tab */}
+            <TabsContent value="information" className="mt-6">
               <DetailTab
                 htmlDescription={kelas.htmlDescription}
                 jsonDescription={kelas.jsonDescription}
               />
             </TabsContent>
 
-            {/* Live Session Tab */}
-            <TabsContent value="live-session" className="mt-6">
-              <LiveSessionTab liveSessions={kelas.liveSessions} />
+            {/* Materi Tab */}
+            <TabsContent value="materi" className="mt-6">
+              {/* Materi Section */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold mb-4">Materi</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {kelas.materis.map((materi) => (
+                    <MateriCard
+                      key={materi.id}
+                      materi={materi}
+                      onClick={() => router.push(`/kelas/${kelas.id}/materi/${materi.id}`)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Live Sessions Section */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Live Sessions</h3>
+                <LiveSessionTab liveSessions={kelas.liveSessions} />
+              </div>
             </TabsContent>
+
 
             {/* Discussion Tab */}
             <TabsContent value="discussion" className="mt-6">

@@ -32,6 +32,7 @@
         "@tailwindcss/typography": "^0.5.16",
         "@tanstack/react-table": "^8.21.3",
         "@tiptap/extension-color": "^2.26.1",
+        "@tiptap/extension-youtube": "^3.4.4",
         "@tiptap/html": "^2.26.1",
         "@tiptap/pm": "^2.26.1",
         "@types/bcryptjs": "^3.0.0",
@@ -64,6 +65,7 @@
         "sonner": "^2.0.7",
         "tailwind-merge": "^3.3.1",
         "use-debounce": "^10.0.6",
+        "vaul": "^1.1.2",
         "ws": "^8.18.3",
         "zod": "^4.1.5",
         "zustand": "^5.0.8",
@@ -737,7 +739,7 @@
 
     "@tiptap/extension-underline": ["@tiptap/extension-underline@2.14.0", "", { "peerDependencies": { "@tiptap/core": "^2.7.0" } }, "sha512-rlBasbwElFikaL5qPyp3OeoEBH2p9Dve0K6liqIWF4i9cECH2Bm53y2S0enVEe01hmgQEWmoYK+fq67rxr3XsQ=="],
 
-    "@tiptap/extension-youtube": ["@tiptap/extension-youtube@2.14.0", "", { "peerDependencies": { "@tiptap/core": "^2.7.0" } }, "sha512-kryHjsjlIV2B6rS0Mnv9AqAyCCaeNWE1XDAWyYfhWQSmQkfaxSZU3rMnh3BMvSsVsdv5mtyxyBqBTrQA2sBSaw=="],
+    "@tiptap/extension-youtube": ["@tiptap/extension-youtube@3.4.4", "", { "peerDependencies": { "@tiptap/core": "^3.4.4" } }, "sha512-CdIUwKtjb6YxTd6gA/FOCEV+8aSHipaGZ2qu0iBFm2pCifpuPnUpK+iLAV08PfWSu9UDaWcCTwofFIFb6N5LpQ=="],
 
     "@tiptap/html": ["@tiptap/html@2.26.1", "", { "dependencies": { "zeed-dom": "^0.15.1" }, "peerDependencies": { "@tiptap/core": "^2.7.0", "@tiptap/pm": "^2.7.0" } }, "sha512-93keIjciRdjgQabxntXBjW6NTrAoM+uC/u3dwoM5CJFs40cpJC+/CEPYG7SJ5Cyv8srv/OqzyjCjoz7PQGvXyA=="],
 
@@ -2427,6 +2429,8 @@
 
     "v8-to-istanbul": ["v8-to-istanbul@9.3.0", "", { "dependencies": { "@jridgewell/trace-mapping": "^0.3.12", "@types/istanbul-lib-coverage": "^2.0.1", "convert-source-map": "^2.0.0" } }, "sha512-kiGUalWN+rgBJ/1OHZsBtU4rXZOfj/7rKQxULKlIzwzQSvMJUUNgPwJEEh7gU6xEVxC0ahoOBvN2YI8GH6FNgA=="],
 
+    "vaul": ["vaul@1.1.2", "", { "dependencies": { "@radix-ui/react-dialog": "^1.1.1" }, "peerDependencies": { "react": "^16.8 || ^17.0 || ^18.0 || ^19.0.0 || ^19.0.0-rc", "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0.0 || ^19.0.0-rc" } }, "sha512-ZFkClGpWyI2WUQjdLJ/BaGuV6AVQiJ3uELGk3OYtP+B6yCO7Cmn9vPFXVJkRaGkOJu3m8bQMgtyzNHixULceQA=="],
+
     "vfile": ["vfile@6.0.3", "", { "dependencies": { "@types/unist": "^3.0.0", "vfile-message": "^4.0.0" } }, "sha512-KzIbH/9tXat2u30jf+smMwFCsno4wHVdNmzFyL+T/L3UGqqk6JKfVqOFOZEpZSHADH1k40ab6NUIXZq422ov3Q=="],
 
     "vfile-message": ["vfile-message@4.0.2", "", { "dependencies": { "@types/unist": "^3.0.0", "unist-util-stringify-position": "^4.0.0" } }, "sha512-jRDZ1IMLttGj41KcZvlrYAaI3CfqpLpfpf+Mfig13viT6NKvRzWZ+lXz0Y5D60w6uJIBAOGq9mSHf0gktF0duw=="],
@@ -2776,6 +2780,8 @@
     "node-vibrant/@types/node": ["@types/node@10.17.60", "", {}, "sha512-F0KIgDJfy2nA3zMLmWGKxcH2ZVEtCZXHHdOQs2gSaQ27+lNeEfGxzkIw90aXswATX7AZ33tahPbzy6KAfUreVw=="],
 
     "novel/@tiptap/extension-color": ["@tiptap/extension-color@2.14.0", "", { "peerDependencies": { "@tiptap/core": "^2.7.0", "@tiptap/extension-text-style": "^2.7.0" } }, "sha512-sY+eWIbkCMAwOGH7pQ1ZuNqkqMaaHE+TsJwA7bQ6VhI2gGhhqGjT/DfmJMUen8FSdzuPoWlgtuXXCeOO6FOduw=="],
+
+    "novel/@tiptap/extension-youtube": ["@tiptap/extension-youtube@2.14.0", "", { "peerDependencies": { "@tiptap/core": "^2.7.0" } }, "sha512-kryHjsjlIV2B6rS0Mnv9AqAyCCaeNWE1XDAWyYfhWQSmQkfaxSZU3rMnh3BMvSsVsdv5mtyxyBqBTrQA2sBSaw=="],
 
     "novel/@tiptap/pm": ["@tiptap/pm@2.14.0", "", { "dependencies": { "prosemirror-changeset": "^2.3.0", "prosemirror-collab": "^1.3.1", "prosemirror-commands": "^1.6.2", "prosemirror-dropcursor": "^1.8.1", "prosemirror-gapcursor": "^1.3.2", "prosemirror-history": "^1.4.1", "prosemirror-inputrules": "^1.4.0", "prosemirror-keymap": "^1.2.2", "prosemirror-markdown": "^1.13.1", "prosemirror-menu": "^1.2.4", "prosemirror-model": "^1.23.0", "prosemirror-schema-basic": "^1.2.3", "prosemirror-schema-list": "^1.4.1", "prosemirror-state": "^1.4.3", "prosemirror-tables": "^1.6.4", "prosemirror-trailing-node": "^3.0.0", "prosemirror-transform": "^1.10.2", "prosemirror-view": "^1.37.0" } }, "sha512-cnsfaIlvTFCDtLP/A2Fd3LmpttgY0O/tuTM2fC71vetONz83wUTYT+aD9uvxdX0GkSocoh840b0TsEazbBxhpA=="],
 

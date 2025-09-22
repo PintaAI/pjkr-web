@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import NovelEditor from "@/components/novel/novel-editor";
 import { Plus, Edit2,} from "lucide-react";
 
@@ -122,25 +122,26 @@ export function LessonForm({
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
+    <Drawer open={isOpen} onOpenChange={setIsOpen} direction="bottom">
+      <DrawerTrigger asChild>
         {trigger || defaultTrigger}
-      </DialogTrigger>
-      <DialogContent className="max-w-7xl sm:max-w-5xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>{mode === 'add' ? 'Add New Lesson' : 'Edit Lesson'}</span>
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="isDemo" className="text-sm">Demo</Label>
-              <Switch
-                id="isDemo"
-                checked={formData.isDemo}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isDemo: checked }))}
-              />
-            </div>
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
+      </DrawerTrigger>
+      <DrawerContent className="max-h-[90vh]">
+        <div className="max-w-7xl sm:max-w-5xl mx-auto overflow-y-auto min-w-0 w-full">
+          <DrawerHeader>
+            <DrawerTitle className="flex items-center justify-between">
+              <span>{mode === 'add' ? 'Add New Lesson' : 'Edit Lesson'}</span>
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="isDemo" className="text-sm">Demo</Label>
+                <Switch
+                  id="isDemo"
+                  checked={formData.isDemo}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isDemo: checked }))}
+                />
+              </div>
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className="space-y-4 p-4">
           <div className="space-y-2">
             <Label htmlFor="title">Lesson Title *</Label>
             <Input
@@ -166,8 +167,9 @@ export function LessonForm({
             <NovelEditor
               initialContent={formData.jsonDescription}
               onUpdate={handleContentUpdate}
-              className="min-h-[700px]"
+              className="min-h-[500px]"
               saveStatus={isLoading ? "Saving..." : "Saved"}
+              showTopToolbar={true}
             />
           </div>
           
@@ -183,8 +185,9 @@ export function LessonForm({
               {mode === 'add' ? 'Add Lesson' : 'Save Changes'}
             </Button>
           </div>
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </DrawerContent>
+    </Drawer>
   );
 }

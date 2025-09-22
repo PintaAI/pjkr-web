@@ -58,6 +58,7 @@ export async function getKelasDetail(id: string) {
             id: true,
             title: true,
             description: true,
+            htmlDescription: true,
             order: true,
             isDemo: true,
             createdAt: true,
@@ -83,6 +84,7 @@ export async function getKelasDetail(id: string) {
         },
         vocabularySets: {
           where: {
+            kelasId: kelasId,
             isPublic: true,
           },
           select: {
@@ -90,9 +92,27 @@ export async function getKelasDetail(id: string) {
             title: true,
             description: true,
             icon: true,
-            _count: {
+            isPublic: true,
+            createdAt: true,
+            user: {
               select: {
-                items: true,
+                id: true,
+                name: true,
+              },
+            },
+            kelas: {
+              select: {
+                id: true,
+                title: true,
+                level: true,
+              },
+            },
+            items: {
+              select: {
+                id: true,
+                korean: true,
+                indonesian: true,
+                type: true,
               },
             },
           },

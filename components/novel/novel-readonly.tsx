@@ -1,6 +1,7 @@
 "use client";
 
 import { EditorContent, EditorRoot, type JSONContent } from "novel";
+import { generateHTML, generateJSON } from "@tiptap/html";
 import { defaultExtensions } from "./extensions";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
@@ -18,13 +19,32 @@ export function NovelReadonly({ content, html, className }: NovelReadonlyProps) 
     if (content) {
       setEditorContent(content);
     } else if (html) {
-      // If only HTML is provided, use it with dangerouslySetInnerHTML as fallback
-      // This maintains backward compatibility
-      setEditorContent(null);
+      // Convert HTML to JSON content so we can use Tiptap with our extensions
+      try {
+        const jsonContent = generateJSON(html, defaultExtensions);
+        setEditorContent(jsonContent);
+      } catch (error) {
+        console.warn("Failed to parse HTML content, using fallback:", error);
+        // Create a simple document structure with the HTML content
+        setEditorContent({
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [
+                {
+                  type: "text",
+                  text: "Content could not be parsed properly."
+                }
+              ]
+            }
+          ]
+        });
+      }
     }
   }, [content, html]);
 
-  // If we have JSON content, render with Tiptap editor
+  // Always render with Tiptap editor to ensure extensions work properly
   if (editorContent) {
     return (
       <div className={cn("w-full", className)}>
@@ -42,16 +62,6 @@ export function NovelReadonly({ content, html, className }: NovelReadonlyProps) 
           />
         </EditorRoot>
       </div>
-    );
-  }
-
-  // Fallback to HTML rendering for backward compatibility
-  if (html) {
-    return (
-      <div
-        className={cn("prose prose-lg dark:prose-invert prose-headings:font-title font-default max-w-full", className)}
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
     );
   }
 

@@ -30,6 +30,7 @@ import { slashCommand, suggestionItems } from "./slash-command";
 import { uploadFn } from "./image-upload";
 import { LinkSelector } from "./selectors/link-selector";
 import { TopToolbar } from "./top-toolbar";
+import { YoutubeDialog } from "./youtube-dialog";
 import hljs from "highlight.js";
 
 const extensions = [...defaultExtensions, slashCommand];
@@ -55,6 +56,8 @@ const NovelEditor = ({
   const [openNode, setOpenNode] = useState(false);
   const [openColor, setOpenColor] = useState(false);
   const [openLink, setOpenLink] = useState(false);
+  const [openYoutube, setOpenYoutube] = useState(false);
+  const [currentEditor, setCurrentEditor] = useState<EditorInstance | null>(null);
 
   const highlightCodeblocks = (content: string) => {
     const doc = new DOMParser().parseFromString(content, "text/html");
@@ -87,6 +90,28 @@ const NovelEditor = ({
       setInitialContent(defaultEditorContent);
     }
   }, [propInitialContent]);
+
+  // Handle YouTube dialog opening
+  useEffect(() => {
+    const handleOpenYoutubeDialog = (event: CustomEvent) => {
+      setCurrentEditor(event.detail.editor);
+      setOpenYoutube(true);
+    };
+
+    document.addEventListener('openYoutubeDialog', handleOpenYoutubeDialog as EventListener);
+    
+    return () => {
+      document.removeEventListener('openYoutubeDialog', handleOpenYoutubeDialog as EventListener);
+    };
+  }, []);
+
+  const handleYoutubeSubmit = (url: string) => {
+    if (currentEditor) {
+      currentEditor.commands.setYoutubeVideo({
+        src: url,
+      });
+    }
+  };
 
   if (!initialContent) return null;
 
@@ -160,6 +185,12 @@ const NovelEditor = ({
             </EditorBubble>
           </EditorContent>
         </EditorRoot>
+
+        <YoutubeDialog
+          open={openYoutube}
+          onOpenChange={setOpenYoutube}
+          onSubmit={handleYoutubeSubmit}
+        />
       </div>
   );
 };

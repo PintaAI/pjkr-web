@@ -8,9 +8,11 @@ import {
   ListOrdered,
   Text,
   TextQuote,
+  Youtube,
 } from "lucide-react";
 import { createSuggestionItems, Command, renderItems } from "novel";
 import { toast } from "sonner";
+import { YoutubeDialog } from "./youtube-dialog";
 
 export const suggestionItems = createSuggestionItems([
   {
@@ -76,6 +78,22 @@ export const suggestionItems = createSuggestionItems([
         }
       };
       input.click();
+    },
+  },
+  {
+    title: "YouTube",
+    description: "Embed a YouTube video.",
+    searchTerms: ["youtube", "video", "embed", "yt"],
+    icon: <Youtube size={18} />,
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).run();
+      
+      // We'll handle the dialog opening through a global event or state
+      // For now, let's use a more elegant approach with a custom event
+      const event = new CustomEvent('openYoutubeDialog', {
+        detail: { editor, range }
+      });
+      document.dispatchEvent(event);
     },
   },
   {

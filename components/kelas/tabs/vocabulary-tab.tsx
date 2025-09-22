@@ -1,20 +1,35 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Book, GraduationCap } from "lucide-react";
+import { GraduationCap } from "lucide-react";
+import { VocabCard } from "@/components/dashboard/vocab-card";
 
-interface VocabularySet {
+interface VocabSet {
   id: number;
   title: string;
   description: string | null;
   icon: string | null;
-  _count: {
-    items: number;
-  };
+  isPublic: boolean;
+  createdAt: Date;
+  user: {
+    id: string;
+    name: string | null;
+  } | null;
+  kelas: {
+    id: number;
+    title: string;
+    level: string;
+  } | null;
+  items: Array<{
+    id: number;
+    korean: string;
+    indonesian: string;
+    type: string;
+  }>;
 }
 
 interface VocabularyTabProps {
-  vocabularySets: VocabularySet[];
+  vocabularySets: VocabSet[];
 }
 
 export default function VocabularyTab({ vocabularySets }: VocabularyTabProps) {
@@ -27,31 +42,13 @@ export default function VocabularyTab({ vocabularySets }: VocabularyTabProps) {
               <GraduationCap className="w-5 h-5 text-primary" />
               <h3 className="text-lg font-semibold">Vocabulary Sets ({vocabularySets.length})</h3>
             </div>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {vocabularySets.map((vocabSet) => (
-                <div key={vocabSet.id} className="p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
-                  <div className="flex items-start gap-3">
-                    {vocabSet.icon ? (
-                      <div className="text-2xl">{vocabSet.icon}</div>
-                    ) : (
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Book className="w-5 h-5 text-primary" />
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <div className="font-medium text-base mb-1">{vocabSet.title}</div>
-                      {vocabSet.description && (
-                        <p className="text-sm text-muted-foreground mb-2">{vocabSet.description}</p>
-                      )}
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Book className="w-4 h-4" />
-                          {vocabSet._count.items} words
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <VocabCard
+                  key={vocabSet.id}
+                  vocabSet={vocabSet}
+                  compact={false}
+                />
               ))}
             </div>
           </div>

@@ -20,7 +20,7 @@ import {
   UploadImagesPlugin,
 } from "novel";
 
-
+import { YoutubeExtension } from "@/lib/editor/extensions/youtube";
 import { cx } from "class-variance-authority";
 import { common, createLowlight } from "lowlight";
 
@@ -157,6 +157,7 @@ export const defaultExtensions = [
   aiHighlight,
   codeBlockLowlight,
   twitter,
+  YoutubeExtension,
   mathematics,
   characterCount,
   TiptapUnderline,

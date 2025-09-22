@@ -8,7 +8,7 @@ import { StepMeta } from "@/components/kelas-builder/steps/step-meta";
 import { StepContent } from "@/components/kelas-builder/steps/step-content";
 import { StepResources } from "@/components/kelas-builder/steps/step-resources";
 import { StepReview } from "@/components/kelas-builder/steps/step-review";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,14 +18,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function KelasBuilderPage() {
 
   const searchParams = useSearchParams();
-  const { 
-    currentStep, 
-    isLoading, 
-    error, 
+  const {
+    currentStep,
+    isLoading,
+    error,
     clearError,
     loadDraft,
     draftId
@@ -42,6 +43,113 @@ export default function KelasBuilderPage() {
   
   }, [searchParams, draftId, loadDraft]);
 
+  if (searchParams.get('edit') && !draftId) {
+    return (
+      <KelasBuilderLayout>
+        <div className="space-y-4">
+          {/* Basic Information Card Skeleton */}
+          <div className="border rounded-lg p-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Skeleton className="h-5 w-5" />
+              <Skeleton className="h-6 w-48" />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-3 w-64" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-3 w-40" />
+                  </div>
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-3 w-44" />
+                  </div>
+                </div>
+              </div>
+              <div className="lg:col-span-1 space-y-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-20" />
+                  <div className="flex justify-center">
+                    <Skeleton className="h-16 w-16 rounded-full" />
+                  </div>
+                  <Skeleton className="h-3 w-32 text-center" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-32 w-full" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-40 w-full" />
+              <Skeleton className="h-3 w-56" />
+            </div>
+          </div>
+
+          {/* Pricing Card Skeleton */}
+          <div className="border rounded-lg p-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Skeleton className="h-5 w-5" />
+              <Skeleton className="h-6 w-40" />
+            </div>
+            <div className="flex items-center justify-between p-2 border rounded-lg mb-6">
+              <div className="space-y-1">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-64" />
+              </div>
+              <Skeleton className="h-6 w-12" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </div>
+            <div className="mt-6 bg-muted/50 rounded-lg p-4">
+              <Skeleton className="h-5 w-32 mb-3" />
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+                <div className="border-t pt-2 flex justify-between">
+                  <Skeleton className="h-5 w-24" />
+                  <Skeleton className="h-5 w-28" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </KelasBuilderLayout>
+    );
+  }
+
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 'meta':
@@ -56,22 +164,6 @@ export default function KelasBuilderPage() {
         return <StepMeta />;
     }
   };
-
-  if (isLoading) {
-    return (
-      <KelasBuilderLayout>
-        {/* Minimalist loading overlay */}
-        <div className="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm">
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="bg-background/80 border border-border rounded-lg p-6 shadow-sm">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          </div>
-        </div>
-        {renderCurrentStep()}
-      </KelasBuilderLayout>
-    );
-  }
 
   if (error) {
     return (

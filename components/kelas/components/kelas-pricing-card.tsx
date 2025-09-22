@@ -284,7 +284,7 @@ export default function KelasPricingCard({
                   <MoreVertical className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="z-[99999] !z-[99999]" style={{zIndex: 99999}}>
                 <DropdownMenuItem
                   onClick={handleUnenroll}
                   disabled={enrollment.isLoading}

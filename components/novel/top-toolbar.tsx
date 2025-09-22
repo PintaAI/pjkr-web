@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useEditor } from "novel";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { toast } from "sonner";
 import {
   BoldIcon,
   ItalicIcon,
@@ -17,6 +18,8 @@ import {
   LinkIcon,
   Check,
   Trash,
+  ImageIcon,
+  Youtube,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -270,6 +273,89 @@ export const TopToolbar = () => {
           </form>
         </PopoverContent>
       </Popover>
+
+      {/* Separator */}
+      <div className="mx-1 h-6 w-px bg-muted" />
+
+      {/* Image */}
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        onClick={() => {
+          const input = document.createElement("input");
+          input.type = "file";
+          input.accept = "image/*";
+          input.onchange = async (event) => {
+            const file = (event.target as HTMLInputElement).files?.[0];
+            if (file) {
+              if (!file.type.includes("image/")) {
+                toast.error("File type not supported.");
+                return;
+              }
+              if (file.size / 1024 / 1024 > 20) {
+                toast.error("File size too big (max 20MB).");
+                return;
+              }
+
+              const formData = new FormData();
+              formData.append("file", file);
+              formData.append("type", "image");
+              formData.append("folder", "editor");
+
+              const uploadPromise = fetch("/api/upload", {
+                method: "POST",
+                body: formData,
+              });
+
+              toast.promise(
+                uploadPromise.then(async (res) => {
+                  if (res.status === 200) {
+                    const result = await res.json();
+                    if (result.success && result.data?.url) {
+                      editor
+                        .chain()
+                        .focus()
+                        .setImage({ src: result.data.url })
+                        .run();
+                    } else {
+                      throw new Error(result.error || "Upload failed");
+                    }
+                  } else {
+                    const errorResult = await res.json().catch(() => ({}));
+                    throw new Error(errorResult.error || "Error uploading image. Please try again.");
+                  }
+                }),
+                {
+                  loading: "Uploading image...",
+                  success: "Image uploaded successfully.",
+                  error: (e) => e.message,
+                }
+              );
+            }
+          };
+          input.click();
+        }}
+        className="h-8 w-8 p-0"
+      >
+        <ImageIcon className="h-4 w-4" />
+      </Button>
+
+      {/* YouTube */}
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        onClick={() => {
+          const event = new CustomEvent('openYoutubeDialog', {
+            detail: { editor }
+          });
+          document.dispatchEvent(event);
+        }}
+        className="h-8 w-8 p-0"
+      >
+        <Youtube className="h-4 w-4" />
+      </Button>
     </div>
   );
 };

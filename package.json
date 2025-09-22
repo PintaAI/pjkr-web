@@ -45,6 +45,7 @@
     "@tailwindcss/typography": "^0.5.16",
     "@tanstack/react-table": "^8.21.3",
     "@tiptap/extension-color": "^2.26.1",
+    "@tiptap/extension-youtube": "^3.4.4",
     "@tiptap/html": "^2.26.1",
     "@tiptap/pm": "^2.26.1",
     "@types/bcryptjs": "^3.0.0",
@@ -77,6 +78,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
     "use-debounce": "^10.0.6",
+    "vaul": "^1.1.2",
     "ws": "^8.18.3",
     "zod": "^4.1.5",
     "zustand": "^5.0.8"
