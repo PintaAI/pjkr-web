@@ -18,8 +18,8 @@ import {
   TiptapUnderline,
   Twitter,
   UploadImagesPlugin,
-  Youtube,
 } from "novel";
+
 
 import { cx } from "class-variance-authority";
 import { common, createLowlight } from "lowlight";
@@ -124,12 +124,6 @@ const codeBlockLowlight = CodeBlockLowlight.configure({
   lowlight: createLowlight(common),
 });
 
-const youtube = Youtube.configure({
-  HTMLAttributes: {
-    class: cx("rounded-lg border border-muted"),
-  },
-  inline: false,
-});
 
 const twitter = Twitter.configure({
   HTMLAttributes: {
@@ -162,7 +156,6 @@ export const defaultExtensions = [
   horizontalRule,
   aiHighlight,
   codeBlockLowlight,
-  youtube,
   twitter,
   mathematics,
   characterCount,
