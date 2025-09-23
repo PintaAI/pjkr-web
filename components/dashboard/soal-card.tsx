@@ -40,22 +40,24 @@ export function SoalCard({ soalSet, onClick, compact = false }: SoalCardProps) {
   if (compact) {
     return (
       <Card
-        className="group overflow-hidden hover:shadow-lg  hover:-translate-y-1 transition-all cursor-pointer py-0 w-full max-h-[200px]"
+        className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer p-4 relative bg-gradient-to-br from-card to-muted/20 rounded-lg"
         onClick={onClick}
       >
-        {/* Media */}
-        <div className="relative w-full h-full min-h-[120px]">
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary to-secondary">
-            <BsCreditCard2Front className="h-8 w-8 text-primary-foreground" />
+        <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-primary to-card" />
+        <CardContent className="p-0 space-y-3 pl-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-semibold text-primary mb-1 break-words line-clamp-1">
+                {soalSet.nama}
+              </h3>
+              <p className="text-sm text-muted-foreground break-words">
+                <span className="inline-flex items-center gap-1">
+                  <BsCreditCard2Front className="h-3 w-3" />
+                  {soalSet.soals.length} questions
+                </span>
+              </p>
+            </div>
           </div>
-          {/* gradient overlay */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
-        </div>
-
-        <CardContent className="px-4 py-3">
-          <h3 className="text-sm font-semibold leading-snug line-clamp-2 text-center">
-            {soalSet.nama}
-          </h3>
         </CardContent>
       </Card>
     );

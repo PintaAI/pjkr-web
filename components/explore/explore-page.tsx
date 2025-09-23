@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { KelasCard } from "../kelas/kelas-card";
-import { VocabItemCard } from "./vocab-collection-card";
+import { VocabItemCard } from "./vocab-item-card";
 import { UserProfileCard } from "./user-profile-card";
 import { SoalItemCard } from "./soal-item-card";
 import { Button } from "../ui/button";

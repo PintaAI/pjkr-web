@@ -1,18 +1,21 @@
 import type { StateCreator } from 'zustand';
-import type { KelasBuilderState, ResourcesData, VocabularySet } from './types';
-import { linkVocabularyToKelas, unlinkVocabularyFromKelas, getKelasResources } from '@/app/actions/kelas/resources';
+import type { KelasBuilderState, ResourcesData, VocabularySet, SoalSet } from './types';
+import { linkVocabularyToKelas, unlinkVocabularyFromKelas, getKelasResources, linkSoalToKelas, unlinkSoalFromKelas } from '@/app/actions/kelas/resources';
 
 export interface Resources {
   resources: ResourcesData;
   updateResources: (resources: Partial<ResourcesData>) => void;
   addVocabConnection: (vocabSetId: number, vocabSetData: any) => void;
   removeVocabConnection: (vocabSetId: number) => void;
+  addSoalConnection: (soalSetId: number, soalSetData: any) => void;
+  removeSoalConnection: (soalSetId: number) => void;
   saveResources: () => Promise<void>;
   loadResources: () => Promise<void>;
 }
 
 export const initialResources: ResourcesData = {
   connectedVocabSets: [],
+  connectedSoalSets: [],
 };
 
 export const createResources: StateCreator<
@@ -49,6 +52,24 @@ export const createResources: StateCreator<
     });
   },
 
+  addSoalConnection: (soalSetId: number, soalSetData: any) => {
+    set((state) => {
+      const exists = state.resources.connectedSoalSets.some(s => s.id === soalSetId);
+      if (!exists) {
+        state.resources.connectedSoalSets.push(soalSetData);
+        state.stepDirtyFlags.resources = true;
+      }
+    });
+  },
+
+  removeSoalConnection: (soalSetId: number) => {
+    set((state) => {
+      state.resources.connectedSoalSets = state.resources.connectedSoalSets.filter(
+        s => s.id !== soalSetId
+      );
+      state.stepDirtyFlags.resources = true;
+    });
+  },
 
   saveResources: async () => {
     const { draftId, resources } = get();
@@ -83,6 +104,30 @@ export const createResources: StateCreator<
         }
       }
 
+      // Handle soal set connections
+      const currentSoalIds = currentResourcesResult.success && currentResourcesResult.data
+        ? currentResourcesResult.data.soalSets.map((ss: any) => ss.koleksiSoalId)
+        : [];
+        
+      const newSoalIds = resources.connectedSoalSets.map(s => s.id);
+      
+      // Link new soal sets
+      if (newSoalIds.length > 0) {
+        const soalResult = await linkSoalToKelas(draftId, newSoalIds);
+        if (!soalResult.success) {
+          throw new Error(soalResult.error);
+        }
+      }
+
+      // Unlink removed soal sets
+      const removedSoalIds = currentSoalIds.filter((id: number) => !newSoalIds.includes(id));
+      if (removedSoalIds.length > 0) {
+        const unlinkSoalResult = await unlinkSoalFromKelas(draftId, removedSoalIds);
+        if (!unlinkSoalResult.success) {
+          throw new Error(unlinkSoalResult.error);
+        }
+      }
+
 
       set((state) => {
         state.stepDirtyFlags.resources = false;
@@ -110,7 +155,11 @@ export const createResources: StateCreator<
             user: vs.user || null,
           })) as VocabularySet[];
 
-          // Soal sets removed - no longer loading soal connections
+          // Load soal set connections
+          state.resources.connectedSoalSets = (result.data.soalSets as any[]).map(ss => ({
+            ...ss.koleksiSoal,
+            kelasKoleksiSoals: ss.koleksiSoal?.kelasKoleksiSoals || [],
+          })) as SoalSet[];
         });
       }
     } catch (error) {

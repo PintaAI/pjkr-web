@@ -1,6 +1,6 @@
 "use client";
 
-import { Video, MessageSquare, GraduationCap, Megaphone, FileText, BookOpen } from "lucide-react";
+import { Video, MessageSquare, GraduationCap, Megaphone, FileText, BookOpen, Brain } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { KelasType, Difficulty } from "@prisma/client";
 import { useSession } from "@/lib/hooks/use-session";
@@ -11,6 +11,7 @@ import DetailTab from "./tabs/detail-tab";
 import LiveSessionTab from "./tabs/live-session-tab";
 import DiscussionTab from "./tabs/discussion-tab";
 import VocabularyTab from "./tabs/vocabulary-tab";
+import SoalTab from "./tabs/soal-tab";
 import { useState, useRef,} from "react";
 import { useAnimation } from "framer-motion";
 import React from "react";
@@ -73,6 +74,31 @@ interface VocabSet {
   }>;
 }
 
+interface SoalSet {
+  id: number;
+  nama: string;
+  deskripsi: string | null;
+  isPrivate: boolean;
+  isDraft: boolean;
+  createdAt: Date;
+  soals: Array<{
+    id: number;
+    pertanyaan: string;
+    difficulty: string | null;
+  }>;
+  user: {
+    id: string;
+    name: string | null;
+  } | null;
+  kelasKoleksiSoals: Array<{
+    kelas: {
+      id: number;
+      title: string;
+      level: string;
+    };
+  }>;
+}
+
 interface Post {
   id: number;
   title: string;
@@ -110,6 +136,7 @@ interface Kelas {
   materis: Materi[];
   liveSessions: LiveSession[];
   vocabularySets: VocabSet[];
+  soalSets: SoalSet[];
   posts: Post[];
   _count: {
     members: number;
@@ -284,7 +311,7 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
         {/* Tabs Section */}
         <div className="pt-6">
           <Tabs defaultValue="information" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger
                 value="information"
                 className="flex items-center gap-2 text-primary"
@@ -312,6 +339,13 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
               >
                 <GraduationCap className="w-4 h-4 text-primary" />
                 Vocabulary
+              </TabsTrigger>
+              <TabsTrigger
+                value="questions"
+                className="flex items-center gap-2 text-primary"
+              >
+                <Brain className="w-4 h-4 text-primary" />
+                Questions
               </TabsTrigger>
             </TabsList>
 
@@ -369,6 +403,11 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
             {/* Vocabulary Tab */}
             <TabsContent value="vocabulary" className="mt-6">
               <VocabularyTab vocabularySets={kelas.vocabularySets} />
+            </TabsContent>
+
+            {/* Questions Tab */}
+            <TabsContent value="questions" className="mt-6">
+              <SoalTab soalSets={kelas.soalSets} />
             </TabsContent>
           </Tabs>
         </div>

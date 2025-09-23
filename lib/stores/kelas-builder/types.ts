@@ -61,9 +61,36 @@ export interface VocabularySet {
   } | null;
 }
 
+// Soal set structure
+export interface SoalSet {
+  id: number;
+  nama: string;
+  deskripsi: string | null;
+  isPrivate: boolean;
+  isDraft: boolean;
+  createdAt: Date;
+  soals: Array<{
+    id: number;
+    pertanyaan: string;
+    difficulty: string | null;
+  }>;
+  user: {
+    id: string;
+    name: string | null;
+  } | null;
+  kelasKoleksiSoals: Array<{
+    kelas: {
+      id: number;
+      title: string;
+      level: string;
+    };
+  }>;
+}
+
 // Resources data structures
 export interface ResourcesData {
   connectedVocabSets: VocabularySet[];
+  connectedSoalSets: SoalSet[];
 }
 
 // The complete state of the Zustand store, combining all slices
@@ -111,6 +138,8 @@ export interface KelasBuilderState {
   updateResources: (resources: Partial<ResourcesData>) => void;
   addVocabConnection: (vocabSetId: number, vocabSetData: any) => void;
   removeVocabConnection: (vocabSetId: number) => void;
+  addSoalConnection: (soalSetId: number, soalSetData: any) => void;
+  removeSoalConnection: (soalSetId: number) => void;
   saveResources: () => Promise<void>;
   loadResources: () => Promise<void>;
  

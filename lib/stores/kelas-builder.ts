@@ -205,7 +205,7 @@ export const useKelasBuilderStore = create<Store>()(
             error: null,
             meta: initialMeta,
             materis: [],
-            resources: initialResources,
+            resources: { ...initialResources },
             stepDirtyFlags: {
               meta: false,
               content: false,

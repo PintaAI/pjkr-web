@@ -44,29 +44,29 @@ export function VocabCard({ vocabSet, onClick, onDelete, compact = false }: Voca
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   if (compact) {
     return (
-      <Card
-        className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer py-0 w-full max-h-[80px] bg-gradient-to-br from-primary to-secondary"
-        onClick={onClick}
-      >
-        <CardContent className="p-3">
-          <div className="flex items-center gap-3">
-            {/* Icon */}
-            <div className="flex-shrink-0 w-10 h-10 rounded-md bg-white/20 backdrop-blur-sm flex items-center justify-center">
-              {vocabSet.icon ? (
-                <IconRenderer icon={vocabSet.icon} className="h-5 w-5 text-primary-foreground" />
-              ) : (
-                <BookOpen className="h-5 w-5 text-primary-foreground" />
-              )}
+      <Card className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer p-4 relative bg-gradient-to-br from-card to-muted/20 rounded-lg" onClick={onClick}>
+        <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-primary to-card" />
+        <CardContent className="p-0 space-y-3 pl-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-semibold text-primary mb-1 break-words line-clamp-1">
+                {vocabSet.title}
+              </h3>
+              <p className="text-sm text-muted-foreground break-words">
+                <span className="inline-flex items-center gap-1">
+                  <BookOpen className="h-3 w-3" />
+                  {vocabSet.items.length} items
+                </span>
+              </p>
             </div>
-
-            {/* Title */}
-            <h3 className="text-sm font-semibold leading-snug line-clamp-2 flex-1 text-primary-foreground">
-              {vocabSet.title}
-            </h3>
-
-            {/* Item count */}
-            <div className="flex-shrink-0 text-xs text-primary-foreground/80 bg-white/80 backdrop-blur-sm px-2 py-1 rounded-md">
-              {vocabSet.items.length} items
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center">
+                {vocabSet.icon ? (
+                  <IconRenderer icon={vocabSet.icon} className="h-4 w-4" />
+                ) : (
+                  <BookOpen className="h-4 w-4" />
+                )}
+              </div>
             </div>
           </div>
         </CardContent>

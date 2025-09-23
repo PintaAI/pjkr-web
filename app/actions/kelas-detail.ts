@@ -117,6 +117,36 @@ export async function getKelasDetail(id: string) {
             },
           },
         },
+        kelasKoleksiSoals: {
+          include: {
+            koleksiSoal: {
+              select: {
+                id: true,
+                nama: true,
+                deskripsi: true,
+                isPrivate: true,
+                isDraft: true,
+                createdAt: true,
+                soals: {
+                  select: {
+                    id: true,
+                    pertanyaan: true,
+                    difficulty: true,
+                  },
+                },
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            order: 'asc',
+          },
+        },
         posts: {
           where: {
             isPublished: true,
@@ -201,10 +231,23 @@ export async function getKelasDetail(id: string) {
       }));
     }
 
+    // Transform soal sets data structure for client
+    const soalSets = kelas.kelasKoleksiSoals.map(kks => ({
+      ...kks.koleksiSoal,
+      kelasKoleksiSoals: [{
+        kelas: {
+          id: kelas.id,
+          title: kelas.title,
+          level: kelas.level,
+        },
+      }],
+    }));
+
     // Convert Decimal fields to numbers for client components
     const serializedKelas = {
       ...kelas,
       posts: postsWithLikeStatus,
+      soalSets,
       price: kelas.price ? Number(kelas.price) : null,
       discount: kelas.discount ? Number(kelas.discount) : null,
     };

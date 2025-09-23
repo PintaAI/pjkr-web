@@ -9,9 +9,11 @@ import {
   Loader2,
 } from "lucide-react";
 import { getGuruVocabularySets } from "@/app/actions/kelas/vocabulary";
+import { getGuruSoalSets } from "@/app/actions/kelas/soal-set";
 import { toast } from "sonner";
 import { VocabCard } from "@/components/dashboard/vocab-card";
-import { VocabularySet } from "@/lib/stores/kelas-builder/types";
+import { SoalCard } from "@/components/dashboard/soal-card";
+import { VocabularySet, SoalSet } from "@/lib/stores/kelas-builder/types";
 
 export function StepResources() {
   const {
@@ -19,9 +21,12 @@ export function StepResources() {
     resources,
     addVocabConnection,
     removeVocabConnection,
+    addSoalConnection,
+    removeSoalConnection,
     saveResources
   } = useKelasBuilderStore();
   const [availableVocabSets, setAvailableVocabSets] = useState<VocabularySet[]>([]);
+  const [availableSoalSets, setAvailableSoalSets] = useState<SoalSet[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -30,10 +35,17 @@ export function StepResources() {
     const loadResources = async () => {
       setIsLoading(true);
       try {
-        const vocabResult = await getGuruVocabularySets();
+        const [vocabResult, soalResult] = await Promise.all([
+          getGuruVocabularySets(),
+          getGuruSoalSets()
+        ]);
 
         if (vocabResult.success && vocabResult.data) {
           setAvailableVocabSets(vocabResult.data);
+        }
+        
+        if (soalResult.success && soalResult.data) {
+          setAvailableSoalSets(soalResult.data);
         }
       } catch (error) {
         console.error("Failed to load resources:", error);
@@ -54,6 +66,16 @@ export function StepResources() {
 
   const handleDisconnectVocabSet = (vocabSetId: number) => {
     removeVocabConnection(vocabSetId);
+  };
+
+  const handleConnectSoalSet = (soalSet: SoalSet) => {
+    if (!resources.connectedSoalSets.some(c => c.id === soalSet.id)) {
+      addSoalConnection(soalSet.id, soalSet);
+    }
+  };
+
+  const handleDisconnectSoalSet = (soalSetId: number) => {
+    removeSoalConnection(soalSetId);
   };
 
 
@@ -92,9 +114,15 @@ export function StepResources() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">{resources.connectedVocabSets.length}</div>
-            <div className="text-sm text-muted-foreground">Connected Vocabulary Sets</div>
+          <div className="grid grid-cols-2 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold text-primary">{resources.connectedVocabSets.length}</div>
+              <div className="text-sm text-muted-foreground">Vocabulary Sets</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-secondary">{resources.connectedSoalSets.length}</div>
+              <div className="text-sm text-muted-foreground">Question Sets</div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -144,9 +172,53 @@ export function StepResources() {
         </CardContent>
       </Card>
 
+      {/* Soal Sets Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5" />
+            Question Sets
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-6">
+            {/* Available Soal Sets */}
+            <div className="border rounded-lg p-4">
+              <h4 className="font-semibold mb-4">Available ({availableSoalSets.length})</h4>
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {availableSoalSets
+                  .filter(soal => !resources.connectedSoalSets.some(c => c.id === soal.id))
+                  .map((soal) => (
+                  <SoalCard
+                    key={soal.id}
+                    soalSet={soal}
+                    onClick={() => handleConnectSoalSet(soal)}
+                    compact={true}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Connected Soal Sets */}
+            <div className="border rounded-lg p-4">
+              <h4 className="font-semibold mb-4">Connected ({resources.connectedSoalSets.length})</h4>
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {resources.connectedSoalSets.map((connected) => (
+                  <SoalCard
+                    key={connected.id}
+                    soalSet={connected}
+                    compact={true}
+                    onClick={() => handleDisconnectSoalSet(connected.id)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Save Button */}
-      {resources.connectedVocabSets.length > 0 && (
+      {(resources.connectedVocabSets.length > 0 || resources.connectedSoalSets.length > 0) && (
         <div className="flex justify-end">
           <Button
             onClick={handleSaveConnections}

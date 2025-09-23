@@ -68,6 +68,53 @@ export async function unlinkVocabularyFromKelas(kelasId: number, vocabSetIds: nu
   }
 }
 
+export async function linkSoalToKelas(kelasId: number, koleksiSoalIds: number[]) {
+  try {
+    const session = await assertAuthenticated();
+    
+    // Verify kelas ownership
+    const kelas = await prisma.kelas.findUnique({
+      where: { id: kelasId },
+      select: { authorId: true }
+    });
+    
+    if (!kelas || kelas.authorId !== session.user.id) {
+      return { success: false, error: 'Not authorized' };
+    }
+
+    // Create KelasKoleksiSoal links for each soal set
+    const linkPromises = koleksiSoalIds.map(async (koleksiSoalId, index) => {
+      // Check if link already exists
+      const existingLink = await prisma.kelasKoleksiSoal.findFirst({
+        where: {
+          kelasId: kelasId,
+          koleksiSoalId: koleksiSoalId
+        }
+      });
+
+      if (!existingLink) {
+        return prisma.kelasKoleksiSoal.create({
+          data: {
+            kelasId: kelasId,
+            koleksiSoalId: koleksiSoalId,
+            order: index,
+            title: '', // Will be filled from the actual soal set
+            description: ''
+          }
+        });
+      }
+      return existingLink;
+    });
+
+    await Promise.all(linkPromises);
+
+    return { success: true, message: 'Question sets linked successfully' };
+  } catch (error) {
+    console.error("Link soal to kelas error:", error);
+    return { success: false, error: "Failed to link question sets" };
+  }
+}
+
 export async function unlinkSoalFromKelas(kelasId: number, koleksiSoalIds: number[]) {
   try {
     const session = await assertAuthenticated();
