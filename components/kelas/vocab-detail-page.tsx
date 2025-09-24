@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
 import { BookOpen, Clock, GraduationCap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -13,7 +12,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { VocabItemCard } from "@/components/explore/vocab-item-card";
 
 interface VocabItem {
@@ -44,71 +43,11 @@ interface VocabSet {
 }
 
 interface VocabDetailPageProps {
-  params: Promise<{ id: string; vocabId: string }>;
+  vocabSet: VocabSet;
 }
 
-export default function VocabDetailPage({ params }: VocabDetailPageProps) {
-  const router = useRouter();
-  const { id, vocabId } = use(params);
-  const [vocabSet, setVocabSet] = useState<VocabSet | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchVocabSet = async () => {
-      try {
-        const response = await fetch(`/api/vocabulary-sets/${vocabId}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch vocabulary set');
-        }
-        const result = await response.json();
-        if (result.success) {
-          setVocabSet(result.data);
-        } else {
-          setError(result.error || 'Failed to load vocabulary set');
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchVocabSet();
-  }, [vocabId]);
-
-  if (loading) {
-    return (
-      <div className="w-full max-w-5xl mx-auto px-6 -mt-6">
-        <div className="animate-pulse">
-          <div className="h-48 bg-muted rounded-xl mb-6"></div>
-          <div className="space-y-4">
-            <div className="h-8 bg-muted rounded w-1/3"></div>
-            <div className="h-4 bg-muted rounded w-1/2"></div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-24 bg-muted rounded"></div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !vocabSet) {
-    return (
-      <div className="w-full max-w-5xl mx-auto px-6 -mt-6">
-        <Card>
-          <CardContent className="p-6 text-center">
-            <GraduationCap className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">Vocabulary Set Not Found</h3>
-            <p className="text-muted-foreground">{error || 'The requested vocabulary set could not be found.'}</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+export default function VocabDetailPage({ vocabSet }: VocabDetailPageProps) {
+  
 
   return (
     <div className="w-full max-w-5xl mx-auto px-6 -mt-6">
@@ -122,16 +61,18 @@ export default function VocabDetailPage({ params }: VocabDetailPageProps) {
         <div className="absolute inset-0">
           {vocabSet.kelas?.thumbnail ? (
             <>
-              <img
+              <Image
                 src={vocabSet.kelas.thumbnail}
                 alt={vocabSet.kelas.title}
+                width={800}
+                height={192}
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/20" />
             </>
           ) : (
             <div
-              className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/80 to-secondary/60"
+              className="w-full h-full flex items-center justify-center"
             >
               <GraduationCap className="w-16 h-16 text-white/30" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
@@ -154,7 +95,7 @@ export default function VocabDetailPage({ params }: VocabDetailPageProps) {
               <BreadcrumbSeparator className="text-white/60" />
               <BreadcrumbItem>
                 <BreadcrumbLink
-                  href={`/kelas/${id}`}
+                  href={`/kelas/${vocabSet.kelas?.id}`}
                   className="text-white/80 hover:text-white hover:underline"
                 >
                   {vocabSet.kelas?.title ?? "Class"}
@@ -198,7 +139,7 @@ export default function VocabDetailPage({ params }: VocabDetailPageProps) {
 
       {/* Vocabulary Items */}
       <Card>
-        <CardContent >
+        <CardContent>
           {vocabSet.items.length > 0 ? (
             <div className="space-y-4">
               <h3 className="text-xl font-semibold mb-6">Vocabulary Items</h3>

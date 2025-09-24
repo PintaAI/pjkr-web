@@ -413,3 +413,87 @@ export async function getMateriDetail(materiId: string, kelasId: string) {
     };
   }
 }
+
+export async function getVocabDetail(vocabId: string, kelasId: string) {
+  try {
+    const session = await getServerSession();
+    const userId = session?.user?.id;
+    const vocabIdNum = parseInt(vocabId);
+    const kelasIdNum = parseInt(kelasId);
+
+    if (isNaN(vocabIdNum) || isNaN(kelasIdNum)) {
+      return {
+        success: false,
+        error: "Invalid vocabulary set or kelas ID",
+        data: null,
+      };
+    }
+
+    const vocabSet = await prisma.vocabularySet.findFirst({
+      where: {
+        id: vocabIdNum,
+        kelasId: kelasIdNum,
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        icon: true,
+        isPublic: true,
+        createdAt: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        kelas: {
+          select: {
+            id: true,
+            title: true,
+            level: true,
+            thumbnail: true,
+          },
+        },
+        items: {
+          select: {
+            id: true,
+            korean: true,
+            indonesian: true,
+            type: true,
+          },
+        },
+      },
+    });
+
+    if (!vocabSet) {
+      return {
+        success: false,
+        error: "Vocabulary set not found",
+        data: null,
+      };
+    }
+
+    // Check if user has access to this kelas
+    const accessCheck = await checkKelasAccess(kelasId, userId);
+    if (!accessCheck.success || !accessCheck.hasAccess) {
+      return {
+        success: false,
+        error: "Access denied",
+        data: null,
+      };
+    }
+
+    return {
+      success: true,
+      data: vocabSet,
+    };
+  } catch (error) {
+    console.error("Get vocabulary detail error:", error);
+    return {
+      success: false,
+      error: "Failed to fetch vocabulary details",
+      data: null,
+    };
+  }
+}

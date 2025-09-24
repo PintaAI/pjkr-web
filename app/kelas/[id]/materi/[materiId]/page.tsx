@@ -1,5 +1,5 @@
 import { getMateriDetail } from "@/app/actions/kelas-detail";
-import MateriDetailWrapper from "@/components/kelas/materi-detail-wrapper";
+import MateriDetailPage from "@/components/kelas/materi-detail-page";
 import { notFound } from "next/navigation";
 
 
@@ -19,5 +19,5 @@ export default async function MateriDetail({ params }: MateriDetailProps) {
     notFound();
   }
 
-  return <MateriDetailWrapper materi={result.data} />;
+  return <MateriDetailPage materi={result.data} />;
 }

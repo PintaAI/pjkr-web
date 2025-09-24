@@ -1,5 +1,5 @@
 import { getKelasDetail } from "@/app/actions/kelas-detail";
-import KelasDetailWrapper from "@/components/kelas/kelas-detail-wrapper";
+import KelasDetailPage from "@/components/kelas/kelas-detail-page";
 import { notFound } from "next/navigation";
 
 // Force dynamic rendering to ensure fresh data
@@ -18,5 +18,5 @@ export default async function KelasDetail({ params }: KelasDetailProps) {
     notFound();
   }
 
-  return <KelasDetailWrapper kelas={result.data} />;
+  return <KelasDetailPage kelas={result.data} />;
 }

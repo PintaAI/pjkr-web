@@ -1,6 +1,6 @@
 "use client";
 
-import { Video, MessageSquare, GraduationCap, Megaphone, FileText, BookOpen, Brain } from "lucide-react";
+import { Video, MessageSquare, GraduationCap, Megaphone, FileText, BookOpen, Brain, BarChart3 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { KelasType, Difficulty } from "@prisma/client";
 import { useSession } from "@/lib/hooks/use-session";
@@ -155,6 +155,8 @@ interface KelasDetailPageProps {
 export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
   const router = useRouter();
   const { user, isLoading } = useSession();
+  
+  const isAuthor = !isLoading && user?.id === kelas.authorId;
   
   // Initialize color extraction from thumbnail
   const { colors, isExtracting, handleColorExtraction } = useKelasColors(kelas.thumbnail);
@@ -311,7 +313,7 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
         {/* Tabs Section */}
         <div className="pt-6">
           <Tabs defaultValue="information" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className={`grid w-full ${isAuthor ? 'grid-cols-6' : 'grid-cols-5'}`}>
               <TabsTrigger
                 value="information"
                 className="flex items-center gap-2 text-primary"
@@ -347,6 +349,15 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
                 <Brain className="w-4 h-4 text-primary" />
                 Questions
               </TabsTrigger>
+              {isAuthor && (
+                <TabsTrigger
+                  value="statistics"
+                  className="flex items-center gap-2 text-primary"
+                >
+                  <BarChart3 className="w-4 h-4 text-primary" />
+                  Statistics
+                </TabsTrigger>
+              )}
             </TabsList>
 
             {/* Information Tab */}
@@ -409,6 +420,40 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
             <TabsContent value="questions" className="mt-6">
               <SoalTab soalSets={kelas.soalSets} />
             </TabsContent>
+            {/* Statistics Tab */}
+            {isAuthor && (
+              <TabsContent value="statistics" className="mt-6">
+                <div className="space-y-6">
+                  <h3 className="text-xl font-semibold border-b pb-2">Kelas Statistics</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="text-3xl font-bold text-primary mb-1">150</div>
+                        <p className="text-sm text-muted-foreground">Enrolled Students</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="text-3xl font-bold text-primary mb-1">85%</div>
+                        <p className="text-sm text-muted-foreground">Avg Completion Rate</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="text-3xl font-bold text-primary mb-1">1,200</div>
+                        <p className="text-sm text-muted-foreground">Page Views</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="text-3xl font-bold text-primary mb-1">Rp 4.5M</div>
+                        <p className="text-sm text-muted-foreground">Total Revenue</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </TabsContent>
+            )}
           </Tabs>
         </div>
 
