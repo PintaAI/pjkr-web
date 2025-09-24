@@ -49,18 +49,26 @@ export function SoalItemForm({ item, onSave, onCancel }: SoalItemFormProps) {
   const [explanationContent, setExplanationContent] = useState<{ json: any; html: string } | null>(null);
 
   const updateOpsi = (index: number, field: keyof OpsiItem, value: string | boolean) => {
-    const updatedOpsis = [...formData.opsis!];
-    
     // If setting as correct, make all other options incorrect (radio button behavior)
     if (field === 'isCorrect' && value === true) {
-      updatedOpsis.forEach((opsi, i) => {
-        opsi.isCorrect = i === index;
-      });
+      const updatedOpsis = formData.opsis!.map((opsi, i) => ({
+        ...opsi,
+        isCorrect: i === index
+      }));
+      setFormData({ ...formData, opsis: updatedOpsis });
+    } else if (field === 'isCorrect' && value === false) {
+      // If unchecking, just uncheck this one (allow no correct answer)
+      const updatedOpsis = formData.opsis!.map((opsi, i) =>
+        i === index ? { ...opsi, isCorrect: false } : opsi
+      );
+      setFormData({ ...formData, opsis: updatedOpsis });
     } else {
-      updatedOpsis[index] = { ...updatedOpsis[index], [field]: value };
+      // For text updates
+      const updatedOpsis = formData.opsis!.map((opsi, i) =>
+        i === index ? { ...opsi, [field]: value } : opsi
+      );
+      setFormData({ ...formData, opsis: updatedOpsis });
     }
-    
-    setFormData({ ...formData, opsis: updatedOpsis });
   };
 
   const addOpsi = () => {
@@ -204,7 +212,7 @@ export function SoalItemForm({ item, onSave, onCancel }: SoalItemFormProps) {
                           ? 'border-primary bg-primary text-primary-foreground'
                           : 'border-muted-foreground/30 text-muted-foreground hover:border-primary/50'
                       }`}
-                      onClick={() => updateOpsi(index, 'isCorrect', !opsi.isCorrect)}
+                      onClick={() => updateOpsi(index, 'isCorrect', true)}
                     >
                       {opsi.isCorrect ? <CheckCircle2 className="w-4 h-4" /> : optionLetter}
                     </div>

@@ -36,8 +36,17 @@ interface VocabSheetProps {
 }
 
 export function VocabSheet({ isOpen, onOpenChange, vocabSet, onSuccess, onCancel }: VocabSheetProps) {
+  const handleOpenChange = (open: boolean) => {
+    onOpenChange(open);
+    
+    // When sheet is closed, refresh the parent data
+    if (!open) {
+      onSuccess();
+    }
+  };
+
   return (
-    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+    <Sheet open={isOpen} onOpenChange={handleOpenChange}>
       <SheetContent className="w-full sm:max-w-2xl overflow-y-auto m-0">
         <SheetHeader>
           <SheetTitle className="text-center">
@@ -46,7 +55,6 @@ export function VocabSheet({ isOpen, onOpenChange, vocabSet, onSuccess, onCancel
         </SheetHeader>
         <VocabCollectionForm
           vocabSet={vocabSet}
-          onSuccess={onSuccess}
           onCancel={onCancel}
         />
       </SheetContent>

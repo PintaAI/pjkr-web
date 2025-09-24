@@ -402,7 +402,7 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
 
             {/* Vocabulary Tab */}
             <TabsContent value="vocabulary" className="mt-6">
-              <VocabularyTab vocabularySets={kelas.vocabularySets} />
+              <VocabularyTab vocabularySets={kelas.vocabularySets} kelasId={kelas.id} />
             </TabsContent>
 
             {/* Questions Tab */}

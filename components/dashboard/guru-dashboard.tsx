@@ -28,7 +28,6 @@ import { getGuruVocabularySets } from "@/app/actions/kelas/vocabulary";
 import { getGuruSoalSets } from "@/app/actions/kelas/soal-set";
 import { useEffect, useState } from "react";
 
-
 type UserRoles = "GURU" | "MURID" | "ADMIN";
 
 interface DashboardUser {
@@ -73,6 +72,14 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
   const [soalSets, setSoalSets] = useState<SoalSet[]>([]);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [soalSheetOpen, setSoalSheetOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.slice(1);
+      const validTabs = ['tools', 'classes', 'vocabulary', 'soals', 'statistics'];
+      return validTabs.includes(hash) ? hash : 'tools';
+    }
+    return 'tools';
+  });
 
   const fetchData = async () => {
     try {
@@ -203,7 +210,7 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="tools" className="w-full">
+      <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value); window.location.hash = value; }} className="w-full">
         <TabsList className="w-full">
           <TabsTrigger value="tools" className="flex-1">
             <Wrench className="w-4 h-4 mr-2" />

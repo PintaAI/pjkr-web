@@ -3,6 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { GraduationCap } from "lucide-react";
 import { VocabCard } from "@/components/dashboard/vocab-card";
+import { useRouter } from "next/navigation";
 
 interface VocabSet {
   id: number;
@@ -30,9 +31,16 @@ interface VocabSet {
 
 interface VocabularyTabProps {
   vocabularySets: VocabSet[];
+  kelasId: number;
 }
 
-export default function VocabularyTab({ vocabularySets }: VocabularyTabProps) {
+export default function VocabularyTab({ vocabularySets, kelasId }: VocabularyTabProps) {
+  const router = useRouter();
+
+  const handleVocabClick = (vocabSetId: number) => {
+    router.push(`/kelas/${kelasId}/vocab/${vocabSetId}`);
+  };
+
   return (
     <Card>
       <CardContent className="p-6">
@@ -48,6 +56,7 @@ export default function VocabularyTab({ vocabularySets }: VocabularyTabProps) {
                   key={vocabSet.id}
                   vocabSet={vocabSet}
                   compact={false}
+                  onClick={() => handleVocabClick(vocabSet.id)}
                 />
               ))}
             </div>

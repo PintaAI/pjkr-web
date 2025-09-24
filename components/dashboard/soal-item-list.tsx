@@ -43,7 +43,7 @@ export function SoalItemList({ items, onEdit, onDelete, onAdd, onQuickAdd, onGen
   const getDifficultyColor = (difficulty?: Difficulty | null) => {
     switch (difficulty) {
       case "BEGINNER":
-        return "bg-success/10 border-success/30 text-success";
+        return "bg-primary/10 border-primary/30 text-success";
       case "INTERMEDIATE":
         return "bg-secondary/20 border-secondary/40 text-secondary-foreground";
       case "ADVANCED":
