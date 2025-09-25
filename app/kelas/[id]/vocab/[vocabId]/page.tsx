@@ -205,6 +205,7 @@ export default function VocabDetailPage({ params }: VocabDetailPageProps) {
               <div className="grid gap-4 md:grid-cols-2">
                 {vocabSet.items.map((item) => (
                   <VocabItemCard
+                    disableNavigation={true}
                     key={item.id}
                     data={{
                       ...item,

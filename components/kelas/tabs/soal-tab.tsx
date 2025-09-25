@@ -36,7 +36,7 @@ interface SoalTabProps {
 export default function SoalTab({ soalSets }: SoalTabProps) {
   return (
     <Card>
-      <CardContent className="p-6">
+      <CardContent >
         {soalSets.length > 0 ? (
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">

@@ -3,6 +3,48 @@
 import { prisma } from "@/lib/db";
 import { getServerSession } from "@/lib/session";
 
+// Helper function to check if user has enrollment access to a kelas
+async function checkEnrollmentAccess(kelasId: number, userId?: string) {
+  if (!userId) {
+    return {
+      hasAccess: false,
+      isAuthor: false,
+      isMember: false,
+      error: "Authentication required"
+    };
+  }
+
+  const enrollmentCheck = await prisma.kelas.findFirst({
+    where: { id: kelasId },
+    include: {
+      members: {
+        where: { id: userId },
+        select: { id: true }
+      }
+    }
+  });
+
+  if (!enrollmentCheck) {
+    return {
+      hasAccess: false,
+      isAuthor: false,
+      isMember: false,
+      error: "Class not found"
+    };
+  }
+
+  const isAuthor = enrollmentCheck.authorId === userId;
+  const isMember = enrollmentCheck.members.length > 0;
+  const hasAccess = isAuthor || isMember;
+
+  return {
+    hasAccess,
+    isAuthor,
+    isMember,
+    error: hasAccess ? null : "Access denied. You must be enrolled in this class to access this content."
+  };
+}
+
 export async function getKelasDetail(id: string) {
   try {
     const session = await getServerSession();
@@ -17,10 +59,15 @@ export async function getKelasDetail(id: string) {
       };
     }
 
+    // Check if user has enrollment access
+    const accessCheck = await checkEnrollmentAccess(kelasId, userId);
+    const hasAccess = accessCheck.hasAccess;
+
+    // Always fetch basic kelas info and statistics
     const kelas = await prisma.kelas.findFirst({
       where: {
         id: kelasId,
-        isDraft: false, // Only show published classes
+        isDraft: false,
       },
       select: {
         id: true,
@@ -30,7 +77,7 @@ export async function getKelasDetail(id: string) {
         htmlDescription: true,
         type: true,
         level: true,
-        thumbnail: true, // Add thumbnail field
+        thumbnail: true,
         icon: true,
         isPaidClass: true,
         price: true,
@@ -45,142 +92,6 @@ export async function getKelasDetail(id: string) {
             id: true,
             name: true,
             image: true,
-          },
-        },
-        materis: {
-          where: {
-            isDraft: false, // Only show published materis
-          },
-          orderBy: {
-            order: "asc",
-          },
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            htmlDescription: true,
-            order: true,
-            isDemo: true,
-            createdAt: true,
-          },
-        },
-        liveSessions: {
-          where: {
-            status: {
-              in: ["SCHEDULED", "LIVE"],
-            },
-          },
-          orderBy: {
-            scheduledStart: "asc",
-          },
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            status: true,
-            scheduledStart: true,
-            scheduledEnd: true,
-          },
-        },
-        vocabularySets: {
-          where: {
-            kelasId: kelasId,
-            isPublic: true,
-          },
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            icon: true,
-            isPublic: true,
-            createdAt: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-            kelas: {
-              select: {
-                id: true,
-                title: true,
-                level: true,
-              },
-            },
-            items: {
-              select: {
-                id: true,
-                korean: true,
-                indonesian: true,
-                type: true,
-              },
-            },
-          },
-        },
-        kelasKoleksiSoals: {
-          include: {
-            koleksiSoal: {
-              select: {
-                id: true,
-                nama: true,
-                deskripsi: true,
-                isPrivate: true,
-                isDraft: true,
-                createdAt: true,
-                soals: {
-                  select: {
-                    id: true,
-                    pertanyaan: true,
-                    difficulty: true,
-                  },
-                },
-                user: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
-              },
-            },
-          },
-          orderBy: {
-            order: 'asc',
-          },
-        },
-        posts: {
-          where: {
-            isPublished: true,
-          },
-          orderBy: [
-            { isPinned: "desc" },
-            { createdAt: "desc" },
-          ],
-          take: 5,
-          select: {
-            id: true,
-            title: true,
-            htmlDescription: true,
-            jsonDescription: true,
-            type: true,
-            isPinned: true,
-            likeCount: true,
-            commentCount: true,
-            shareCount: true,
-            viewCount: true,
-            createdAt: true,
-            author: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
-            },
-            _count: {
-              select: {
-                comments: true,
-                likes: true,
-              },
-            },
           },
         },
         _count: {
@@ -204,35 +115,204 @@ export async function getKelasDetail(id: string) {
       };
     }
 
-    // Add userLiked field to posts if user is authenticated
-    let postsWithLikeStatus = kelas.posts;
-    if (userId && kelas.posts.length > 0) {
-      const postIds = kelas.posts.map(post => post.id);
-      const userLikes = await prisma.postLike.findMany({
+    // Initialize empty arrays for restricted content
+    let materis: any[] = [];
+    let liveSessions: any[] = [];
+    let vocabularySets: any[] = [];
+    let kelasKoleksiSoals: any[] = [];
+    let posts: any[] = [];
+
+    // Only fetch sensitive data if user has access
+    if (hasAccess) {
+      // Fetch materis
+      const materiData = await prisma.materi.findMany({
         where: {
-          userId,
-          postId: { in: postIds },
+          kelasId: kelasId,
+          isDraft: false,
+        },
+        orderBy: {
+          order: "asc",
         },
         select: {
-          postId: true,
+          id: true,
+          title: true,
+          description: true,
+          htmlDescription: true,
+          order: true,
+          isDemo: true,
+          createdAt: true,
         },
       });
+      materis = materiData;
 
-      const likedPostIds = new Set(userLikes.map(like => like.postId));
+      // Fetch live sessions
+      const liveSessionData = await prisma.liveSession.findMany({
+        where: {
+          kelasId: kelasId,
+          status: {
+            in: ["SCHEDULED", "LIVE"],
+          },
+        },
+        orderBy: {
+          scheduledStart: "asc",
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          status: true,
+          scheduledStart: true,
+          scheduledEnd: true,
+        },
+      });
+      liveSessions = liveSessionData;
 
-      postsWithLikeStatus = kelas.posts.map(post => ({
-        ...post,
-        userLiked: likedPostIds.has(post.id),
-      }));
-    } else {
-      postsWithLikeStatus = kelas.posts.map(post => ({
-        ...post,
-        userLiked: false,
-      }));
+      // Fetch vocabulary sets
+      const vocabData = await prisma.vocabularySet.findMany({
+        where: {
+          kelasId: kelasId,
+          isPublic: true,
+        },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          icon: true,
+          isPublic: true,
+          createdAt: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          kelas: {
+            select: {
+              id: true,
+              title: true,
+              level: true,
+            },
+          },
+          items: {
+            select: {
+              id: true,
+              korean: true,
+              indonesian: true,
+              type: true,
+            },
+          },
+        },
+      });
+      vocabularySets = vocabData;
+
+      // Fetch soal sets
+      const soalData = await prisma.kelasKoleksiSoal.findMany({
+        where: {
+          kelasId: kelasId,
+        },
+        include: {
+          koleksiSoal: {
+            select: {
+              id: true,
+              nama: true,
+              deskripsi: true,
+              isPrivate: true,
+              isDraft: true,
+              createdAt: true,
+              soals: {
+                select: {
+                  id: true,
+                  pertanyaan: true,
+                  difficulty: true,
+                },
+              },
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          order: 'asc',
+        },
+      });
+      kelasKoleksiSoals = soalData;
+
+      // Fetch posts
+      const postData = await prisma.post.findMany({
+        where: {
+          kelasId: kelasId,
+          isPublished: true,
+        },
+        orderBy: [
+          { isPinned: "desc" },
+          { createdAt: "desc" },
+        ],
+        take: 5,
+        select: {
+          id: true,
+          title: true,
+          htmlDescription: true,
+          jsonDescription: true,
+          type: true,
+          isPinned: true,
+          likeCount: true,
+          commentCount: true,
+          shareCount: true,
+          viewCount: true,
+          createdAt: true,
+          author: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+          _count: {
+            select: {
+              comments: true,
+              likes: true,
+            },
+          },
+        },
+      });
+      posts = postData;
+    }
+
+    // Add userLiked field to posts if user is authenticated and has access
+    let postsWithLikeStatus = [];
+    if (hasAccess && posts.length > 0) {
+      if (userId) {
+        const postIds = posts.map(post => post.id);
+        const userLikes = await prisma.postLike.findMany({
+          where: {
+            userId,
+            postId: { in: postIds },
+          },
+          select: {
+            postId: true,
+          },
+        });
+
+        const likedPostIds = new Set(userLikes.map(like => like.postId));
+
+        postsWithLikeStatus = posts.map(post => ({
+          ...post,
+          userLiked: likedPostIds.has(post.id),
+        }));
+      } else {
+        postsWithLikeStatus = posts.map(post => ({
+          ...post,
+          userLiked: false,
+        }));
+      }
     }
 
     // Transform soal sets data structure for client
-    const soalSets = kelas.kelasKoleksiSoals.map(kks => ({
+    const soalSets = kelasKoleksiSoals.map(kks => ({
       ...kks.koleksiSoal,
       kelasKoleksiSoals: [{
         kelas: {
@@ -248,6 +328,9 @@ export async function getKelasDetail(id: string) {
       ...kelas,
       posts: postsWithLikeStatus,
       soalSets,
+      materis,
+      liveSessions,
+      vocabularySets,
       price: kelas.price ? Number(kelas.price) : null,
       discount: kelas.discount ? Number(kelas.discount) : null,
     };
@@ -356,6 +439,16 @@ export async function getMateriDetail(materiId: string, kelasId: string) {
       };
     }
 
+    // Check enrollment access
+    const accessCheck = await checkEnrollmentAccess(kelasIdNum, userId);
+    if (!accessCheck.hasAccess) {
+      return {
+        success: false,
+        error: accessCheck.error || "Access denied",
+        data: null,
+      };
+    }
+
     const materi = await prisma.materi.findFirst({
       where: {
         id: materiIdNum,
@@ -390,16 +483,6 @@ export async function getMateriDetail(materiId: string, kelasId: string) {
       };
     }
 
-    // Check if user has access to this materi
-    const accessCheck = await checkKelasAccess(kelasId, userId);
-    if (!accessCheck.success || !accessCheck.hasAccess) {
-      return {
-        success: false,
-        error: "Access denied",
-        data: null,
-      };
-    }
-
     return {
       success: true,
       data: materi,
@@ -425,6 +508,16 @@ export async function getVocabDetail(vocabId: string, kelasId: string) {
       return {
         success: false,
         error: "Invalid vocabulary set or kelas ID",
+        data: null,
+      };
+    }
+
+    // Check enrollment access
+    const accessCheck = await checkEnrollmentAccess(kelasIdNum, userId);
+    if (!accessCheck.hasAccess) {
+      return {
+        success: false,
+        error: accessCheck.error || "Access denied",
         data: null,
       };
     }
@@ -470,16 +563,6 @@ export async function getVocabDetail(vocabId: string, kelasId: string) {
       return {
         success: false,
         error: "Vocabulary set not found",
-        data: null,
-      };
-    }
-
-    // Check if user has access to this kelas
-    const accessCheck = await checkKelasAccess(kelasId, userId);
-    if (!accessCheck.success || !accessCheck.hasAccess) {
-      return {
-        success: false,
-        error: "Access denied",
         data: null,
       };
     }

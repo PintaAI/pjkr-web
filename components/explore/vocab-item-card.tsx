@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Card, CardContent,} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,19 +24,56 @@ interface VocabItemCardProps {
       id: number;
       title: string;
     } | null;
+    // Add connected kelas for navigation to kelas vocab detail page
+    connectedKelas?: {
+      id: number;
+      title: string;
+    };
     difficulty: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
     rating: number;
     totalLearners: number;
   };
   className?: string;
+  disableNavigation?: boolean;
 }
 
 /* removed unused difficultyColors to enforce token-only palette */
 
-export function VocabItemCard({ data, className = "" }: VocabItemCardProps) {
-  const handlePlayAudio = () => {
+export function VocabItemCard({ data, className = "", disableNavigation = false }: VocabItemCardProps) {
+  const router = useRouter();
+  
+  // Log the vocab data for debugging
+  console.log('VocabItemCard data:', {
+    id: data.id,
+    korean: data.korean,
+    connectedKelas: data.connectedKelas,
+    collection: data.collection,
+  });
+  
+  const handlePlayAudio = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click when clicking audio button
     // TODO: Implement audio playback
     console.log('Play audio for:', data.korean);
+  };
+
+  const handleCardClick = () => {
+    // Skip navigation if disabled
+    if (disableNavigation) {
+      console.log('Navigation disabled for vocab card');
+      return;
+    }
+
+    // Priority navigation logic:
+    // 1. If connected to a kelas, navigate to kelas vocab detail page (using collection ID)
+    // 2. Fallback to author profile
+    
+    if (data.connectedKelas && data.collection) {
+      console.log(`Navigating to vocab collection in kelas: /kelas/${data.connectedKelas.id}/vocab/${data.collection.id}`);
+      router.push(`/kelas/${data.connectedKelas.id}/vocab/${data.collection.id}`);
+    } else {
+      console.log(`Navigating to author profile: /profile/${data.author.id}`);
+      router.push(`/profile/${data.author.id}`);
+    }
   };
 
   const typeLabels = {
@@ -52,7 +90,10 @@ export function VocabItemCard({ data, className = "" }: VocabItemCardProps) {
   };
 
   return (
-    <Card className={`group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer p-4 relative bg-gradient-to-br from-card to-muted/20 ${className}`}>
+    <Card
+      className={`group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all ${disableNavigation ? '' : 'cursor-pointer'} p-4 relative bg-gradient-to-br from-card to-muted/20 ${className}`}
+      onClick={disableNavigation ? undefined : handleCardClick}
+    >
       <div className={`absolute inset-y-0 left-0 w-1 ${data.difficulty === "BEGINNER" ? "bg-gradient-to-b from-primary to-card" : data.difficulty === "INTERMEDIATE" ? "bg-gradient-to-b from-secondary to-card" : "bg-gradient-to-b from-destructive to-card"}`} />
       <CardContent className="p-0 space-y-3 pl-3">
         <div className="flex items-start justify-between gap-3">

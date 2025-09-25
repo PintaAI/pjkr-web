@@ -214,7 +214,7 @@ export default function KelasPricingCard({
         )}
 
         {/* Promo Code Form */}
-        {kelas.isPaidClass && (
+        {!enrollment.isEnrolled && kelas.isPaidClass && (
           <div className="space-y-2 pt-2 mt-2 border-t">
             {appliedPromoCode ? (
               <div className="flex items-center justify-between px-3 py-2 rounded-md bg-primary/20 text-primary">

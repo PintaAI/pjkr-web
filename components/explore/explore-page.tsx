@@ -49,6 +49,10 @@ type VocabContent = {
     id: number;
     title: string;
   } | null;
+  connectedKelas?: {
+    id: number;
+    title: string;
+  };
   difficulty: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
   rating: number;
   totalLearners: number;
@@ -84,6 +88,12 @@ type SoalContent = {
   };
   isActive: boolean;
   collectionName: string;
+  // Add connected classes for navigation
+  connectedClasses?: Array<{
+    id: number;
+    title: string;
+    level: string;
+  }>;
 };
 
 type ContentItem =

@@ -158,6 +158,16 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
   
   const isAuthor = !isLoading && user?.id === kelas.authorId;
   
+  // Get initial tab from hash, similar to guru dashboard
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.slice(1);
+      const validTabs = ['information', 'materi', 'discussion', 'vocabulary', 'questions', 'statistics'];
+      return validTabs.includes(hash) ? hash : 'information';
+    }
+    return 'information';
+  });
+  
   // Initialize color extraction from thumbnail
   const { colors, isExtracting, handleColorExtraction } = useKelasColors(kelas.thumbnail);
 
@@ -197,6 +207,20 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
       teaserControls.start({ opacity: 1, scale: 1 });
     }
   }, [teaserControls, kelas.materis.length]);
+
+  // Listen for hash changes (browser back/forward navigation)
+  React.useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1);
+      const validTabs = ['information', 'materi', 'discussion', 'vocabulary', 'questions', 'statistics'];
+      if (validTabs.includes(hash)) {
+        setActiveTab(hash);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
   
   // Automatic "tease" animation for materials dropdown: briefly open then close
   React.useEffect(() => {
@@ -312,8 +336,8 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
 
         {/* Tabs Section */}
         <div className="pt-6">
-          <Tabs defaultValue="information" className="w-full">
-            <TabsList className={`grid w-full ${isAuthor ? 'grid-cols-6' : 'grid-cols-5'}`}>
+          <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value); window.location.hash = value; }} className="w-full">
+            <TabsList className={`grid w-full ${isAuthor ? 'grid-cols-6' : (enrollment.isEnrolled || isAuthor) ? 'grid-cols-5' : 'grid-cols-1'}`}>
               <TabsTrigger
                 value="information"
                 className="flex items-center gap-2 text-primary"
@@ -321,34 +345,38 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
                 <FileText className="w-4 h-4 text-primary" />
                 Information
               </TabsTrigger>
-              <TabsTrigger
-                value="materi"
-                className="flex items-center gap-2 text-primary"
-              >
-                <BookOpen className="w-4 h-4 text-primary" />
-                Materi & Live Class
-              </TabsTrigger>
-              <TabsTrigger
-                value="discussion"
-                className="flex items-center gap-2 text-primary"
-              >
-                <MessageSquare className="w-4 h-4 text-primary" />
-                Discussion
-              </TabsTrigger>
-              <TabsTrigger
-                value="vocabulary"
-                className="flex items-center gap-2 text-primary"
-              >
-                <GraduationCap className="w-4 h-4 text-primary" />
-                Vocabulary
-              </TabsTrigger>
-              <TabsTrigger
-                value="questions"
-                className="flex items-center gap-2 text-primary"
-              >
-                <Brain className="w-4 h-4 text-primary" />
-                Questions
-              </TabsTrigger>
+              {(enrollment.isEnrolled || isAuthor) && (
+                <>
+                  <TabsTrigger
+                    value="materi"
+                    className="flex items-center gap-2 text-primary"
+                  >
+                    <BookOpen className="w-4 h-4 text-primary" />
+                    Materi & Live Class
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="discussion"
+                    className="flex items-center gap-2 text-primary"
+                  >
+                    <MessageSquare className="w-4 h-4 text-primary" />
+                    Discussion
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="vocabulary"
+                    className="flex items-center gap-2 text-primary"
+                  >
+                    <GraduationCap className="w-4 h-4 text-primary" />
+                    Vocabulary
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="questions"
+                    className="flex items-center gap-2 text-primary"
+                  >
+                    <Brain className="w-4 h-4 text-primary" />
+                    Questions
+                  </TabsTrigger>
+                </>
+              )}
               {isAuthor && (
                 <TabsTrigger
                   value="statistics"

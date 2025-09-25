@@ -46,6 +46,10 @@ export interface TransformedVocab {
     id: number;
     title: string;
   } | null;
+  connectedKelas?: {
+    id: number;
+    title: string;
+  };
   difficulty: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
   rating: number;
   totalLearners: number;
@@ -81,6 +85,11 @@ export interface TransformedSoal {
   };
   isActive: boolean;
   collectionName: string;
+  connectedClasses?: Array<{
+    id: number;
+    title: string;
+    level: string;
+  }>;
 }
 
 export type ExploreContentItem =
@@ -113,7 +122,7 @@ export async function getExploreData() {
       },
     });
 
-    // Fetch random VocabularyItems
+    // Fetch random VocabularyItems with connected kelas information
     const vocabData = await prisma.vocabularyItem.findMany({
       include: {
         creator: {
@@ -127,6 +136,12 @@ export async function getExploreData() {
           select: {
             id: true,
             title: true,
+            kelas: {
+              select: {
+                id: true,
+                title: true,
+              },
+            },
           },
         },
       },
@@ -166,7 +181,7 @@ export async function getExploreData() {
       },
     });
 
-    // Fetch random Soals - only active ones
+    // Fetch random Soals - only active ones with connected classes
     const soalData = await prisma.soal.findMany({
       where: {
         isActive: true,
@@ -189,6 +204,17 @@ export async function getExploreData() {
         koleksiSoal: {
           select: {
             nama: true,
+            kelasKoleksiSoals: {
+              select: {
+                kelas: {
+                  select: {
+                    id: true,
+                    title: true,
+                    level: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -231,7 +257,14 @@ export async function getExploreData() {
         name: vocab.creator.name || '',
         image: vocab.creator.image || ''
       },
-      collection: vocab.collection,
+      collection: vocab.collection ? {
+        id: vocab.collection.id,
+        title: vocab.collection.title,
+      } : null,
+      connectedKelas: vocab.collection?.kelas ? {
+        id: vocab.collection.kelas.id,
+        title: vocab.collection.kelas.title,
+      } : undefined,
       difficulty: 'BEGINNER' as const,
       rating: 4.5,
       totalLearners: Math.floor(Math.random() * 1000) + 100,
@@ -253,21 +286,31 @@ export async function getExploreData() {
       bio: `Experienced ${user.role.toLowerCase()} in Korean learning.`,
     }));
 
-    const transformedSoals: TransformedSoal[] = randomSoals.map(soal => ({
-      id: soal.id,
-      pertanyaan: soal.pertanyaan,
-      difficulty: soal.difficulty || 'BEGINNER',
-      explanation: soal.explanation || '',
-      options: soal.opsis.map(o => o.opsiText),
-      correctOptionIndex: soal.opsis.findIndex(o => o.isCorrect),
-      author: {
-        id: soal.author.id,
-        name: soal.author.name || '',
-        image: soal.author.image || ''
-      },
-      isActive: soal.isActive,
-      collectionName: soal.koleksiSoal.nama,
-    }));
+    const transformedSoals: TransformedSoal[] = randomSoals.map(soal => {
+      // Extract connected classes from the nested relationship
+      const connectedClasses = soal.koleksiSoal.kelasKoleksiSoals.map(kks => ({
+        id: kks.kelas.id,
+        title: kks.kelas.title,
+        level: kks.kelas.level,
+      }));
+
+      return {
+        id: soal.id,
+        pertanyaan: soal.pertanyaan,
+        difficulty: soal.difficulty || 'BEGINNER',
+        explanation: soal.explanation || '',
+        options: soal.opsis.map(o => o.opsiText),
+        correctOptionIndex: soal.opsis.findIndex(o => o.isCorrect),
+        author: {
+          id: soal.author.id,
+          name: soal.author.name || '',
+          image: soal.author.image || ''
+        },
+        isActive: soal.isActive,
+        collectionName: soal.koleksiSoal.nama,
+        connectedClasses: connectedClasses.length > 0 ? connectedClasses : undefined,
+      };
+    });
 
     // Combine all content types
     const allContent: ExploreContentItem[] = [

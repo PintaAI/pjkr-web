@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, BookOpen } from "lucide-react";
 
 interface SoalItemCardProps {
   data: {
@@ -23,8 +24,15 @@ interface SoalItemCardProps {
     };
     isActive: boolean;
     collectionName: string;
+    // Add optional connected classes for smart navigation
+    connectedClasses?: Array<{
+      id: number;
+      title: string;
+      level: string;
+    }>;
   };
   className?: string;
+  disableNavigation?: boolean;
 }
 
 const difficultyStyles = {
@@ -33,12 +41,54 @@ const difficultyStyles = {
   ADVANCED: "bg-destructive/10 text-destructive",
 } as const;
 
-export function SoalItemCard({ data, className = "" }: SoalItemCardProps) {
+export function SoalItemCard({ data, className = "", disableNavigation = false }: SoalItemCardProps) {
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
+  const router = useRouter();
+
+  // Log the connected classes data for debugging
+  console.log('SoalItemCard data:', {
+    id: data.id,
+    pertanyaan: data.pertanyaan.substring(0, 50) + '...',
+    connectedClasses: data.connectedClasses,
+    collectionName: data.collectionName
+  });
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on interactive elements
+    if ((e.target as HTMLElement).closest('input, button, label')) {
+      return;
+    }
+
+    // Skip navigation if disabled
+    if (disableNavigation) {
+      console.log('Navigation disabled for soal card');
+      return;
+    }
+
+    // Simple navigation logic - use first connected class
+    if (data.connectedClasses && data.connectedClasses.length > 0) {
+      const targetClass = data.connectedClasses[0];
+      console.log(`Navigating to class: ${targetClass.title} (${targetClass.level}) - /kelas/${targetClass.id}#questions`);
+      router.push(`/kelas/${targetClass.id}#questions`);
+    } else {
+      // Fallback: navigate to author profile
+      console.log(`No connected classes found, navigating to author profile: /profile/${data.author.id}`);
+      router.push(`/profile/${data.author.id}`);
+    }
+
+    // TODO: Future iterations could implement smarter class selection:
+    // - Prioritize by difficulty level (BEGINNER > INTERMEDIATE > ADVANCED)
+    // - Prioritize user's enrolled classes
+    // - Prioritize classes with most members/activity
+    // - Consider user's learning progress/level
+  };
 
   return (
-    <Card className={`group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer p-4 relative bg-gradient-to-br from-card to-muted/20 ${className}`}>
+    <Card
+      className={`group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all ${disableNavigation ? '' : 'cursor-pointer'} p-4 relative bg-gradient-to-br from-card to-muted/20 ${className}`}
+      onClick={disableNavigation ? undefined : handleCardClick}
+    >
       <div className={`absolute inset-x-0 top-0 h-1 ${data.difficulty === "BEGINNER" ? "bg-gradient-to-r from-primary to-card" : data.difficulty === "INTERMEDIATE" ? "bg-gradient-to-r from-secondary to-card" : "bg-gradient-to-r from-destructive to-card"}`} />
       <div className="absolute top-4 -right-3 bg-primary text-primary-foreground px-6  text-xs font-semibold transform -translate-y-1 translate-x-1 rotate-45 shadow-xl">
         Soal
@@ -124,9 +174,17 @@ export function SoalItemCard({ data, className = "" }: SoalItemCardProps) {
         )}
 
         <div className="flex items-center justify-between pt-2 border-t">
-          <Badge className={difficultyStyles[data.difficulty]}>
-            {data.difficulty.toLowerCase()}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge className={difficultyStyles[data.difficulty]}>
+              {data.difficulty.toLowerCase()}
+            </Badge>
+            {data.connectedClasses && data.connectedClasses.length > 1 && (
+              <Badge variant="outline" className="text-xs">
+                <BookOpen className="h-3 w-3 mr-1" />
+                {data.connectedClasses.length} classes
+              </Badge>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <Avatar
               className="h-6 w-6"

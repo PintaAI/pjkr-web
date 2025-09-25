@@ -43,7 +43,7 @@ export default function VocabularyTab({ vocabularySets, kelasId }: VocabularyTab
 
   return (
     <Card>
-      <CardContent className="p-6">
+      <CardContent >
         {vocabularySets.length > 0 ? (
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
