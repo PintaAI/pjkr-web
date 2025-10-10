@@ -18,7 +18,6 @@ interface KelasHeaderProps {
     isDraft: boolean;
   };
   onBack: () => void;
-  teaserControls: any;
 }
 
 const typeLabels: Record<KelasType, string> = {
@@ -48,12 +47,13 @@ const getDifficultyColor = (level: Difficulty) => {
   }
 };
 
-export default function KelasHeader({ kelas, onBack, teaserControls }: KelasHeaderProps) {
+export default function KelasHeader({ kelas, onBack }: KelasHeaderProps) {
   return (
     <motion.div
       className="relative h-80 rounded-b-2xl overflow-hidden mb-6"
       initial={{ opacity: 0, scale: 0.95 }}
-      animate={teaserControls}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
     >
       {/* Background thumbnail */}
       <div className="absolute inset-0">

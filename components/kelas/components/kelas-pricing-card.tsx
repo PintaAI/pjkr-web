@@ -188,13 +188,13 @@ export default function KelasPricingCard({
   };
 
   return (
-    <Card className="lg:w-64 py-0 relative overflow-hidden border-primary">
+    <Card className="lg:w-64 h-[195px] py-0 relative overflow-hidden border-primary">
       {!kelas.isPaidClass && (
         <div className="absolute top-6 right-6 px-6 text-white px-3 py-1 text-xs font-bold transform rotate-45 translate-x-1/2 -translate-y-1/2 shadow-md border-2 bg-primary border-primary">
           GRATIS
         </div>
       )}
-      <CardContent className="p-4">
+      <CardContent className="p-4 flex flex-col justify-center h-full">
         {enrollment.isEnrolled ? (
           <div className="space-y-3">
             <div className="text-center">

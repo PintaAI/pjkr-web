@@ -12,8 +12,7 @@ import LiveSessionTab from "./tabs/live-session-tab";
 import DiscussionTab from "./tabs/discussion-tab";
 import VocabularyTab from "./tabs/vocabulary-tab";
 import SoalTab from "./tabs/soal-tab";
-import { useState, useRef,} from "react";
-import { useAnimation } from "framer-motion";
+import { useState } from "react";
 import React from "react";
 import { useKelasColors } from "@/lib/hooks/use-kelas-colors";
 import { ColorExtractor } from "react-color-extractor";
@@ -23,7 +22,6 @@ import KelasHeader from "./components/kelas-header";
 import KelasStats from "./components/kelas-stats";
 import KelasAuthor from "./components/kelas-author";
 import KelasPricingCard from "./components/kelas-pricing-card";
-import KelasMaterialsList from "./components/kelas-materials-list";
 import { MateriCard } from "./components/materi-card";
 
 interface Author {
@@ -159,14 +157,19 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
   const isAuthor = !isLoading && user?.id === kelas.authorId;
   
   // Get initial tab from hash, similar to guru dashboard
-  const [activeTab, setActiveTab] = useState(() => {
+  const [activeTab, setActiveTab] = useState('information'); // Always start with 'information' to prevent hydration mismatch
+  
+  // Update tab from hash after mount
+  React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.slice(1);
       const validTabs = ['information', 'materi', 'discussion', 'vocabulary', 'questions', 'statistics'];
-      return validTabs.includes(hash) ? hash : 'information';
+      if (validTabs.includes(hash)) {
+        console.log('[HYDRATION DEBUG] Setting initial tab from hash:', hash);
+        setActiveTab(hash);
+      }
     }
-    return 'information';
-  });
+  }, []);
   
   // Initialize color extraction from thumbnail
   const { colors, isExtracting, handleColorExtraction } = useKelasColors(kelas.thumbnail);
@@ -176,37 +179,12 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
   
   // Prevent hydration mismatch by using the existing isClient state
   const [isClient, setIsClient] = useState(false);
-
-  // State for materials list visibility
-  const [showMaterials, setShowMaterials] = useState(false);
-  // Track if we already performed the automatic teaser for materials list
-  const [hasTeasedMaterials, setHasTeasedMaterials] = useState(false);
-  
-  // Refs for timeout cleanup
-  const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Animation controls for teaser
-  const teaserControls = useAnimation();
   
   // Set isClient to true after component mounts on client side
   React.useEffect(() => {
+    console.log('[HYDRATION DEBUG] Client mounted - isAuthor:', isAuthor, 'isEnrolled:', enrollment.isEnrolled, 'isLoading:', isLoading);
     setIsClient(true);
-    if (kelas.materis.length > 0) {
-      // Run teaser once then leave header visible
-      teaserControls.start({
-        opacity: [0, 1],
-        scale: [0.95, 1],
-        transition: {
-          duration: 0.6,
-          ease: "easeOut"
-        }
-      });
-    } else {
-      // Ensure header shown even with no materi
-      teaserControls.start({ opacity: 1, scale: 1 });
-    }
-  }, [teaserControls, kelas.materis.length]);
+  }, [isAuthor, enrollment.isEnrolled, isLoading]);
 
   // Listen for hash changes (browser back/forward navigation)
   React.useEffect(() => {
@@ -222,36 +200,12 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
   
-  // Automatic "tease" animation for materials dropdown: briefly open then close
-  React.useEffect(() => {
-    if (!hasTeasedMaterials && kelas.materis.length > 0 && isClient) {
-      // Delay a bit so header animation finishes
-      openTimeoutRef.current = setTimeout(() => {
-        setShowMaterials(true);
-        // Close after a short showcase
-        closeTimeoutRef.current = setTimeout(() => {
-          setShowMaterials(false);
-          setHasTeasedMaterials(true);
-        }, 1600);
-      }, 800);
-    }
-    
-    // Cleanup function to clear both timeouts
-    return () => {
-      if (openTimeoutRef.current) {
-        clearTimeout(openTimeoutRef.current);
-      }
-      if (closeTimeoutRef.current) {
-        clearTimeout(closeTimeoutRef.current);
-      }
-    };
-  }, [hasTeasedMaterials, kelas.materis.length, isClient]);
   
   // Check if current user is the author of this kelas
 
 
   const handleBack = () => {
-    router.back();
+    router.push('/kelas');
   };
 
   const handleNavigateToLearn = () => {
@@ -283,7 +237,6 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
           isDraft: kelas.isDraft,
         }}
         onBack={handleBack}
-        teaserControls={teaserControls}
       />
 
       <div className="px-6 space-y-6">
@@ -323,21 +276,18 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
               onNavigateToLearn={handleNavigateToLearn}
             />
 
-            {/* Materials Section */}
-            <KelasMaterialsList
-              materis={kelas.materis}
-              showMaterials={showMaterials}
-              setShowMaterials={setShowMaterials}
-              hasTeasedMaterials={hasTeasedMaterials}
-              kelasId={kelas.id}
-            />
           </div>
         </div>
 
         {/* Tabs Section */}
-        <div className="pt-6">
+        <div>
           <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value); window.location.hash = value; }} className="w-full">
-            <TabsList className={`grid w-full ${isAuthor ? 'grid-cols-6' : (enrollment.isEnrolled || isAuthor) ? 'grid-cols-5' : 'grid-cols-1'}`}>
+            <TabsList className={`grid w-full ${
+              !isClient ? 'grid-cols-1' : // During SSR/initial render, always use single column
+              isAuthor ? 'grid-cols-6' :
+              (enrollment.isEnrolled || isAuthor) ? 'grid-cols-5' :
+              'grid-cols-1'
+            }`}>
               <TabsTrigger
                 value="information"
                 className="flex items-center gap-2 text-primary"
@@ -345,7 +295,8 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
                 <FileText className="w-4 h-4 text-primary" />
                 Information
               </TabsTrigger>
-              {(enrollment.isEnrolled || isAuthor) && (
+              {/* Only render conditional tabs after client mount to prevent hydration mismatch */}
+              {isClient && (enrollment.isEnrolled || isAuthor) && (
                 <>
                   <TabsTrigger
                     value="materi"
@@ -377,7 +328,8 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
                   </TabsTrigger>
                 </>
               )}
-              {isAuthor && (
+              {/* Only render author tab after client mount to prevent hydration mismatch */}
+              {isClient && isAuthor && (
                 <TabsTrigger
                   value="statistics"
                   className="flex items-center gap-2 text-primary"
