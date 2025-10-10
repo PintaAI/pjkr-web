@@ -123,12 +123,18 @@ export const colorUtils = {
    */
   generateVariations: (hex: string) => {
     const rgb = colorUtils.hexToRgb(hex)
-    if (!rgb) return { lighter: hex, darker: hex }
+    if (!rgb) return { lighter: hex, darker: hex, darkMode: hex, lightMode: hex }
     
     const lighter = `rgb(${Math.min(255, rgb.r + 30)}, ${Math.min(255, rgb.g + 30)}, ${Math.min(255, rgb.b + 30)})`
     const darker = `rgb(${Math.max(0, rgb.r - 30)}, ${Math.max(0, rgb.g - 30)}, ${Math.max(0, rgb.b - 30)})`
     
-    return { lighter, darker }
+    // For light mode: make significantly darker for better contrast (reduce by 35-40%)
+    const lightMode = `rgb(${Math.floor(rgb.r * 0.6)}, ${Math.floor(rgb.g * 0.6)}, ${Math.floor(rgb.b * 0.6)})`
+    
+    // For dark mode: keep brighter/original or slightly lighter
+    const darkMode = `rgb(${Math.min(255, rgb.r + 20)}, ${Math.min(255, rgb.g + 20)}, ${Math.min(255, rgb.b + 20)})`
+    
+    return { lighter, darker, lightMode, darkMode }
   },
 
   /**

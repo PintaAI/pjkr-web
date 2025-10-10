@@ -14,8 +14,9 @@ import {
   handleCommandNavigation,
   handleImageDrop,
   handleImagePaste,
+  Placeholder,
 } from "novel";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { defaultExtensions } from "./extensions";
 import { ColorSelector } from "./selectors/color-selector";
@@ -33,8 +34,6 @@ import { TopToolbar } from "./top-toolbar";
 import { YoutubeDialog } from "./youtube-dialog";
 import hljs from "highlight.js";
 
-const extensions = [...defaultExtensions, slashCommand];
-
 interface NovelEditorProps {
   initialContent?: any;
   onUpdate?: (data: { json: any; html: string }) => void;
@@ -42,6 +41,7 @@ interface NovelEditorProps {
   className?: string;
   saveStatus?: "Saved" | "Unsaved" | "Saving...";
   showTopToolbar?: boolean;
+  placeholder?: string;
 }
 
 /* Defaults preserve original sizing when props not supplied */
@@ -51,6 +51,7 @@ const NovelEditor = ({
   initialContent: propInitialContent,
   className,
   showTopToolbar = false,
+  placeholder,
 }: NovelEditorProps) => {
   const [initialContent, setInitialContent] = useState<null | JSONContent>(null);
   const [openNode, setOpenNode] = useState(false);
@@ -58,6 +59,31 @@ const NovelEditor = ({
   const [openLink, setOpenLink] = useState(false);
   const [openYoutube, setOpenYoutube] = useState(false);
   const [currentEditor, setCurrentEditor] = useState<EditorInstance | null>(null);
+
+  // Create extensions with custom placeholder if provided
+  const extensions = useMemo(() => {
+    const exts = [...defaultExtensions, slashCommand];
+    
+    if (placeholder) {
+      // Replace the default Placeholder extension with custom one
+      const filteredExts = exts.filter(ext => ext.name !== 'placeholder');
+      const customPlaceholder = Placeholder.configure({
+        includeChildren: false,
+        placeholder: ({ node, editor }) => {
+          if (node.type.name === "paragraph" && editor.isEmpty) {
+            return placeholder;
+          }
+          if (node.type.name === "heading") {
+            return `Heading ${node.attrs.level}`;
+          }
+          return "";
+        },
+      });
+      return [...filteredExts, customPlaceholder];
+    }
+    
+    return exts;
+  }, [placeholder]);
 
   const highlightCodeblocks = (content: string) => {
     const doc = new DOMParser().parseFromString(content, "text/html");

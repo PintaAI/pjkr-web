@@ -51,6 +51,7 @@ interface DiscussionTabProps {
   kelasTitle?: string;
   initialPosts?: Post[];
   initialPostsCount?: number;
+  isAuthor?: boolean;
 }
 
 export default function DiscussionTab({
@@ -58,6 +59,7 @@ export default function DiscussionTab({
   kelasTitle = "Class",
   initialPosts = [],
   initialPostsCount = 0,
+  isAuthor = false,
 }: DiscussionTabProps) {
   const { user, isAuthenticated } = useSession();
   const [posts, setPosts] = useState<Post[]>(initialPosts);
@@ -238,6 +240,7 @@ export default function DiscussionTab({
           <NewPostForm
             kelasId={kelasId}
             kelasTitle={kelasTitle}
+            isAuthor={isAuthor}
             onPostCreated={(post) => {
               setPosts([post, ...posts]);
             }}
@@ -279,15 +282,11 @@ export default function DiscussionTab({
           )}
         </div>
       ) : (
-        <Card>
-          <CardContent className="p-8">
-            <div className="text-center text-muted-foreground">
-              <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-medium mb-2">No discussions yet</h3>
-              <p className="mb-4">Be the first to start a conversation!</p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/30">
+          <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
+          <h3 className="text-lg font-medium mb-2">No discussions yet</h3>
+          <p className="mb-4">Be the first to start a conversation!</p>
+        </div>
       )}
     </div>
   );

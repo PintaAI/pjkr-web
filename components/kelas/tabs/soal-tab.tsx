@@ -35,30 +35,26 @@ interface SoalTabProps {
 
 export default function SoalTab({ soalSets }: SoalTabProps) {
   return (
-    <Card>
-      <CardContent >
-        {soalSets.length > 0 ? (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Brain className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-semibold">Question Sets ({soalSets.length})</h3>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {soalSets.map((soalSet) => (
-                <SoalCard
-                  key={soalSet.id}
-                  soalSet={soalSet}
-                />
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            <Brain className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p>No question sets available for this class.</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 mb-4">
+        <Brain className="w-5 h-5 text-primary" />
+        <h3 className="text-lg font-semibold">Question Sets ({soalSets.length})</h3>
+      </div>
+      {soalSets.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {soalSets.map((soalSet) => (
+            <SoalCard
+              key={soalSet.id}
+              soalSet={soalSet}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/30">
+          <Brain className="w-12 h-12 mx-auto mb-2 opacity-50" />
+          <p>No question sets available for this class.</p>
+        </div>
+      )}
+    </div>
   );
 }

@@ -11,7 +11,6 @@ import {
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
 import { motion } from "framer-motion";
-import { useKelasColors } from "@/lib/hooks/use-kelas-colors";
 import { NovelReadonly } from "@/components/novel/novel-readonly";
 import Image from "next/image";
 import { Badge } from "../ui/badge";
@@ -40,7 +39,7 @@ interface MateriDetailPageProps {
 }
 
 export default function MateriDetailPage({ materi }: MateriDetailPageProps) {
-  const { colors, isExtracting, handleColorExtraction } = useKelasColors(materi.kelas.thumbnail);
+  
 
 
   return (
@@ -68,9 +67,7 @@ export default function MateriDetailPage({ materi }: MateriDetailPageProps) {
             <div
               className="w-full h-full flex items-center justify-center"
               style={{
-                background: colors
-                  ? `linear-gradient(135deg, ${colors.primary}CC, ${colors.secondary}99)`
-                  : "linear-gradient(135deg, hsl(var(--primary)) / 0.8, hsl(var(--secondary)) / 0.6)"
+                background: "linear-gradient(135deg, hsl(var(--primary)) / 0.8, hsl(var(--secondary)) / 0.6)"
               }}
             >
               <BookOpen className="w-16 h-16 text-white/30" />
@@ -135,8 +132,8 @@ export default function MateriDetailPage({ materi }: MateriDetailPageProps) {
 
 
       {/* Content */}
-      <Card>
-        <CardContent>
+      <Card className="border-none bg-primary/3 p-0 backdrop-blur-[2px]">
+        <CardContent className="p-0 ">
           {materi.jsonDescription ? (
             <NovelReadonly content={materi.jsonDescription} />
           ) : materi.htmlDescription ? (

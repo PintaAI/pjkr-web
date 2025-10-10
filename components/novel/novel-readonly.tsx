@@ -1,7 +1,7 @@
 "use client";
 
 import { EditorContent, EditorRoot, type JSONContent } from "novel";
-import { generateHTML, generateJSON } from "@tiptap/html";
+import { generateJSON } from "@tiptap/html";
 import { defaultExtensions } from "./extensions";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";

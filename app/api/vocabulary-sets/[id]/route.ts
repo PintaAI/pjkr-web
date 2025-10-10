@@ -31,6 +31,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
             title: true,
             type: true,
             level: true,
+            thumbnail: true,
             author: {
               select: {
                 id: true,
@@ -136,7 +137,8 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
             id: true,
             title: true,
             type: true,
-            level: true
+            level: true,
+            thumbnail: true
           }
         }
       }

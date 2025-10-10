@@ -76,13 +76,13 @@ export function VocabCard({ vocabSet, onClick, onDelete, compact = false }: Voca
 
   return (
     <Card
-      className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all bg-gradient-to-br from-card to-muted/20 cursor-pointer py-0 relative"
+      className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all bg-card cursor-pointer py-0 relative border"
       onClick={onClick}
     >
       {/* Media */}
       <div className="relative">
-        <div className="relative w-full aspect-[16/9] bg-muted/40">
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary to-secondary">
+        <div className="relative w-full aspect-[16/9]">
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/90 to-primary/70 dark:from-primary/80 dark:to-primary/60">
             {vocabSet.icon ? (
               <IconRenderer icon={vocabSet.icon} className="h-12 w-12 text-primary-foreground" />
             ) : (
@@ -90,7 +90,7 @@ export function VocabCard({ vocabSet, onClick, onDelete, compact = false }: Voca
             )}
           </div>
           {/* gradient overlay */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent dark:from-black/50 dark:via-black/20" />
 
           {/* badges */}
           <div className="absolute top-2 left-2 flex gap-2">
@@ -111,7 +111,7 @@ export function VocabCard({ vocabSet, onClick, onDelete, compact = false }: Voca
                 e.stopPropagation();
                 setDeleteDialogOpen(true);
               }}
-              className="absolute top-2 right-2 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-black/50 hover:bg-black/70 text-destructive"
+              className="absolute top-2 right-2 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-background/80 hover:bg-background/90 backdrop-blur-sm text-destructive border"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -133,10 +133,10 @@ export function VocabCard({ vocabSet, onClick, onDelete, compact = false }: Voca
       <CardContent className="sm:px-4 pt-0 pb-3 sm:pb-4">
         <div className="flex justify-between items-start">
           <div className="flex-1">
-            <h3 className="text-sm sm:text-base font-semibold leading-snug line-clamp-2">
+            <h3 className="text-sm sm:text-base font-semibold leading-snug line-clamp-2 text-foreground">
               {vocabSet.title}
             </h3>
-            <p className="mt-1 text-xs sm:text-sm text-muted-foreground line-clamp-2">
+            <p className="mt-1 text-xs sm:text-sm text-muted-foreground/80 dark:text-muted-foreground line-clamp-2">
               {vocabSet.description || "No description available"}
             </p>
           </div>

@@ -31,12 +31,12 @@ export function MateriCard({ materi, onClick }: MateriCardProps) {
 
   return (
     <Card
-      className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer bg-gradient-to-br from-card to-muted/20 py-0"
+      className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer bg-card py-0 border"
       onClick={onClick}
     >
       {/* Media */}
       <div className="relative">
-        <div className="relative w-full aspect-[16/9] bg-muted/40">
+        <div className="relative w-full aspect-[16/9]">
           {videoId ? (
             <img
               src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
@@ -44,12 +44,12 @@ export function MateriCard({ materi, onClick }: MateriCardProps) {
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary to-secondary">
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/90 to-primary/70 dark:from-primary/80 dark:to-primary/60">
               <BookOpen className="h-12 w-12 text-primary-foreground" />
             </div>
           )}
           {/* gradient overlay */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent dark:from-black/50 dark:via-black/20" />
 
           {/* badges */}
           <div className="absolute top-2 left-2 flex gap-2">
@@ -74,10 +74,10 @@ export function MateriCard({ materi, onClick }: MateriCardProps) {
       </div>
 
       <CardContent className="sm:px-4 pt-0 pb-3 sm:pb-4">
-        <h3 className="text-sm sm:text-base font-semibold leading-snug line-clamp-2">
+        <h3 className="text-sm sm:text-base font-semibold leading-snug line-clamp-2 text-foreground">
           {materi.title}
         </h3>
-        <p className="mt-1 text-xs sm:text-sm text-muted-foreground line-clamp-2">
+        <p className="mt-1 text-xs sm:text-sm text-muted-foreground/80 dark:text-muted-foreground line-clamp-2">
           {materi.description || "No description available"}
         </p>
       </CardContent>

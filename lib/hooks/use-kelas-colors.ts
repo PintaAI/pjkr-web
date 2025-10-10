@@ -8,6 +8,8 @@ interface KelasColors {
   secondary: string
   primaryDark: string
   secondaryDark: string
+  primaryLight: string
+  secondaryLight: string
 }
 
 export const useKelasColors = (thumbnailUrl: string | null) => {
@@ -19,29 +21,53 @@ export const useKelasColors = (thumbnailUrl: string | null) => {
       const primary = extractedColors[0]
       const secondary = extractedColors[1]
 
-      // Generate dark mode variants
-      const primaryDark = colorUtils.generateVariations(primary).darker
-      const secondaryDark = colorUtils.generateVariations(secondary).darker
+      // Generate theme-specific variants
+      const primaryVariations = colorUtils.generateVariations(primary)
+      const secondaryVariations = colorUtils.generateVariations(secondary)
 
       const extractedColorsObj = {
         primary,
         secondary,
-        primaryDark,
-        secondaryDark
+        primaryDark: primaryVariations.darkMode,
+        secondaryDark: secondaryVariations.darkMode,
+        primaryLight: primaryVariations.lightMode,
+        secondaryLight: secondaryVariations.lightMode
       }
 
       setColors(extractedColorsObj)
 
-      // Override global CSS variables to make all Tailwind classes use extracted colors
-      const root = document.documentElement
-      
-      // Use hex colors directly - Tailwind can handle them
-      root.style.setProperty('--primary', primary)
-      root.style.setProperty('--secondary', secondary)
-      root.style.setProperty('--primary-foreground', '#ffffff')
-      root.style.setProperty('--secondary-foreground', colorUtils.getContrastColor(secondary))
+      // Apply colors directly via a style tag to properly handle both :root and .dark selectors
+      applyThemeColors(primaryVariations, secondaryVariations)
     }
     setIsExtracting(false)
+  }
+
+  const applyThemeColors = (primaryVariations: any, secondaryVariations: any) => {
+    // Remove existing kelas-colors style if it exists
+    const existingStyle = document.getElementById('kelas-colors')
+    if (existingStyle) {
+      existingStyle.remove()
+    }
+
+    // Create a style element with separate :root and .dark definitions
+    const style = document.createElement('style')
+    style.id = 'kelas-colors'
+    style.textContent = `
+      :root {
+        --primary: ${primaryVariations.lightMode} !important;
+        --secondary: ${secondaryVariations.lightMode} !important;
+        --primary-foreground: #ffffff !important;
+        --secondary-foreground: ${colorUtils.getContrastColor(secondaryVariations.lightMode)} !important;
+      }
+      
+      .dark {
+        --primary: ${primaryVariations.darkMode} !important;
+        --secondary: ${secondaryVariations.darkMode} !important;
+        --primary-foreground: #ffffff !important;
+        --secondary-foreground: ${colorUtils.getContrastColor(secondaryVariations.darkMode)} !important;
+      }
+    `
+    document.head.appendChild(style)
   }
 
   useEffect(() => {
@@ -50,11 +76,10 @@ export const useKelasColors = (thumbnailUrl: string | null) => {
       setColors(null)
     } else {
       // Reset to default colors when no thumbnail
-      const root = document.documentElement
-      root.style.removeProperty('--primary')
-      root.style.removeProperty('--secondary')
-      root.style.removeProperty('--primary-foreground')
-      root.style.removeProperty('--secondary-foreground')
+      const existingStyle = document.getElementById('kelas-colors')
+      if (existingStyle) {
+        existingStyle.remove()
+      }
     }
   }, [thumbnailUrl])
 

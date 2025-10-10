@@ -1,6 +1,6 @@
 "use client";
 
-import { Video, MessageSquare, GraduationCap, Megaphone, FileText, BookOpen, Brain, BarChart3 } from "lucide-react";
+import {  MessageSquare, GraduationCap, Megaphone, FileText, BookOpen, Brain, BarChart3 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { KelasType, Difficulty } from "@prisma/client";
 import { useSession } from "@/lib/hooks/use-session";
@@ -8,7 +8,7 @@ import { useKelasEnrollment } from "@/lib/hooks/use-kelas-enrollment";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import DetailTab from "./tabs/detail-tab";
-import LiveSessionTab from "./tabs/live-session-tab";
+import MateriLiveTab from "./tabs/materi-live-tab";
 import DiscussionTab from "./tabs/discussion-tab";
 import VocabularyTab from "./tabs/vocabulary-tab";
 import SoalTab from "./tabs/soal-tab";
@@ -17,12 +17,13 @@ import React from "react";
 import { useKelasColors } from "@/lib/hooks/use-kelas-colors";
 import { ColorExtractor } from "react-color-extractor";
 
+
 // Import modular components
 import KelasHeader from "./components/kelas-header";
 import KelasStats from "./components/kelas-stats";
 import KelasAuthor from "./components/kelas-author";
 import KelasPricingCard from "./components/kelas-pricing-card";
-import { MateriCard } from "./components/materi-card";
+
 
 interface Author {
   id: string;
@@ -163,9 +164,8 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.slice(1);
-      const validTabs = ['information', 'materi', 'discussion', 'vocabulary', 'questions', 'statistics'];
+      const validTabs = ['information', 'materials', 'discussion', 'vocabulary', 'questions', 'statistics'];
       if (validTabs.includes(hash)) {
-        console.log('[HYDRATION DEBUG] Setting initial tab from hash:', hash);
         setActiveTab(hash);
       }
     }
@@ -182,22 +182,34 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
   
   // Set isClient to true after component mounts on client side
   React.useEffect(() => {
-    console.log('[HYDRATION DEBUG] Client mounted - isAuthor:', isAuthor, 'isEnrolled:', enrollment.isEnrolled, 'isLoading:', isLoading);
     setIsClient(true);
-  }, [isAuthor, enrollment.isEnrolled, isLoading]);
+  }, []);
 
   // Listen for hash changes (browser back/forward navigation)
   React.useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
-      const validTabs = ['information', 'materi', 'discussion', 'vocabulary', 'questions', 'statistics'];
+      const validTabs = ['information', 'materials', 'discussion', 'vocabulary', 'questions', 'statistics'];
       if (validTabs.includes(hash)) {
         setActiveTab(hash);
+      } else if (!hash) {
+        // If no hash, default to information tab
+        setActiveTab('information');
       }
     };
 
+    // Also listen for popstate (browser back/forward button)
+    const handlePopState = () => {
+      handleHashChange();
+    };
+
     window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handlePopState);
+    
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, []);
   
   
@@ -299,11 +311,11 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
               {isClient && (enrollment.isEnrolled || isAuthor) && (
                 <>
                   <TabsTrigger
-                    value="materi"
+                    value="materials"
                     className="flex items-center gap-2 text-primary"
                   >
                     <BookOpen className="w-4 h-4 text-primary" />
-                    Materi & Live Class
+                    Materials & Live
                   </TabsTrigger>
                   <TabsTrigger
                     value="discussion"
@@ -348,27 +360,13 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
               />
             </TabsContent>
 
-            {/* Materi Tab */}
-            <TabsContent value="materi" className="mt-6">
-              {/* Materi Section */}
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold mb-4">Materi</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {kelas.materis.map((materi) => (
-                    <MateriCard
-                      key={materi.id}
-                      materi={materi}
-                      onClick={() => router.push(`/kelas/${kelas.id}/materi/${materi.id}`)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Live Sessions Section */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Live Sessions</h3>
-                <LiveSessionTab liveSessions={kelas.liveSessions} />
-              </div>
+            {/* Materials & Live Tab */}
+            <TabsContent value="materials" className="mt-6">
+              <MateriLiveTab
+                materis={kelas.materis}
+                liveSessions={kelas.liveSessions}
+                kelasId={kelas.id}
+              />
             </TabsContent>
 
 

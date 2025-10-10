@@ -73,6 +73,9 @@ export default function VocabDetailPage({ vocabSet }: VocabDetailPageProps) {
           ) : (
             <div
               className="w-full h-full flex items-center justify-center"
+              style={{
+                background: "linear-gradient(135deg, hsl(var(--primary)) / 0.8, hsl(var(--secondary)) / 0.6)"
+              }}
             >
               <GraduationCap className="w-16 h-16 text-white/30" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
@@ -95,7 +98,7 @@ export default function VocabDetailPage({ vocabSet }: VocabDetailPageProps) {
               <BreadcrumbSeparator className="text-white/60" />
               <BreadcrumbItem>
                 <BreadcrumbLink
-                  href={`/kelas/${vocabSet.kelas?.id}`}
+                  href={`/kelas/${vocabSet.kelas?.id}#vocabulary`}
                   className="text-white/80 hover:text-white hover:underline"
                 >
                   {vocabSet.kelas?.title ?? "Class"}
@@ -138,11 +141,11 @@ export default function VocabDetailPage({ vocabSet }: VocabDetailPageProps) {
       </motion.div>
 
       {/* Vocabulary Items */}
-      <Card>
-        <CardContent>
+      <Card className="border-none bg-primary/3  backdrop-blur-sm">
+        <CardContent >
           {vocabSet.items.length > 0 ? (
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold mb-6">Vocabulary Items</h3>
+              <h3 className="text-xl font-semibold mb-6">Vocabularyt Items</h3>
               <div className="grid gap-4 md:grid-cols-2">
                 {vocabSet.items.map((item) => (
                   <VocabItemCard
