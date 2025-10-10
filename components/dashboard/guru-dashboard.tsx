@@ -211,24 +211,24 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value); window.location.hash = value; }} className="w-full">
-        <TabsList className="w-full">
-          <TabsTrigger value="tools" className="flex-1">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="tools">
             <Wrench className="w-4 h-4 mr-2" />
             Tools
           </TabsTrigger>
-          <TabsTrigger value="classes" className="flex-1">
+          <TabsTrigger value="classes">
             <BookOpen className="w-4 h-4 mr-2" />
             Manage Classes
           </TabsTrigger>
-          <TabsTrigger value="vocabulary" className="flex-1">
+          <TabsTrigger value="vocabulary">
             <FileText className="w-4 h-4 mr-2" />
             Manage Vocabulary
           </TabsTrigger>
-          <TabsTrigger value="soals" className="flex-1">
+          <TabsTrigger value="soals">
             <FileQuestion className="w-4 h-4 mr-2" />
             Manage Soals
           </TabsTrigger>
-          <TabsTrigger value="statistics" className="flex-1">
+          <TabsTrigger value="statistics">
             <BarChart3 className="w-4 h-4 mr-2" />
             Statistics
           </TabsTrigger>

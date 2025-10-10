@@ -1,8 +1,8 @@
-import { Suspense } from "react";
+
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Book, Code, Globe, ArrowRight, Loader2 } from "lucide-react";
+import { FileText, Book, Code, Globe, ArrowRight } from "lucide-react";
 import fs from "fs/promises";
 import path from "path";
 

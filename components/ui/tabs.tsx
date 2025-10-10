@@ -37,7 +37,7 @@ function TabsList({
           width: tabBounds.width,
           height: tabBounds.height,
           left: tabBounds.left - listBounds.left,
-          top: (tabBounds.top - listBounds.top) - 6, // Move up by 1px to align properly
+          top: (tabBounds.top - listBounds.top) - 5, // Move up by 1px to align properly
         } as DOMRect)
       }
     }
@@ -110,7 +110,7 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring hover:bg-primary/10 hover:text-primary text-foreground dark:text-muted-foreground relative z-10 inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color] duration-200 focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring hover:bg-primary/10 hover:mx-1 hover:text-primary text-foreground dark:text-muted-foreground relative z-10 inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color] duration-200 focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         "data-[state=active]:text-primary-foreground dark:data-[state=active]:text-primary-foreground",
         className
       )}
