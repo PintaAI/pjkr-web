@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Compass,
   Palette,
+  BookOpen,
 } from "lucide-react"
 
 export interface SidebarUser {
@@ -136,6 +137,11 @@ export function getSidebarData(userRole?: UserRole) {
       },
     ] as SidebarNavItem[],
     projects: [
+      {
+        name: "Documentation",
+        url: "/docs",
+        icon: BookOpen,
+      },
       {
         name: "Editor",
         url: "/editor",
