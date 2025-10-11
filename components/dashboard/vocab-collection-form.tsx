@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,7 +27,7 @@ interface VocabCollectionFormProps {
 }
 
 
-export function VocabCollectionForm({ vocabSet, kelasId, onCancel }: VocabCollectionFormProps) {
+export function VocabCollectionForm({ vocabSet, kelasId,  }: VocabCollectionFormProps) {
    const store = useVocabStore();
    const {
      loading,
@@ -37,12 +37,14 @@ export function VocabCollectionForm({ vocabSet, kelasId, onCancel }: VocabCollec
      itemDialogOpen,
      editingItemIndex,
      generating,
+     currentVocabSetId,
      setLoading,
-     setSaving,
+     
      setFormData,
      setItems,
-     setItemDialogOpen,
+     
      setGenerating,
+     setCurrentVocabSetId,
      initForCreate,
      initForEdit,
      handleAddItem,
@@ -56,7 +58,7 @@ export function VocabCollectionForm({ vocabSet, kelasId, onCancel }: VocabCollec
    const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
    // Auto-save function that saves form data
-   const performAutoSave = async (data: { formData: any; items: any[] }) => {
+   const performAutoSave = async () => {
      if (saving) {
        return;
      }
@@ -170,17 +172,25 @@ export function VocabCollectionForm({ vocabSet, kelasId, onCancel }: VocabCollec
       // Filter out empty items
       const validItems = items.filter(item => item.korean.trim() && item.indonesian.trim());
 
+      // Use currentVocabSetId if available (for newly created sets), otherwise use vocabSet?.id (for editing)
+      const vocabSetIdToUse = currentVocabSetId || vocabSet?.id;
+
       const result = await saveVocabularySet(kelasId || null, {
         title: formData.title,
         description: formData.description || undefined,
         icon: formData.icon || undefined,
         isPublic: formData.isPublic,
         items: validItems,
-      }, vocabSet?.id);
+      }, vocabSetIdToUse);
 
       if (!result.success) {
         console.error("Failed to save:", result.error);
         throw new Error(result.error || 'Save failed');
+      }
+
+      // Store the ID from the first save so subsequent auto-saves update the same record
+      if (result.data?.id && !currentVocabSetId) {
+        setCurrentVocabSetId(result.data.id);
       }
     } catch (error) {
       console.error("Error saving vocabulary set:", error);

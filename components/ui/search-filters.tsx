@@ -52,13 +52,6 @@ export function SearchFilters({
   }, [debouncedSearch, onSearchChange, debounceMs]);
 
   if (singleFilter) {
-    const combinedOptions = filters.flatMap((filter) =>
-      filter.options.map((option) => ({
-        value: `${filter.key}:${option.value}`,
-        label: `${filter.label}: ${option.label}`,
-      }))
-    );
-
     const activeFilters = filters.filter((filter) => filter.value !== "ALL");
     const currentLabel = activeFilters.length === 0
       ? "Filter by..."

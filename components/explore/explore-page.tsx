@@ -107,9 +107,8 @@ interface ExplorePageProps {
 }
 
 export default function ExplorePage({ initialData = [] }: ExplorePageProps) {
-   const [content, setContent] = useState<ContentItem[]>(initialData);
-   const [error, setError] = useState<string | null>(null);
-   const [hideDescription, setHideDescription] = useState(false);
+    const [content, setContent] = useState<ContentItem[]>(initialData);
+    const [hideDescription, setHideDescription] = useState(false);
 
    useEffect(() => {
      if (initialData.length === 0) {
@@ -119,11 +118,9 @@ export default function ExplorePage({ initialData = [] }: ExplorePageProps) {
            const data = await response.json();
            if (data.success) {
              setContent(data.data);
-           } else {
-             setError('Failed to load content');
            }
          } catch {
-           setError('Failed to load content');
+           // Error handling removed as error state is not used
          }
        };
 

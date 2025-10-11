@@ -18,13 +18,13 @@ export async function GET(request: NextRequest) {
     const usage = await cloudinary.api.usage();
 
     // Fetch ALL resources to count by type and calculate actual storage usage
-    let resourceCounts = { image: 0, video: 0, raw: 0 };
+    const resourceCounts = { image: 0, video: 0, raw: 0 };
     let calculatedStorageUsage = 0;
     const resourceTypes = ['image', 'video', 'raw'];
-    
+
     for (const type of resourceTypes) {
       try {
-        let allTypeResources: any[] = [];
+        const allTypeResources: any[] = [];
         let cursor: string | undefined = undefined;
         
         // Fetch ALL resources of this type (handle pagination)
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch paginated resources for table - combine all resource types
     let resources: any[] = [];
-    let result_next_cursor = undefined;
+    const result_next_cursor = undefined;
     let has_more = false;
     
     try {

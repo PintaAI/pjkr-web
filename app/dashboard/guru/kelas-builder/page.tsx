@@ -25,7 +25,7 @@ export default function KelasBuilderPage() {
   const searchParams = useSearchParams();
   const {
     currentStep,
-    isLoading,
+   
     error,
     clearError,
     loadDraft,

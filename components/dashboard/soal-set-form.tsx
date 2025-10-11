@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { saveKoleksiSoal, getSoalsByKoleksi, saveSoal, saveOpsi, deleteSoal, deleteOpsi } from "@/app/actions/kelas/assessment";
+import { saveKoleksiSoal, getSoalsByKoleksi, saveSoal, saveOpsi, deleteSoal,  } from "@/app/actions/kelas/assessment";
 import { SoalItemList } from "./soal-item-list";
 import { SoalItemForm } from "./soal-item-form";
 import { SoalSetFormSkeleton } from "./soal-set-form-skeleton";
@@ -62,40 +62,38 @@ interface SoalSetFormProps {
   onCancel?: () => void;
 }
 
-export function SoalSetForm({ soalSet, kelasId, onCancel }: SoalSetFormProps) {
+export function SoalSetForm({ soalSet, kelasId, }: SoalSetFormProps) {
    const store = useSoalStore();
-   const {
-     loading,
-     saving,
-     formData,
-     soals,
-     originalSoals,
-     deletedSoalIds,
-     soalDialogOpen,
-     editingSoalIndex,
-     generating,
-     setLoading,
-     setSaving,
-     setFormData,
-     setSoals,
-     setOriginalSoals,
-     setDeletedSoalIds,
-     setGenerating,
-     initForCreate,
-     initForEdit,
-     handleAddSoal,
-     handleEditSoal,
-     handleDeleteSoal,
-     handleSaveSoal,
-     handleCancelSoal,
-     handleQuickAddSoal,
-     hasDataChanged,
-   } = store;
+    const {
+      loading,
+      saving,
+      formData,
+      soals,
+      originalSoals,
+      deletedSoalIds,
+      soalDialogOpen,
+      editingSoalIndex,
+      generating,
+      setLoading,
+      setFormData,
+      setSoals,
+      setOriginalSoals,
+      setDeletedSoalIds,
+      setGenerating,
+      initForCreate,
+      initForEdit,
+      handleAddSoal,
+      handleEditSoal,
+      handleDeleteSoal,
+      handleSaveSoal,
+      handleCancelSoal,
+      handleQuickAddSoal,
+    } = store;
 
    const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
    // Auto-save function that saves form data (without triggering onSuccess)
-   const performAutoSave = async (data: { formData: any; soals: any[] }) => {
+   const performAutoSave = async () => {
      if (saving) {
        return;
      }

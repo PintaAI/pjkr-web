@@ -172,7 +172,7 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
   }, []);
   
   // Initialize color extraction from thumbnail
-  const { colors, isExtracting, handleColorExtraction } = useKelasColors(kelas.thumbnail);
+  const {  handleColorExtraction } = useKelasColors(kelas.thumbnail);
 
   // Use the enrollment hook
   const enrollment = useKelasEnrollment(kelas.id);

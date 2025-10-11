@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import { Eye, Star, TrendingUp, Activity } from "lucide-react";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import {
   LineChart,
   Line,
@@ -63,7 +62,7 @@ const fmtNumber = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n
 const fmtPercent = (n: number) => `${n}%`;
 
 export function GuruDashboardStatistics() {
-  const [range, setRange] = useState<"6m" | "12m">("6m");
+  const [range] = useState<"6m" | "12m">("6m");
 
   const viewsSeries = useMemo(() => {
     if (range === "12m") {

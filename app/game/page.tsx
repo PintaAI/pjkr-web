@@ -34,7 +34,7 @@ export default function GamePage() {
    // Calculate level progress (assuming 1000 XP per level)
    const currentLevel = user.level || 1
    const currentXP = user.xp || 0
-   const xpForNextLevel = currentLevel * 1000
+  
    const xpProgress = currentXP % 1000
    const levelProgress = Math.round((xpProgress / 1000) * 100)
 

@@ -45,9 +45,6 @@ export function SoalItemForm({ item, onSave, onCancel }: SoalItemFormProps) {
         ],
   });
 
-  const [questionContent, setQuestionContent] = useState<{ json: any; html: string } | null>(null);
-  const [explanationContent, setExplanationContent] = useState<{ json: any; html: string } | null>(null);
-
   const updateOpsi = (index: number, field: keyof OpsiItem, value: string | boolean) => {
     // If setting as correct, make all other options incorrect (radio button behavior)
     if (field === 'isCorrect' && value === true) {
@@ -86,12 +83,10 @@ export function SoalItemForm({ item, onSave, onCancel }: SoalItemFormProps) {
   };
 
   const handleQuestionUpdate = (data: { json: any; html: string }) => {
-    setQuestionContent(data);
     setFormData({ ...formData, pertanyaan: data.html });
   };
 
   const handleExplanationUpdate = (data: { json: any; html: string }) => {
-    setExplanationContent(data);
     setFormData({ ...formData, explanation: data.html });
   };
 

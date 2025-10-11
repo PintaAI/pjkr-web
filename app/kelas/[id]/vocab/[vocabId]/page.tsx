@@ -4,7 +4,6 @@ import { useEffect, useState, use } from "react";
 import VocabDetailComponent from "@/components/kelas/vocab-detail-page";
 import { Card, CardContent } from "@/components/ui/card";
 import { GraduationCap } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 interface VocabItem {
   id: number;
@@ -38,8 +37,8 @@ interface VocabPageProps {
 }
 
 export default function VocabPage({ params }: VocabPageProps) {
-  const router = useRouter();
-  const { id, vocabId } = use(params);
+
+  const { vocabId } = use(params);
   const [vocabSet, setVocabSet] = useState<VocabSet | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

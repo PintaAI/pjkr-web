@@ -55,10 +55,7 @@ export function ManageVocab({ vocabSets: initialVocabSets }: ManageVocabProps) {
     return matchesSearch && matchesPublic;
   });
 
-  const totalSets = vocabSets.length;
-  const totalItems = vocabSets.reduce((sum, set) => sum + set.items.length, 0);
-  const publicSets = vocabSets.filter(set => set.isPublic).length;
-  const privateSets = totalSets - publicSets;
+
 
   const handleCreateVocab = () => {
     setEditingVocabSet(null);
@@ -91,7 +88,7 @@ export function ManageVocab({ vocabSets: initialVocabSets }: ManageVocabProps) {
       } else {
         setError(result.error || "Failed to delete vocabulary set");
       }
-    } catch (error) {
+    } catch  {
       setError("Failed to delete vocabulary set");
     }
   };

@@ -3,9 +3,9 @@ import { cn } from "@/lib/utils";
 
 export const YoutubeNodeView = ({ 
   node, 
-  deleteNode, 
+  
   selected, 
-  updateAttributes 
+   
 }: NodeViewProps) => {
   const { src, start } = node.attrs;
 

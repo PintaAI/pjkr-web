@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Youtube, ExternalLink } from "lucide-react";
+import { Youtube, } from "lucide-react";
 
 interface YoutubeDialogProps {
   open: boolean;

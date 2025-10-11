@@ -3,6 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen } from "lucide-react";
+import Image from "next/image";
 
 interface Materi {
   id: number;
@@ -38,10 +39,11 @@ export function MateriCard({ materi, onClick }: MateriCardProps) {
       <div className="relative">
         <div className="relative w-full aspect-[16/9]">
           {videoId ? (
-            <img
+            <Image
               src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
               alt={materi.title}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/90 to-primary/70 dark:from-primary/80 dark:to-primary/60">

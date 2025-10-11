@@ -27,7 +27,7 @@ const soalItemSchema = z.object({
 const soalItemsSchema = z.array(soalItemSchema).min(1).max(1);
 
 export async function POST(request: Request) {
-  const { prompt, schema, existingItems, type = 'vocabulary' } = await request.json();
+  const { prompt, existingItems, type = 'vocabulary' } = await request.json();
   console.log('[ai/generate] request body received', {
     hasPrompt: !!prompt,
     type,
@@ -39,18 +39,15 @@ export async function POST(request: Request) {
   }
 
   let modifiedPrompt = prompt;
-  let selectedSchema;
 
   // Choose schema based on generation type
   if (type === 'soal' || type === 'question') {
-    selectedSchema = soalItemsSchema;
     if (existingItems && existingItems.length > 0) {
       const existingQuestions = existingItems.map((item: any) => item.pertanyaan).join(', ');
       modifiedPrompt += ` **Please ensure the new questions are different from the following existing questions: ${existingQuestions}.**`;
     }
   } else {
     // Default to vocabulary
-    selectedSchema = vocabularyItemsSchema;
     if (existingItems && existingItems.length > 0) {
       const existingKoreanWords = existingItems.map((item: any) => item.korean).join(', ');
       modifiedPrompt += ` **Please ensure the new words are not in the following list of existing words: ${existingKoreanWords}.**`;

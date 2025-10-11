@@ -27,6 +27,7 @@ interface VocabState {
   itemDialogOpen: boolean;
   editingItemIndex: number | null;
   generating: boolean;
+  currentVocabSetId: number | null; // Track created vocab set ID
 }
 
 interface VocabActions {
@@ -37,6 +38,7 @@ interface VocabActions {
   setItemDialogOpen: (open: boolean) => void;
   setEditingItemIndex: (index: number | null) => void;
   setGenerating: (generating: boolean) => void;
+  setCurrentVocabSetId: (id: number | null) => void;
 
   // Actions
   initForCreate: () => void;
@@ -70,10 +72,11 @@ const initialState: VocabState = {
   itemDialogOpen: false,
   editingItemIndex: null,
   generating: false,
+  currentVocabSetId: null,
 };
 
 export const useVocabStore = create<VocabState & VocabActions>()(
-  immer((set, get) => ({
+  immer((set,) => ({
     ...initialState,
 
     setLoading: (loading) => set({ loading }),
@@ -85,6 +88,7 @@ export const useVocabStore = create<VocabState & VocabActions>()(
     setItemDialogOpen: (itemDialogOpen) => set({ itemDialogOpen }),
     setEditingItemIndex: (editingItemIndex) => set({ editingItemIndex }),
     setGenerating: (generating) => set({ generating }),
+    setCurrentVocabSetId: (id) => set({ currentVocabSetId: id }),
 
     initForCreate: () => set((state) => {
       state.loading = false;
@@ -99,6 +103,7 @@ export const useVocabStore = create<VocabState & VocabActions>()(
       state.itemDialogOpen = false;
       state.editingItemIndex = null;
       state.generating = false;
+      state.currentVocabSetId = null; // Reset ID for new creation
     }),
 
     initForEdit: (vocabSet) => set((state) => {
@@ -109,6 +114,7 @@ export const useVocabStore = create<VocabState & VocabActions>()(
         icon: vocabSet.icon || "FaBookOpen",
         isPublic: vocabSet.isPublic || false,
       };
+      state.currentVocabSetId = vocabSet.id || null; // Set ID for editing
       // items will be set after population
     }),
 

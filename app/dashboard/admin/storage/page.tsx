@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePermissions } from "@/lib/hooks/use-session";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table"
 import { columns } from "./columns"
@@ -73,33 +72,14 @@ export default function StorageManagement() {
       } else {
         setError(json.error || "Failed to fetch data");
       }
-    } catch (err) {
+    } catch {
       setError("Network error");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (publicId: string, resourceType: string) => {
-    if (!confirm('Delete this file?')) return;
-    try {
-      const res = await fetch('/api/upload', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          publicId,
-          resource_type: resourceType
-        }),
-      });
-      if (res.ok) {
-        fetchStorageData(nextCursor); // Refresh
-      } else {
-        alert('Delete failed');
-      }
-    } catch (err) {
-      alert('Delete error');
-    }
-  };
+
 
   const handleBulkDelete = async () => {
     if (selectedResources.length === 0) return;
@@ -130,7 +110,7 @@ export default function StorageManagement() {
       // Clear selection and refresh
       setSelectedResources([]);
       fetchStorageData(nextCursor);
-    } catch (err) {
+    } catch {
       alert('Bulk delete error');
     }
   };

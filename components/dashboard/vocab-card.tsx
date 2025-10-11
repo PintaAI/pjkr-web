@@ -149,7 +149,7 @@ export function VocabCard({ vocabSet, onClick, onDelete, compact = false }: Voca
             <AlertDialogHeader>
               <AlertDialogTitle>Delete Vocabulary Set?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the vocabulary set "{vocabSet.title}" and all its items.
+                This action cannot be undone. This will permanently delete the vocabulary set {vocabSet.title} and all its items.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

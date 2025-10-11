@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
+
 import { GraduationCap } from "lucide-react";
 import { VocabCard } from "@/components/dashboard/vocab-card";
 import { useRouter } from "next/navigation";

@@ -55,10 +55,7 @@ export function ManageSoals({ soalSets: initialSoalSets }: ManageSoalsProps) {
     return matchesSearch && matchesStatus;
   });
 
-  const totalSets = soalSets.length;
-  const totalQuestions = soalSets.reduce((sum, set) => sum + set.soals.length, 0);
-  const publishedSets = soalSets.filter(set => !set.isDraft).length;
-  const draftSets = totalSets - publishedSets;
+ 
 
   const handleCreateSoal = () => {
     setEditingSoalSet(null);

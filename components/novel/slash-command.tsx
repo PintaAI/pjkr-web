@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { createSuggestionItems, Command, renderItems } from "novel";
 import { toast } from "sonner";
-import { YoutubeDialog } from "./youtube-dialog";
+
 
 export const suggestionItems = createSuggestionItems([
   {

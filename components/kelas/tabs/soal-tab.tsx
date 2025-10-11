@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
+
 import { Brain } from "lucide-react";
 import { SoalCard } from "@/components/dashboard/soal-card";
 

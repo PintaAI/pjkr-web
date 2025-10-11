@@ -4,10 +4,10 @@ import cloudinary, { uploadOptions } from '@/lib/cloudinary';
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const file = formData.get('file') as File;
-    const uploadType = (formData.get('type') as string) || 'image';
-    const customFolder = formData.get('folder') as string | null;
-    const customPublicId = formData.get('public_id') as string | null;
+    const file = (formData as any).get('file') as File;
+    const uploadType = ((formData as any).get('type') as string) || 'image';
+    const customFolder = (formData as any).get('folder') as string | null;
+    const customPublicId = (formData as any).get('public_id') as string | null;
     
     if (!file) {
       return NextResponse.json(
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     const publicId = customPublicId || `${uploadType}_${Date.now()}`;
 
     // Build options with overrides
-    let options = {
+    const options = {
       ...baseOptions,
       public_id: publicId,
       ...(customFolder ? { folder: `pjkr/${customFolder}` } : {}),
