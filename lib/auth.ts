@@ -42,8 +42,10 @@ export const auth = betterAuth({
   },
   trustedOrigins: [
     "http://localhost:3000",
-    process.env.BETTER_AUTH_URL || "http://localhost:3000"
-  ],
+    "https://hakgyo.vercel.app",
+    process.env.BETTER_AUTH_URL || "http://localhost:3000",
+    process.env.NEXT_PUBLIC_APP_URL || ""
+  ].filter(Boolean),
   logger: {
     level: process.env.NODE_ENV === "development" ? "debug" : "error",
     disabled: false,
