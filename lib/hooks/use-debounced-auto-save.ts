@@ -7,7 +7,7 @@ interface UseAutoSaveOptions {
 }
 
 export function useDebouncedAutoSave({ delay = 1000, onSave, enabled = true }: UseAutoSaveOptions) {
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastDataRef = useRef<string | null>(null);
 
   const debouncedSave = useCallback(

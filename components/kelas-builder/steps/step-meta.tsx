@@ -86,7 +86,7 @@ export function StepMeta() {
   const watchedValues = watch();
   
   // Debounced update and save for meta step
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   useEffect(() => {
     const hasActualChanges = JSON.stringify(watchedValues) !== JSON.stringify(meta);

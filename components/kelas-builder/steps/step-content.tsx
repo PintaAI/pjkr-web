@@ -148,7 +148,7 @@ export function StepContent() {
   } = useKelasBuilderStore();
 
   // Debounced auto-save for content step
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   useEffect(() => {
     if (stepDirtyFlags.content) {
