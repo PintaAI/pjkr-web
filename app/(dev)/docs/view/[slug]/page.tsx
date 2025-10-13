@@ -18,9 +18,18 @@ interface PageProps {
 
 async function getDocContent(slug: string) {
   const docsDirectory = path.join(process.cwd(), "docs");
-  const fileName = slug === "readme" ? "README.md" : `${slug}.md`;
-  const filePath = path.join(docsDirectory, fileName);
   
+  // Read all files and find the matching one (case-insensitive)
+  const files = await fs.readdir(docsDirectory);
+  const matchingFile = files.find(
+    file => file.toLowerCase() === `${slug}.md`.toLowerCase()
+  );
+  
+  if (!matchingFile) {
+    throw new Error(`File not found for slug: ${slug}`);
+  }
+  
+  const filePath = path.join(docsDirectory, matchingFile);
   const content = await fs.readFile(filePath, "utf-8");
   return content;
 }
