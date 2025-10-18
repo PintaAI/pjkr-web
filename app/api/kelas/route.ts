@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type') as KelasType | null
     const level = searchParams.get('level') as Difficulty | null
     const authorId = searchParams.get('authorId')
+    const authorEmail = searchParams.get('authorEmail')
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined
     const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : 0
 
@@ -16,6 +17,29 @@ export async function GET(request: NextRequest) {
     if (type) where.type = type
     if (level) where.level = level
     if (authorId) where.authorId = authorId
+    
+    // If authorEmail is provided, find the user first and use their ID
+    if (authorEmail) {
+      const user = await prisma.user.findUnique({
+        where: { email: authorEmail },
+        select: { id: true }
+      })
+      
+      if (user) {
+        where.authorId = user.id
+      } else {
+        // If user with that email doesn't exist, return empty result
+        return NextResponse.json({
+          success: true,
+          data: [],
+          meta: {
+            total: 0,
+            offset,
+            limit
+          }
+        })
+      }
+    }
 
     const kelas = await prisma.kelas.findMany({
       where,

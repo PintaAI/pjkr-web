@@ -12,6 +12,9 @@ jest.mock('@/lib/db', () => ({
       update: jest.fn(),
       delete: jest.fn(),
     },
+    user: {
+      findUnique: jest.fn(),
+    },
   },
 }))
 
@@ -95,6 +98,61 @@ describe('/api/kelas', () => {
         orderBy: { createdAt: 'desc' },
         take: 10,
         skip: 20
+      })
+    })
+
+    it('should filter kelas by authorEmail', async () => {
+      const mockUser = { id: 'user123', email: 'test@example.com' }
+      prisma.user.findUnique.mockResolvedValue(mockUser)
+      prisma.kelas.findMany.mockResolvedValue([mockKelas])
+
+      const request = new NextRequest('http://localhost:3000/api/kelas?authorEmail=test@example.com')
+      const response = await GET(request)
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { email: 'test@example.com' },
+        select: { id: true }
+      })
+      expect(prisma.kelas.findMany).toHaveBeenCalledWith({
+        where: { authorId: 'user123' },
+        include: expect.any(Object),
+        orderBy: { createdAt: 'desc' },
+        take: undefined,
+        skip: 0
+      })
+    })
+
+    it('should return empty result when authorEmail does not exist', async () => {
+      prisma.user.findUnique.mockResolvedValue(null)
+
+      const request = new NextRequest('http://localhost:3000/api/kelas?authorEmail=nonexistent@example.com')
+      const response = await GET(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data.success).toBe(true)
+      expect(data.data).toEqual([])
+      expect(data.meta.total).toBe(0)
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { email: 'nonexistent@example.com' },
+        select: { id: true }
+      })
+      expect(prisma.kelas.findMany).not.toHaveBeenCalled()
+    })
+
+    it('should prioritize authorId over authorEmail when both are provided', async () => {
+      prisma.kelas.findMany.mockResolvedValue([mockKelas])
+
+      const request = new NextRequest('http://localhost:3000/api/kelas?authorId=user456&authorEmail=test@example.com')
+      const response = await GET(request)
+
+      expect(prisma.user.findUnique).not.toHaveBeenCalled()
+      expect(prisma.kelas.findMany).toHaveBeenCalledWith({
+        where: { authorId: 'user456' },
+        include: expect.any(Object),
+        orderBy: { createdAt: 'desc' },
+        take: undefined,
+        skip: 0
       })
     })
   })

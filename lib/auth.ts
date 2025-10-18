@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
+import { expo } from "@better-auth/expo";
 import { createAuthMiddleware } from "better-auth/api";
 import { prisma } from "./db";
 import { logUserRegistration, logUserLogin } from "./activity-logger";
@@ -43,6 +44,8 @@ export const auth = betterAuth({
   trustedOrigins: [
     "http://localhost:3000",
     "https://hakgyo.vercel.app",
+    "kli://",
+    "kli://*",
     process.env.BETTER_AUTH_URL || "http://localhost:3000",
     process.env.NEXT_PUBLIC_APP_URL || ""
   ].filter(Boolean),
@@ -86,6 +89,7 @@ export const auth = betterAuth({
     },
   },
   plugins: [
+    expo(),
     nextCookies() // This should be the last plugin in the array
   ],
 });
