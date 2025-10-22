@@ -46,20 +46,13 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
             image: true
           }
         },
-        vocabularySets: {
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            icon: true,
-            isPublic: true
-          }
-        },
         _count: {
           select: {
             materis: true,
             members: true,
-            completions: true
+            completions: true,
+            vocabularySets: true,
+            kelasKoleksiSoals: true
           }
         }
       }
@@ -71,6 +64,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
         { status: 404 }
       )
     }
+
 
     return NextResponse.json({
       success: true,

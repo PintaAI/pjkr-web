@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams
     const userId = searchParams.get('userId')
+    const kelasId = searchParams.get('kelasId')
     const isPrivate = searchParams.get('isPrivate')
     const isDraft = searchParams.get('isDraft')
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined
@@ -19,6 +20,13 @@ export async function GET(request: NextRequest) {
     const where: any = {}
 
     if (userId) where.userId = userId
+    if (kelasId) {
+      where.kelasKoleksiSoals = {
+        some: {
+          kelasId: parseInt(kelasId)
+        }
+      }
+    }
     if (isPrivate !== null) where.isPrivate = isPrivate === 'true'
     if (isDraft !== null) where.isDraft = isDraft === 'true'
 
