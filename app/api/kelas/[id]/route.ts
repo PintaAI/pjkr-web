@@ -19,7 +19,24 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
 
     const kelas = await prisma.kelas.findUnique({
       where: { id: kelasId },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        jsonDescription: true,
+        htmlDescription: true,
+        type: true,
+        level: true,
+        thumbnail: true,
+        icon: true,
+        isPaidClass: true,
+        price: true,
+        discount: true,
+        promoCode: true,
+        isDraft: true,
+        createdAt: true,
+        updatedAt: true,
+        authorId: true,
         author: {
           select: {
             id: true,
