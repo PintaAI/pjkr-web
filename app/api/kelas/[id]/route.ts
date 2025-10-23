@@ -7,6 +7,8 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
   const params = await props.params;
   try {
     const kelasId = parseInt(params.id)
+    const { searchParams } = new URL(request.url)
+    const userId = searchParams.get('userId')
     
     if (isNaN(kelasId)) {
       return NextResponse.json(
@@ -65,10 +67,21 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
       )
     }
 
+    // Check if user is enrolled in this class
+    let isEnrolled = false
+    if (userId) {
+      isEnrolled = kelas.members.some(member => member.id === userId)
+    }
+
+    // Add isEnrolled field to the response
+    const kelasWithEnrollmentStatus = {
+      ...kelas,
+      isEnrolled
+    }
 
     return NextResponse.json({
       success: true,
-      data: kelas
+      data: kelasWithEnrollmentStatus
     })
   } catch (error) {
     console.error('Error fetching kelas:', error)
