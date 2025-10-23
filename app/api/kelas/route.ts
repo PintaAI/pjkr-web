@@ -18,6 +18,10 @@ export async function GET(request: NextRequest) {
     if (level) where.level = level
     if (authorId) where.authorId = authorId
     
+    // By default, only show published classes (not drafts)
+    // This ensures only available published kelas are returned
+    where.isDraft = false
+    
     // If authorEmail is provided, find the user first and use their ID
     if (authorEmail) {
       const user = await prisma.user.findUnique({
