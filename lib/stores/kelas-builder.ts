@@ -44,9 +44,27 @@ export const useKelasBuilderStore = create<Store>()(
         ...createContent(set, get, store),
         ...createResources(set, get, store),
 
+        // Expose ensureDraftExists from navigation slice
+        ensureDraftExists: () => get().ensureDraftExists(),
+
         // Global Actions
         createDraft: async (initialMeta: KelasMetaData) => {
-          set({ isLoading: true, error: null });
+          const { draftId, isLoading } = get();
+
+          // Prevent multiple draft creations - guard against race conditions
+          if (draftId || isLoading) {
+            console.log('🚫 [DRAFT GUARD] Draft creation blocked - draftId:', draftId, 'isLoading:', isLoading);
+            return;
+          }
+
+          // Set optimistic draft ID to prevent race conditions
+          const optimisticDraftId = `temp-${Date.now()}`;
+          set({
+            draftId: optimisticDraftId as any,
+            isLoading: true,
+            error: null
+          });
+
           try {
             const serializedMeta = {
               ...initialMeta,
@@ -54,8 +72,12 @@ export const useKelasBuilderStore = create<Store>()(
                 ? JSON.parse(JSON.stringify(initialMeta.jsonDescription))
                 : undefined,
             };
+
+            console.log('📝 [DRAFT CREATION] Creating draft with meta:', initialMeta.title);
             const result = await createDraftKelas(serializedMeta);
+
             if (result.success && result.data) {
+              console.log('✅ [DRAFT CREATION] Draft created successfully with ID:', result.data.id);
               set({
                 draftId: result.data.id,
                 kelasIsDraft: true,
@@ -64,11 +86,22 @@ export const useKelasBuilderStore = create<Store>()(
               });
               toast.success('Draft created successfully');
             } else {
+              // Revert optimistic update on failure
+              set({
+                draftId: null,
+                isLoading: false,
+                error: result.error || 'Failed to create draft'
+              });
               throw new Error(result.error || 'Failed to create draft');
             }
           } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Failed to create draft';
-            set({ isLoading: false, error: errorMessage });
+            // Revert optimistic update on failure
+            set({
+              draftId: null,
+              isLoading: false,
+              error: error instanceof Error ? error.message : 'Failed to create draft'
+            });
+            console.error('❌ [DRAFT CREATION] Failed to create draft:', error);
             toast.error('Failed to create draft');
           }
         },

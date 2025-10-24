@@ -121,6 +121,7 @@ export interface KelasBuilderState {
   setCurrentStep: (step: BuilderStep) => void;
   nextStep: () => Promise<void>;
   prevStep: () => void;
+  ensureDraftExists: () => Promise<void>;
 
   // Meta
   updateMeta: (meta: Partial<KelasMetaData>) => void;

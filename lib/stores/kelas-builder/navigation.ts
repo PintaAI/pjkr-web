@@ -9,6 +9,7 @@ export interface Navigation {
   setCurrentStep: (step: BuilderStep) => void;
   nextStep: () => Promise<void>;
   prevStep: () => void;
+  ensureDraftExists: () => Promise<void>;
 }
 
 export const createNavigation: StateCreator<
@@ -24,42 +25,46 @@ export const createNavigation: StateCreator<
     resources: false,
     review: false,
   },
-  setCurrentStep: async (step: BuilderStep) => {
-    const { draftId, meta, createDraft } = get();
+  // Helper function to ensure draft exists before navigation
+  ensureDraftExists: async () => {
+    const { draftId, meta, createDraft, isLoading } = get();
 
-    // Auto-create draft if navigating away from meta and no draft exists
-    if (step !== 'meta' && !draftId && meta.title.trim() !== '') {
+    // Only create draft if we don't have one, have a title, and not currently loading
+    if (!draftId && meta.title.trim() !== '' && !isLoading) {
+      console.log('📝 [NAVIGATION] Ensuring draft exists before navigation...');
       try {
         await createDraft(meta);
+        console.log('✅ [NAVIGATION] Draft ensured successfully');
       } catch (error) {
-        console.error('Failed to auto-create draft:', error);
+        console.error('❌ [NAVIGATION] Failed to ensure draft exists:', error);
         // Set error state so user knows what happened
         set({ error: 'Failed to create draft: ' + (error instanceof Error ? error.message : 'Unknown error') });
+        throw error; // Re-throw to prevent navigation
       }
+    }
+  },
+
+  setCurrentStep: async (step: BuilderStep) => {
+    // Ensure draft exists before navigating away from meta
+    if (step !== 'meta') {
+      await get().ensureDraftExists();
     }
 
     set({ currentStep: step });
   },
+
   nextStep: async () => {
-    const { currentStep, draftId, meta, createDraft } = get();
+    const { currentStep } = get();
 
     console.log('⏭️ [AUTO-SAVE TRIGGER] nextStep called:', {
       currentStep,
-      hasDraft: !!draftId,
-      hasTitle: meta.title.trim() !== ''
+      hasDraft: !!get().draftId,
+      hasTitle: get().meta.title.trim() !== ''
     });
 
-    // Auto-create draft if leaving meta step and no draft exists
-    if (currentStep === 'meta' && !draftId && meta.title.trim() !== '') {
-      console.log('📝 [AUTO-SAVE] Auto-creating draft in nextStep...');
-      try {
-        await createDraft(meta);
-        console.log('✅ [AUTO-SAVE] Draft auto-created in nextStep successfully');
-      } catch (error) {
-        console.error('❌ [AUTO-SAVE] Failed to auto-create draft in nextStep:', error);
-        // Set error state
-        set({ error: 'Failed to create draft: ' + (error instanceof Error ? error.message : 'Unknown error') });
-      }
+    // Ensure draft exists before leaving meta step
+    if (currentStep === 'meta') {
+      await get().ensureDraftExists();
     }
 
     const currentIndex = stepOrder.indexOf(currentStep);

@@ -67,7 +67,8 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
     saveResources,
     calculateOverallProgress,
     clearError,
-    reset
+    reset,
+    ensureDraftExists
   } = useKelasBuilderStore();
 
 
@@ -137,6 +138,10 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
     try {
       switch (currentStep) {
         case 'meta':
+          // Ensure draft exists before saving meta
+          if (!draftId) {
+            await ensureDraftExists();
+          }
           await saveMeta();
           break;
         case 'content':
@@ -149,7 +154,8 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
           await saveAllUnsavedContent();
           break;
       }
-    } catch {
+    } catch (error) {
+      console.error('Save failed:', error);
     }
   };
 
