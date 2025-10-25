@@ -34,6 +34,7 @@ interface SoalState {
   soalDialogOpen: boolean;
   editingSoalIndex: number | null;
   generating: boolean;
+  currentSoalSetId: number | null;
 }
 
 interface SoalActions {
@@ -46,6 +47,7 @@ interface SoalActions {
   setSoalDialogOpen: (open: boolean) => void;
   setEditingSoalIndex: (index: number | null) => void;
   setGenerating: (generating: boolean) => void;
+  setCurrentSoalSetId: (id: number | null) => void;
 
   // Actions
   initForCreate: () => void;
@@ -81,6 +83,7 @@ const initialState: SoalState = {
   soalDialogOpen: false,
   editingSoalIndex: null,
   generating: false,
+  currentSoalSetId: null,
 };
 
 export const useSoalStore = create<SoalState & SoalActions>()(
@@ -98,6 +101,7 @@ export const useSoalStore = create<SoalState & SoalActions>()(
     setSoalDialogOpen: (soalDialogOpen) => set({ soalDialogOpen }),
     setEditingSoalIndex: (editingSoalIndex) => set({ editingSoalIndex }),
     setGenerating: (generating) => set({ generating }),
+    setCurrentSoalSetId: (currentSoalSetId) => set({ currentSoalSetId }),
 
     initForCreate: () => set(initialState),
 

@@ -15,7 +15,9 @@ import {
   FileText,
   Rocket,
   AlertCircle,
-  ArrowLeft
+  ArrowLeft,
+  Eye,
+  Archive
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -44,9 +46,9 @@ const steps = [
   },
   {
     id: 'review',
-    title: 'Tinjau & Publikasikan',
-    description: 'Tinjau dan publikasikan kursus',
-    icon: Rocket,
+    title: 'Tinjau Kelas',
+    description: 'Tinjau dan pastikan semua sudah benar',
+    icon: Eye,
   },
 ];
 
@@ -68,7 +70,10 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
     calculateOverallProgress,
     clearError,
     reset,
-    ensureDraftExists
+    ensureDraftExists,
+    publishDraft,
+    unpublishDraft,
+    kelasIsDraft
   } = useKelasBuilderStore();
 
 
@@ -156,6 +161,28 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
       }
     } catch (error) {
       console.error('Save failed:', error);
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!draftId || !kelasIsDraft) return;
+
+    try {
+      await publishDraft();
+      // Optionally navigate or show success message
+    } catch (error) {
+      console.error('Publish failed:', error);
+    }
+  };
+
+  const handleUnpublish = async () => {
+    if (!draftId || kelasIsDraft) return;
+
+    try {
+      await unpublishDraft();
+      // Optionally navigate or show success message
+    } catch (error) {
+      console.error('Unpublish failed:', error);
     }
   };
 
@@ -247,7 +274,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                   const Icon = step.icon;
                   const stepIsDirty = stepDirtyFlags[step.id as keyof typeof stepDirtyFlags];
                   const isCurrent = step.id === currentStep;
-                  
+
                   return (
                     <Tooltip key={step.id}>
                       <TooltipTrigger asChild>
@@ -270,7 +297,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                             )}>
                               <Icon className="h-5 w-5" />
                             </div>
-                            
+
                             {/* Step Content */}
                             <div className="flex-1 min-w-0">
                               <div className={cn(
@@ -289,7 +316,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                                 {step.description}
                               </div>
                             </div>
-                            
+
                             {/* Status Indicator */}
                             {isCurrent && (
                               <div
@@ -324,6 +351,33 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                     </Tooltip>
                   );
                 })}
+
+                {/* Publish/Unpublish Button */}
+                {currentStep === 'review' && (
+                  <div className="mt-4 pt-4 border-t">
+                    {kelasIsDraft ? (
+                      <Button
+                        onClick={handlePublish}
+                        disabled={!draftId || !kelasIsDraft || !meta.title.trim() || !meta.description || materis.length === 0}
+                        className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                        size="lg"
+                      >
+                        <Rocket className="h-5 w-5 mr-2" />
+                        Publish Course
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={handleUnpublish}
+                        disabled={!draftId || kelasIsDraft}
+                        className="w-full bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                        size="lg"
+                      >
+                        <Archive className="h-5 w-5 mr-2" />
+                        Unpublish Course
+                      </Button>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

@@ -1,43 +1,29 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  Rocket,
   CheckCircle,
   AlertCircle,
-  Loader2,
-  ExternalLink,
-  Share2,
   FileText,
   Eye
 } from "lucide-react";
 import KelasDetailPage from "@/components/kelas/kelas-detail-page";
 import { useSession } from "@/lib/hooks/use-session";
-import { toast } from "sonner";
 
 export function StepReview() {
   const router = useRouter();
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [isPublished, setIsPublished] = useState(false);
-  
+
   const {
     meta,
     materis,
     draftId,
-    publishDraft,
-    unpublishDraft,
     reset,
-    kelasIsDraft,
-    stepDirtyFlags,
-    saveMeta,
-    saveMateris
+    kelasIsDraft
   } = useKelasBuilderStore();
 
   const { session } = useSession();
@@ -97,123 +83,8 @@ export function StepReview() {
     },
   };
 
-  const handlePublish = async () => {
-    if (!draftId) return;
 
-    // Unpublish path (already published and no local changes)
-    if (!kelasIsDraft) {
-      setIsPublishing(true);
-      try {
-        await unpublishDraft();
-        toast.success('Course reverted to draft');
-      } catch (error) {
-        console.error('Error unpublishing course:', error);
-        toast.error('Failed to unpublish');
-      } finally {
-        setIsPublishing(false);
-      }
-      return;
-    }
 
-    if (kelasIsDraft && !isReadyToPublish) return;
-
-    setIsPublishing(true);
-    try {
-      if (kelasIsDraft) {
-        await publishDraft();
-        setIsPublished(true);
-        toast.success('Course published successfully');
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 2000);
-      } else {
-        // Save changes to existing published course
-        if (stepDirtyFlags.meta) {
-          await saveMeta();
-        }
-        if (stepDirtyFlags.content) {
-          await saveMateris();
-        }
-        toast.success('Changes saved');
-      }
-    } catch (error) {
-      console.error('Error publishing/saving course:', error);
-      toast.error(
-        kelasIsDraft
-          ? 'Failed to publish'
-          : 'Failed to unpublish'
-      );
-    } finally {
-      setIsPublishing(false);
-    }
-  };
-
-  const handleCreateNew = () => {
-    reset();
-    router.push('/dashboard/guru/kelas-builder');
-  };
-
-  const handleGoToDashboard = () => {
-    router.push('/dashboard');
-  };
-
-  if (isPublished) {
-    return (
-      <div className="space-y-6">
-        <div className="text-center space-y-4">
-          <div className="flex justify-center">
-            <div className="bg-green-100 p-4 rounded-full">
-              <CheckCircle className="h-12 w-12 text-green-600" />
-            </div>
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-green-600">Course Published Successfully!</h2>
-            <p className="text-muted-foreground mt-2">
-              Your course {meta.title} is now live and available to students.
-            </p>
-          </div>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Done</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Button
-                onClick={handleGoToDashboard}
-                className="flex items-center gap-2"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Go to Dashboard
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleCreateNew}
-                className="flex items-center gap-2"
-              >
-                <Rocket className="h-4 w-4" />
-                Create New Course
-              </Button>
-            </div>
-            
-            <Separator />
-            
-            <div className="space-y-2">
-              <h4 className="font-semibold">Share Your Course</h4>
-              <p className="text-sm text-muted-foreground">
-                Share your published course with students and colleagues.
-              </p>
-              <Button variant="outline" size="sm" className="flex items-center gap-2">
-                <Share2 className="h-4 w-4" />
-                Share Course
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
@@ -259,23 +130,23 @@ export function StepReview() {
         </CardContent>
       </Card>
 
-      {/* Publish Actions */}
+      {/* Review Status */}
       {isReadyToPublish ? (
         <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-300">
-              <Rocket className="h-5 w-5" />
-              {isPublishedServer ? 'Ready to Save Changes' : 'Ready to Publish'}
+              <CheckCircle className="h-5 w-5" />
+              Course Ready for Publishing
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Alert className="mb-4 border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
               <CheckCircle className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-700 dark:text-green-300">
-                Your course meets all requirements and is ready to be published.
+                Your course meets all requirements and is ready to be published. Use the Publish button in the sidebar to make it live.
               </AlertDescription>
             </Alert>
-            
+
             {/* Checklist */}
             <div className="space-y-2 mb-6">
               <div className="flex items-center gap-3">
@@ -295,66 +166,16 @@ export function StepReview() {
                 <span className="text-green-600">Pricing Configuration</span>
               </div>
             </div>
-            
-            {/* Prominent Publish Button */}
-            <div className="text-center space-y-4">
-              <Button
-                onClick={handlePublish}
-                disabled={
-                  isPublishing ||
-                  !draftId ||
-                  (kelasIsDraft && !isReadyToPublish)
-                }
-                className="w-full max-w-md mx-auto h-14 text-lg font-semibold bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-                size="lg"
-              >
-                {isPublishing ? (
-                  <>
-                    <Loader2 className="h-6 w-6 animate-spin mr-3" />
-                    {kelasIsDraft
-                      ? 'Publishing...'
-                      : 'Unpublishing...'}
-                  </>
-                ) : (
-                  <>
-                    <Rocket className="h-6 w-6 mr-3" />
-                    {kelasIsDraft
-                      ? 'Publish Course Now'
-                      : 'Unpublish Course'}
-                    {!draftId && " (No Draft ID)"}
-                  </>
-                )}
-              </Button>
-              
-              <p className="text-sm text-muted-foreground">
-                {kelasIsDraft
-                  ? 'This will make your course live and available to students'
-                  : (false
-                      ? 'This will save your changes to the published course'
-                      : 'This will revert the course back to draft (students will lose access)')}
-              </p>
-            </div>
-            
-            <div className="flex justify-center mt-6">
+
+            <div className="flex justify-center">
               <Button
                 variant="ghost"
-                onClick={handleGoToDashboard}
-                disabled={isPublishing}
+                onClick={() => router.push('/dashboard')}
                 className="text-muted-foreground hover:text-foreground"
               >
                 Save as Draft & Return Later
               </Button>
             </div>
-            
-            {!draftId && (
-              <Alert variant="destructive" className="mt-6">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Missing Draft ID:</strong> You need to create a draft first before publishing.
-                  Go back to the Meta step and save your course information.
-                </AlertDescription>
-              </Alert>
-            )}
           </CardContent>
         </Card>
       ) : (
@@ -362,17 +183,17 @@ export function StepReview() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-red-600" />
-              Not Ready to Publish
+              Course Not Ready Yet
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                cek lagi apa yang kurang, pastikan semua langkah sudah lengkap:
+                Please complete the following requirements before publishing:
               </AlertDescription>
             </Alert>
-            
+
             {/* Checklist */}
             <div className="space-y-2 mt-4">
               <div className="flex items-center gap-3">

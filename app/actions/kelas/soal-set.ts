@@ -54,6 +54,40 @@ export async function saveSoalSetLink(kelasId: number, data: z.infer<typeof soal
   }
 }
 
+export async function deleteSoalSet(soalSetId: number) {
+  try {
+    const session = await assertAuthenticated();
+
+    if (session.user.role !== "GURU") {
+      return { success: false, error: "Not authorized" };
+    }
+
+    // Check if the soal set exists and belongs to the user
+    const soalSet = await prisma.koleksiSoal.findUnique({
+      where: { id: soalSetId },
+      select: { userId: true }
+    });
+
+    if (!soalSet) {
+      return { success: false, error: "Soal set not found" };
+    }
+
+    if (soalSet.userId !== session.user.id) {
+      return { success: false, error: "Not authorized to delete this soal set" };
+    }
+
+    // Delete the soal set (cascade will handle related records)
+    await prisma.koleksiSoal.delete({
+      where: { id: soalSetId }
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Delete soal set error:", error);
+    return { success: false, error: "Failed to delete soal set" };
+  }
+}
+
 export async function getGuruSoalSets() {
   try {
     const session = await assertAuthenticated();

@@ -74,12 +74,14 @@ export function SoalSetForm({ soalSet, kelasId, }: SoalSetFormProps) {
       soalDialogOpen,
       editingSoalIndex,
       generating,
+      currentSoalSetId,
       setLoading,
       setFormData,
       setSoals,
       setOriginalSoals,
       setDeletedSoalIds,
       setGenerating,
+      setCurrentSoalSetId,
       initForCreate,
       initForEdit,
       handleAddSoal,
@@ -230,15 +232,22 @@ export function SoalSetForm({ soalSet, kelasId, }: SoalSetFormProps) {
       }
 
       // Save the collection metadata (only if it changed)
+      // Use currentSoalSetId if available (for newly created sets), otherwise use soalSet?.id (for editing)
+      const soalSetIdToUse = currentSoalSetId || soalSet?.id;
       const koleksiResult = await saveKoleksiSoal(kelasId || null, {
         nama: formData.nama,
         deskripsi: formData.deskripsi || undefined,
         isPrivate: formData.isPrivate,
         isDraft: formData.isDraft,
-      }, soalSet?.id);
+      }, soalSetIdToUse);
 
       if (koleksiResult.success && koleksiResult.data) {
         const koleksiSoalId = koleksiResult.data.id;
+
+        // Store the ID from the first save so subsequent auto-saves update the same record
+        if (koleksiSoalId && !currentSoalSetId) {
+          setCurrentSoalSetId(koleksiSoalId);
+        }
 
         // Only save soals that have changed or are new
         for (let i = 0; i < soals.length; i++) {

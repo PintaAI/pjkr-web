@@ -45,7 +45,7 @@ export const useKelasBuilderStore = create<Store>()(
         ...createResources(set, get, store),
 
         // Expose ensureDraftExists from navigation slice
-        ensureDraftExists: () => get().ensureDraftExists(),
+        ensureDraftExists: createNavigation(set, get, store).ensureDraftExists,
 
         // Global Actions
         createDraft: async (initialMeta: KelasMetaData) => {

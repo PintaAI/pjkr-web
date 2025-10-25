@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import NovelEditor from "@/components/novel/novel-editor";
-import { Plus, Edit2,} from "lucide-react";
+import { Plus, Edit2, BookOpen, Target } from "lucide-react";
 
 interface LessonFormProps {
   mode?: 'add' | 'edit';
@@ -18,6 +19,8 @@ interface LessonFormProps {
     jsonDescription: any;
     htmlDescription: string;
     isDemo: boolean;
+    koleksiSoalId?: number;
+    passingScore?: number;
   };
   onSubmit: (lesson: {
     title: string;
@@ -25,24 +28,32 @@ interface LessonFormProps {
     jsonDescription: any;
     htmlDescription: string;
     isDemo: boolean;
+    koleksiSoalId?: number;
+    passingScore?: number;
   }) => void;
   trigger?: React.ReactNode;
+  kelasId?: number; // For fetching related soal collections
 }
 
-export function LessonForm({ 
-  mode = 'add', 
-  initialData, 
-  onSubmit, 
-  trigger 
+export function LessonForm({
+  mode = 'add',
+  initialData,
+  onSubmit,
+  trigger,
+  kelasId
 }: LessonFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { isLoading } = useKelasBuilderStore();
+  const [availableSoal, setAvailableSoal] = useState<Array<{id: number, nama: string}>>([]);
+  const [soalDropdownOpen, setSoalDropdownOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
     description: initialData?.description || '',
     jsonDescription: initialData?.jsonDescription || { type: "doc", content: [] },
     htmlDescription: initialData?.htmlDescription || '',
     isDemo: initialData?.isDemo || false,
+    koleksiSoalId: initialData?.koleksiSoalId || undefined,
+    passingScore: initialData?.passingScore || 80,
   });
 
   // Reset form data when initialData changes (for edit mode)
@@ -54,9 +65,50 @@ export function LessonForm({
         jsonDescription: initialData.jsonDescription,
         htmlDescription: initialData.htmlDescription,
         isDemo: initialData.isDemo,
+        koleksiSoalId: initialData.koleksiSoalId,
+        passingScore: initialData.passingScore || 80,
       });
     }
   }, [initialData]);
+
+  // Fetch available soal collections when dropdown is opened
+  useEffect(() => {
+    const fetchAvailableSoal = async () => {
+      console.log('🔍 Checking conditions:', {
+        kelasId: !!kelasId,
+        soalDropdownOpen,
+        availableSoalLength: availableSoal.length
+      });
+
+      if (kelasId && soalDropdownOpen && availableSoal.length === 0) {
+        try {
+          console.log('🔄 Fetching soal collections for kelas:', kelasId);
+          // Get kelas-related soal collections
+          const response = await fetch(`/api/kelas/${kelasId}/soal-collections`);
+          console.log('📡 Response status:', response.status);
+          if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Fetched soal collections:', data.data?.length || 0, 'items');
+            console.log('📋 Soal data:', data.data);
+            setAvailableSoal(data.data || []);
+          } else {
+            console.error('❌ Failed to fetch soal collections:', response.statusText);
+            const errorText = await response.text();
+            console.error('❌ Error details:', errorText);
+          }
+        } catch (error) {
+          console.error('❌ Failed to fetch soal collections:', error);
+        }
+      } else {
+        console.log('⏭️ Skipping fetch - conditions not met');
+      }
+    };
+
+    if (soalDropdownOpen) {
+      console.log('🎯 Dropdown opened, attempting to fetch soal collections...');
+      fetchAvailableSoal();
+    }
+  }, [soalDropdownOpen, kelasId, availableSoal.length]);
 
   const handleContentUpdate = (data: { json: any; html: string }) => {
     setFormData(prev => ({ 
@@ -77,6 +129,8 @@ export function LessonForm({
           jsonDescription: { type: "doc", content: [] },
           htmlDescription: '',
           isDemo: false,
+          koleksiSoalId: undefined,
+          passingScore: 80,
         });
       }
       setIsOpen(false);
@@ -92,6 +146,8 @@ export function LessonForm({
         jsonDescription: { type: "doc", content: [] },
         htmlDescription: '',
         isDemo: false,
+        koleksiSoalId: undefined,
+        passingScore: 80,
       });
     } else {
       // Reset to initial data for edit mode
@@ -101,6 +157,8 @@ export function LessonForm({
         jsonDescription: initialData?.jsonDescription || { type: "doc", content: [] },
         htmlDescription: initialData?.htmlDescription || '',
         isDemo: initialData?.isDemo || false,
+        koleksiSoalId: initialData?.koleksiSoalId,
+        passingScore: initialData?.passingScore || 80,
       });
     }
     setIsOpen(false);
@@ -172,8 +230,65 @@ export function LessonForm({
               showTopToolbar={true}
             />
           </div>
-          
-          
+
+          {/* Assessment Configuration */}
+          <div className="space-y-4 border-t pt-4">
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              <Label className="text-base font-medium">Assessment Settings</Label>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="koleksiSoal">Assessment Questions (Optional)</Label>
+              <Select
+                value={formData.koleksiSoalId?.toString() || "none"}
+                onValueChange={(value) => setFormData(prev => ({
+                  ...prev,
+                  koleksiSoalId: value && value !== "none" ? parseInt(value) : undefined
+                }))}
+                onOpenChange={setSoalDropdownOpen}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select assessment questions (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No assessment</SelectItem>
+                  {availableSoal.map((soal) => (
+                    <SelectItem key={soal.id} value={soal.id.toString()}>
+                      {soal.nama}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                Choose a question set for this lesson assessment
+              </p>
+            </div>
+
+            {formData.koleksiSoalId && (
+              <div className="space-y-2">
+                <Label htmlFor="passingScore" className="flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Passing Score (%)
+                </Label>
+                <Input
+                  id="passingScore"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={formData.passingScore}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    passingScore: parseInt(e.target.value) || 80
+                  }))}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Minimum score required to pass this assessment (0-100%)
+                </p>
+              </div>
+            )}
+          </div>
+
           <div className="flex gap-2 justify-end">
             <Button variant="outline" onClick={handleCancel}>
               Cancel

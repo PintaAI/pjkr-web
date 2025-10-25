@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
 // GET /api/materi/[id] - Get specific material
 export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
     const materiId = parseInt(params.id)
     
     if (isNaN(materiId)) {
@@ -33,11 +42,24 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
             }
           }
         },
+        koleksiSoal: {
+          include: {
+            soals: {
+              include: {
+                opsis: true
+              },
+              orderBy: {
+                order: 'asc'
+              }
+            }
+          }
+        },
         completions: {
           select: {
             id: true,
             userId: true,
             isCompleted: true,
+            assessmentPassed: true,
             createdAt: true,
             updatedAt: true,
             user: {
@@ -49,10 +71,14 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
             }
           }
         },
-        _count: {
-          select: {
-            completions: true
-          }
+        assessments: {
+          where: {
+            userId: session.user.id
+          },
+          orderBy: {
+            createdAt: 'desc'
+          },
+          take: 1
         }
       }
     })
@@ -81,6 +107,14 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
 export async function PUT(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
     const materiId = parseInt(params.id)
     
     if (isNaN(materiId)) {
@@ -152,6 +186,14 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
 export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
     const materiId = parseInt(params.id)
     
     if (isNaN(materiId)) {

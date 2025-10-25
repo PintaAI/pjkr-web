@@ -1,8 +1,12 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { BsCreditCard2Front } from "react-icons/bs";
+import { useState } from "react";
 
 
 interface SoalSet {
@@ -33,10 +37,13 @@ interface SoalSet {
 interface SoalCardProps {
   soalSet: SoalSet;
   onClick?: () => void;
+  onDelete?: (id: number) => void;
   compact?: boolean;
 }
 
-export function SoalCard({ soalSet, onClick, compact = false }: SoalCardProps) {
+export function SoalCard({ soalSet, onClick, onDelete, compact = false }: SoalCardProps) {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
   if (compact) {
     return (
       <Card
@@ -59,6 +66,31 @@ export function SoalCard({ soalSet, onClick, compact = false }: SoalCardProps) {
             </div>
           </div>
         </CardContent>
+ 
+        {onDelete && (
+          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Soal Set?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete the soal set {soalSet.nama} and all its questions.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(soalSet.id);
+                    setDeleteDialogOpen(false);
+                  }}
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </Card>
     );
   }
@@ -91,6 +123,22 @@ export function SoalCard({ soalSet, onClick, compact = false }: SoalCardProps) {
             )}
           </div>
 
+          {/* Delete button - top right, hover only */}
+          {onDelete && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteDialogOpen(true);
+              }}
+              className="absolute top-2 right-2 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-background/80 hover:bg-background/90 backdrop-blur-sm text-destructive border"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+
           {/* overlay: info at bottom */}
           <div className="absolute bottom-2 left-2 right-2">
             <div className="flex items-center gap-3 text-xs text-white/90">
@@ -112,6 +160,31 @@ export function SoalCard({ soalSet, onClick, compact = false }: SoalCardProps) {
           {soalSet.deskripsi || "No description available"}
         </p>
       </CardContent>
+
+      {onDelete && (
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Soal Set?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the soal set {soalSet.nama} and all its questions.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(soalSet.id);
+                  setDeleteDialogOpen(false);
+                }}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </Card>
   );
 }

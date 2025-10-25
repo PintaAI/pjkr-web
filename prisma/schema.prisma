@@ -17,7 +17,6 @@ enum UserRoles {
   ADMIN
 }
 
-
 enum KelasType {
   REGULAR
   EVENT
@@ -31,7 +30,6 @@ enum Difficulty {
   INTERMEDIATE
   ADVANCED
 }
-
 
 enum LiveSessionStatus {
   SCHEDULED
@@ -102,54 +100,55 @@ enum MidtransStatus {
 // ================================
 
 model User {
-  id                  String                 @id @default(cuid())
-  email               String                 @unique
-  name                String?
-  role                UserRoles              @default(MURID)
-  emailVerified       Boolean                @default(false)
-  image               String?
-  bio                 String?
-  createdAt           DateTime               @default(now())
-  updatedAt           DateTime               @updatedAt
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  role          UserRoles @default(MURID)
+  emailVerified Boolean   @default(false)
+  image         String?
+  bio           String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   // Core user stats - simplified
-  currentStreak       Int                    @default(0)
-  xp                  Int                    @default(0)
-  level               Int                    @default(1)
-  
+  currentStreak Int       @default(0)
+  xp            Int       @default(0)
+  level         Int       @default(1)
+
   // Auth relations
-  accounts            Account[]
-  sessions            Session[]
-  
+  accounts Account[]
+  sessions Session[]
+
   // Social/Post relations
-  authoredPosts       Post[]                 @relation("PostAuthor")
-  comments            Comment[]              @relation("CommentAuthor")
-  postLikes           PostLike[]             @relation("UserPostLikes")
-  commentLikes        CommentLike[]          @relation("UserCommentLikes")
-  postShares          PostShare[]            @relation("UserPostShares")
-  
+  authoredPosts Post[]        @relation("PostAuthor")
+  comments      Comment[]     @relation("CommentAuthor")
+  postLikes     PostLike[]    @relation("UserPostLikes")
+  commentLikes  CommentLike[] @relation("UserCommentLikes")
+  postShares    PostShare[]   @relation("UserPostShares")
+
   // Education relations - core only
   authoredKelas       Kelas[]                @relation("KelasAuthor")
   joinedKelas         Kelas[]                @relation("KelasMembers")
   materiCompletions   UserMateriCompletion[]
+  materiAssessments   UserMateriAssessment[]
   kelasCompletions    UserKelasCompletion[]
   createdLiveSessions LiveSession[]          @relation("LiveSessionCreator")
   joinedLiveSessions  LiveSession[]          @relation("LiveSessionParticipants")
   vocabularySets      VocabularySet[]
   vocabularyItems     VocabularyItem[]       @relation("VocabularyItemCreator")
-  
+
   // Assessment relations - simplified
-  soals               Soal[]                 @relation("SoalAuthor")
-  koleksiSoals        KoleksiSoal[]          @relation("KoleksiSoalAuthor")
-  createdTryouts      Tryout[]               @relation("TryoutGuru")
+  soals                Soal[]              @relation("SoalAuthor")
+  koleksiSoals         KoleksiSoal[]       @relation("KoleksiSoalAuthor")
+  createdTryouts       Tryout[]            @relation("TryoutGuru")
   tryoutParticipations TryoutParticipant[]
-  
+
   // Utility relations
-  drawings            ExcalidrawDrawing[]
-  pushNotifications   PushNotification[]
-  
+  drawings          ExcalidrawDrawing[]
+  pushNotifications PushNotification[]
+
   // Activity tracking
-  activityLogs        ActivityLog[]
-  subscriptions       Subscription[]
+  activityLogs  ActivityLog[]
+  subscriptions Subscription[]
 
   @@map("user")
 }
@@ -193,12 +192,12 @@ model Account {
 }
 
 model Verification {
-  id         String    @id @default(cuid())
+  id         String   @id @default(cuid())
   identifier String
   value      String
   expiresAt  DateTime
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([identifier])
   @@index([expiresAt])
@@ -210,31 +209,31 @@ model Verification {
 // ================================
 
 model Kelas {
-  id              Int                   @id @default(autoincrement())
-  title           String
-  description     String?
-  jsonDescription Json?                 @db.JsonB
-  htmlDescription String?
-  type            KelasType             @default(REGULAR)
-  level           Difficulty
-  thumbnail       String?
-  icon            String?
-  isPaidClass     Boolean               @default(false)
-  price           Decimal?              @db.Decimal(10,2) // Price for paid classes
-  discount        Decimal?              @db.Decimal(10,2) // Discount amount
-  promoCode       String?               // Promo code for discounts
-  isDraft         Boolean               @default(true) // Draft vs Published
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
-  authorId        String
-  author          User                  @relation("KelasAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  materis         Materi[]              @relation("KelasMateri")
-  liveSessions    LiveSession[]         @relation("KelasLiveSessions")
-  members         User[]                @relation("KelasMembers")
-  vocabularySets  VocabularySet[]       // Added inverse relation
-  completions     UserKelasCompletion[] // Track individual user completions
-  posts           Post[]                @relation("KelasPosts") // Class discussion posts
-  kelasKoleksiSoals KelasKoleksiSoal[]  // Many-to-many relation with question collections
+  id                Int                   @id @default(autoincrement())
+  title             String
+  description       String?
+  jsonDescription   Json?                 @db.JsonB
+  htmlDescription   String?
+  type              KelasType             @default(REGULAR)
+  level             Difficulty
+  thumbnail         String?
+  icon              String?
+  isPaidClass       Boolean               @default(false)
+  price             Decimal?              @db.Decimal(10, 2) // Price for paid classes
+  discount          Decimal?              @db.Decimal(10, 2) // Discount amount
+  promoCode         String? // Promo code for discounts
+  isDraft           Boolean               @default(true) // Draft vs Published
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  authorId          String
+  author            User                  @relation("KelasAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  materis           Materi[]              @relation("KelasMateri")
+  liveSessions      LiveSession[]         @relation("KelasLiveSessions")
+  members           User[]                @relation("KelasMembers")
+  vocabularySets    VocabularySet[] // Added inverse relation
+  completions       UserKelasCompletion[] // Track individual user completions
+  posts             Post[]                @relation("KelasPosts") // Class discussion posts
+  kelasKoleksiSoals KelasKoleksiSoal[] // Many-to-many relation with question collections
 }
 
 model Materi {
@@ -246,43 +245,72 @@ model Materi {
   order           Int
   isDemo          Boolean                @default(false)
   isDraft         Boolean                @default(true) // Draft vs Published
+  // NEW: Simple assessment fields
+  koleksiSoalId   Int? // Optional assessment
+  passingScore    Int? // Required score (0-100), null = no assessment
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
   kelasId         Int
   kelas           Kelas                  @relation("KelasMateri", fields: [kelasId], references: [id], onDelete: Cascade)
   completions     UserMateriCompletion[]
+  // NEW: Relations for assessment
+  koleksiSoal     KoleksiSoal?           @relation("MateriAssessments", fields: [koleksiSoalId], references: [id], onDelete: SetNull)
+  assessments     UserMateriAssessment[]
 
   @@index([kelasId])
   @@index([order])
   @@index([isDemo])
   @@index([isDraft])
+  @@index([koleksiSoalId])
 }
 
 model UserMateriCompletion {
-  id          Int      @id @default(autoincrement())
-  userId      String
-  materiId    Int
-  isCompleted Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  materi      Materi   @relation(fields: [materiId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               Int      @id @default(autoincrement())
+  userId           String
+  materiId         Int
+  isCompleted      Boolean  @default(false)
+  // NEW: Track assessment completion
+  assessmentPassed Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  materi           Materi   @relation(fields: [materiId], references: [id], onDelete: Cascade)
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, materiId])
   @@index([userId])
   @@index([materiId])
+  @@index([assessmentPassed])
+}
+
+// NEW: Simple assessment tracking model
+model UserMateriAssessment {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  materiId  Int
+  score     Int // 0-100
+  isPassed  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  materi Materi @relation(fields: [materiId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, materiId])
+  @@index([userId])
+  @@index([materiId])
+  @@index([isPassed])
 }
 
 model UserKelasCompletion {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   userId      String
   kelasId     Int
-  isCompleted Boolean  @default(false)
+  isCompleted Boolean   @default(false)
   completedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  kelas       Kelas    @relation(fields: [kelasId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  kelas       Kelas     @relation(fields: [kelasId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, kelasId])
   @@index([userId])
@@ -293,7 +321,7 @@ model LiveSession {
   id             String            @id @default(cuid())
   name           String
   description    String?
-  streamCallId   String?           // Stream Video Call ID
+  streamCallId   String? // Stream Video Call ID
   status         LiveSessionStatus @default(SCHEDULED)
   scheduledStart DateTime
   scheduledEnd   DateTime?
@@ -316,28 +344,28 @@ model LiveSession {
 }
 
 model Post {
-  id              Int           @id @default(autoincrement())
+  id              Int         @id @default(autoincrement())
   title           String
   description     String?
-  jsonDescription Json          @db.JsonB
+  jsonDescription Json        @db.JsonB
   htmlDescription String
-  type            PostType      @default(DISCUSSION)
-  isPublished     Boolean       @default(true)
-  isPinned        Boolean       @default(false)
-  viewCount       Int           @default(0)
-  likeCount       Int           @default(0)  // Denormalized for performance
-  commentCount    Int           @default(0)  // Denormalized for performance
-  shareCount      Int           @default(0)  // Denormalized for performance
-  tags            String[]      @default([]) // Array of tags
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  type            PostType    @default(DISCUSSION)
+  isPublished     Boolean     @default(true)
+  isPinned        Boolean     @default(false)
+  viewCount       Int         @default(0)
+  likeCount       Int         @default(0) // Denormalized for performance
+  commentCount    Int         @default(0) // Denormalized for performance
+  shareCount      Int         @default(0) // Denormalized for performance
+  tags            String[]    @default([]) // Array of tags
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
   authorId        String
-  kelasId         Int?          // Optional relation to Kelas for class discussions
-  author          User          @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  kelas           Kelas?        @relation("KelasPosts", fields: [kelasId], references: [id], onDelete: Cascade)
-  comments        Comment[]     @relation("PostComments")
-  likes           PostLike[]    @relation("PostLikes")
-  shares          PostShare[]   @relation("PostShares")
+  kelasId         Int? // Optional relation to Kelas for class discussions
+  author          User        @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  kelas           Kelas?      @relation("KelasPosts", fields: [kelasId], references: [id], onDelete: Cascade)
+  comments        Comment[]   @relation("PostComments")
+  likes           PostLike[]  @relation("PostLikes")
+  shares          PostShare[] @relation("PostShares")
 
   @@index([authorId])
   @@index([createdAt])
@@ -351,23 +379,23 @@ model Post {
 }
 
 model Comment {
-  id            Int            @id @default(autoincrement())
-  content       String
-  jsonContent   Json?          @db.JsonB
-  htmlContent   String?
-  isEdited      Boolean        @default(false)
-  likeCount     Int            @default(0)  // Denormalized for performance
-  replyCount    Int            @default(0)  // Denormalized for performance
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  authorId      String
-  postId        Int
-  parentId      Int?           // For nested comments/replies
-  author        User           @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  post          Post           @relation("PostComments", fields: [postId], references: [id], onDelete: Cascade)
-  parent        Comment?       @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies       Comment[]      @relation("CommentReplies")
-  likes         CommentLike[]  @relation("CommentLikes")
+  id          Int           @id @default(autoincrement())
+  content     String
+  jsonContent Json?         @db.JsonB
+  htmlContent String?
+  isEdited    Boolean       @default(false)
+  likeCount   Int           @default(0) // Denormalized for performance
+  replyCount  Int           @default(0) // Denormalized for performance
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  authorId    String
+  postId      Int
+  parentId    Int? // For nested comments/replies
+  author      User          @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  post        Post          @relation("PostComments", fields: [postId], references: [id], onDelete: Cascade)
+  parent      Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     Comment[]     @relation("CommentReplies")
+  likes       CommentLike[] @relation("CommentLikes")
 
   @@index([postId])
   @@index([authorId])
@@ -422,18 +450,20 @@ model PostShare {
 // ================================
 
 model KoleksiSoal {
-  id        Int      @id @default(autoincrement())
-  nama      String
-  deskripsi String?
-  isPrivate Boolean  @default(false)
-  isDraft   Boolean  @default(true) // Draft vs Published
-  userId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation("KoleksiSoalAuthor", fields: [userId], references: [id], onDelete: Cascade)
-  soals     Soal[]
-  tryouts   Tryout[]
+  id                Int                @id @default(autoincrement())
+  nama              String
+  deskripsi         String?
+  isPrivate         Boolean            @default(false)
+  isDraft           Boolean            @default(true) // Draft vs Published
+  userId            String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  user              User               @relation("KoleksiSoalAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  soals             Soal[]
+  tryouts           Tryout[]
   kelasKoleksiSoals KelasKoleksiSoal[]
+  // NEW: Materis that use this as assessment
+  materis           Materi[]           @relation("MateriAssessments")
 
   @@index([userId])
   @@index([isPrivate])
@@ -442,18 +472,18 @@ model KoleksiSoal {
 
 // Junction table for many-to-many relationship between Kelas and KoleksiSoal
 model KelasKoleksiSoal {
-  id         Int      @id @default(autoincrement())
-  kelasId    Int
+  id            Int      @id @default(autoincrement())
+  kelasId       Int
   koleksiSoalId Int
   // New metadata fields for soal set linking
-  title      String
-  description String?
-  order      Int      @default(0)
-  createdAt  DateTime @default(now())
-  
-  kelas      Kelas    @relation(fields: [kelasId], references: [id], onDelete: Cascade)
+  title         String
+  description   String?
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  kelas       Kelas       @relation(fields: [kelasId], references: [id], onDelete: Cascade)
   koleksiSoal KoleksiSoal @relation(fields: [koleksiSoalId], references: [id], onDelete: Cascade)
-  
+
   @@unique([kelasId, koleksiSoalId])
   @@index([kelasId])
   @@index([koleksiSoalId])
@@ -461,20 +491,20 @@ model KelasKoleksiSoal {
 }
 
 model Soal {
-  id             Int               @id @default(autoincrement())
-  koleksiSoalId  Int
-  authorId       String
-  pertanyaan     String
-  difficulty     Difficulty?
-  explanation    String?
-  isActive       Boolean           @default(true)
-  order          Int?              @default(0) // Optional field for drag and drop sorting
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  koleksiSoal    KoleksiSoal       @relation(fields: [koleksiSoalId], references: [id], onDelete: Cascade)
-  author         User              @relation("SoalAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  opsis          Opsi[]
-  attachments    SoalAttachment[]  @relation("SoalAttachments")
+  id            Int              @id @default(autoincrement())
+  koleksiSoalId Int
+  authorId      String
+  pertanyaan    String
+  difficulty    Difficulty?
+  explanation   String?
+  isActive      Boolean          @default(true)
+  order         Int?             @default(0) // Optional field for drag and drop sorting
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  koleksiSoal   KoleksiSoal      @relation(fields: [koleksiSoalId], references: [id], onDelete: Cascade)
+  author        User             @relation("SoalAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  opsis         Opsi[]
+  attachments   SoalAttachment[] @relation("SoalAttachments")
 
   @@index([koleksiSoalId])
   @@index([authorId])
@@ -484,32 +514,32 @@ model Soal {
 }
 
 model SoalAttachment {
-  id             Int      @id @default(autoincrement())
-  soalId         Int
-  url            String
-  type           String   // "image", "audio", "video", "document", etc.
-  filename       String?
-  size           Int?     // File size in bytes
-  mimeType       String?
-  order          Int      @default(0) // For ordering multiple attachments
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  soal           Soal     @relation("SoalAttachments", fields: [soalId], references: [id], onDelete: Cascade)
+  id        Int      @id @default(autoincrement())
+  soalId    Int
+  url       String
+  type      String // "image", "audio", "video", "document", etc.
+  filename  String?
+  size      Int? // File size in bytes
+  mimeType  String?
+  order     Int      @default(0) // For ordering multiple attachments
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  soal      Soal     @relation("SoalAttachments", fields: [soalId], references: [id], onDelete: Cascade)
 
   @@index([soalId])
   @@index([type])
 }
 
 model Opsi {
-  id             Int                @id @default(autoincrement())
-  soalId         Int
-  opsiText       String
-  isCorrect      Boolean            @default(false)
-  order          Int                @default(0) // For ordering options
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-  soal           Soal               @relation(fields: [soalId], references: [id], onDelete: Cascade)
-  attachments    OpsiAttachment[]   @relation("OpsiAttachments")
+  id          Int              @id @default(autoincrement())
+  soalId      Int
+  opsiText    String
+  isCorrect   Boolean          @default(false)
+  order       Int              @default(0) // For ordering options
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  soal        Soal             @relation(fields: [soalId], references: [id], onDelete: Cascade)
+  attachments OpsiAttachment[] @relation("OpsiAttachments")
 
   @@index([soalId])
   @@index([order])
@@ -517,17 +547,17 @@ model Opsi {
 }
 
 model OpsiAttachment {
-  id             Int      @id @default(autoincrement())
-  opsiId         Int
-  url            String
-  type           String   // "image", "audio", "video", "document", etc.
-  filename       String?
-  size           Int?     // File size in bytes
-  mimeType       String?
-  order          Int      @default(0) // For ordering multiple attachments
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  opsi           Opsi     @relation("OpsiAttachments", fields: [opsiId], references: [id], onDelete: Cascade)
+  id        Int      @id @default(autoincrement())
+  opsiId    Int
+  url       String
+  type      String // "image", "audio", "video", "document", etc.
+  filename  String?
+  size      Int? // File size in bytes
+  mimeType  String?
+  order     Int      @default(0) // For ordering multiple attachments
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  opsi      Opsi     @relation("OpsiAttachments", fields: [opsiId], references: [id], onDelete: Cascade)
 
   @@index([opsiId])
   @@index([type])
@@ -586,7 +616,7 @@ model VocabularySet {
   user        User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
   kelas       Kelas?           @relation(fields: [kelasId], references: [id], onDelete: Cascade) // Cascade when Kelas is deleted
   items       VocabularyItem[] @relation("VocabularySetItems")
-  
+
   @@index([userId])
   @@index([kelasId])
   @@index([isPublic])
@@ -655,9 +685,9 @@ model Subscription {
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   midtransOrderId String         @unique // Store the Midtrans order_id from createTransaction API
   status          MidtransStatus // Midtrans payment status
-  accessTier      String         // The access tier subscribed to (e.g., "FREE", "PREMIUM")
-  startDate       DateTime?      // Set when payment is confirmed (settlement/capture+accept)
-  endDate         DateTime?      // Optional: For recurring/timed subscriptions
+  accessTier      String // The access tier subscribed to (e.g., "FREE", "PREMIUM")
+  startDate       DateTime? // Set when payment is confirmed (settlement/capture+accept)
+  endDate         DateTime? // Optional: For recurring/timed subscriptions
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
@@ -676,7 +706,7 @@ model ActivityLog {
   userId         String
   type           ActivityType
   description    String?
-  xpEarned       Int?         // XP earned from this activity
+  xpEarned       Int? // XP earned from this activity
   streakUpdated  Boolean      @default(false)
   previousStreak Int?
   newStreak      Int?

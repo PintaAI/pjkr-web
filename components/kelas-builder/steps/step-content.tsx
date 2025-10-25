@@ -39,6 +39,7 @@ interface SortableMateriItemProps {
   onUpdateMateri: (id: number | string, data: Partial<any>) => void;
   onRemoveMateri: (id: number | string) => void;
   onToggleMateriDraft: (id: number | string) => Promise<void>;
+  draftId: number | null;
 }
 
 function SortableMateriItem({
@@ -47,6 +48,7 @@ function SortableMateriItem({
   onUpdateMateri,
   onRemoveMateri,
   onToggleMateriDraft,
+  draftId,
 }: SortableMateriItemProps) {
   const {
     attributes,
@@ -117,6 +119,7 @@ function SortableMateriItem({
                 mode="edit"
                 initialData={materi}
                 onSubmit={handleEditSubmit}
+                kelasId={draftId || undefined}
               />
               <Button
                 variant="ghost"
@@ -137,6 +140,7 @@ function SortableMateriItem({
 
 export function StepContent() {
   const {
+    draftId,
     materis,
     addMateri,
     removeMateri,
@@ -264,7 +268,7 @@ export function StepContent() {
           <FileText className="h-5 w-5" />
           <span className="font-semibold">Lessons ({materis.length})</span>
         </div>
-        <LessonForm onSubmit={handleAddMateri} />
+        <LessonForm onSubmit={handleAddMateri} kelasId={draftId || undefined} />
       </div>
 
       {/* Existing Materis */}
@@ -290,6 +294,7 @@ export function StepContent() {
                   onUpdateMateri={handleUpdateMateri}
                   onRemoveMateri={removeMateri}
                   onToggleMateriDraft={toggleMateriDraft}
+                  draftId={draftId}
                 />
               ))}
           </div>

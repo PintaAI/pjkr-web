@@ -26,6 +26,9 @@ export interface MateriData {
   isDemo: boolean;
   isDraft: boolean;
   tempId?: string; // For optimistic UI updates
+  // NEW: Assessment fields
+  koleksiSoalId?: number;
+  passingScore?: number;
 }
 
 // The steps in the builder UI

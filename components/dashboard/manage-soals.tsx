@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getGuruSoalSets } from "@/app/actions/kelas/soal-set";
+import { getGuruSoalSets, deleteSoalSet } from "@/app/actions/kelas/soal-set";
 import { SoalCard } from "./soal-card";
 import { SoalSet, SoalSheet } from "./soal-sheet";
 import { ManageLayout } from "./manage-layout";
@@ -89,6 +89,30 @@ export function ManageSoals({ soalSets: initialSoalSets }: ManageSoalsProps) {
     setEditingSoalSet(null);
   };
 
+  const handleDelete = async (soalSetId: number) => {
+    try {
+      const result = await deleteSoalSet(soalSetId);
+      if (result.success) {
+        // Refresh the list
+        const fetchSoalSets = async () => {
+          try {
+            const result = await getGuruSoalSets();
+            if (result.success && result.data) {
+              setSoalSets(result.data);
+            }
+          } catch (err) {
+            console.error("Failed to refresh soal sets:", err);
+          }
+        };
+        fetchSoalSets();
+      } else {
+        setError(result.error || "Failed to delete soal set");
+      }
+    } catch  {
+      setError("Failed to delete soal set");
+    }
+  };
+
 
 
   return (
@@ -120,6 +144,7 @@ export function ManageSoals({ soalSets: initialSoalSets }: ManageSoalsProps) {
           key={soalSet.id}
           soalSet={soalSet}
           onClick={() => handleEditSoal(soalSet)}
+          onDelete={(id) => handleDelete(id)}
         />
       )}
       createNewCard={{
