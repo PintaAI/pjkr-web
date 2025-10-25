@@ -21,9 +21,6 @@ export function StepReview() {
   const {
     meta,
     materis,
-    draftId,
-    reset,
-    kelasIsDraft
   } = useKelasBuilderStore();
 
   const { session } = useSession();
@@ -35,9 +32,7 @@ export function StepReview() {
 
   const isReadyToPublish = hasTitle && hasDescription && hasContent && hasValidPricing;
 
-  // Determine if the loaded kelas is already published on the server
-  const isPublishedServer = !!draftId && !kelasIsDraft;
-  // Create mock kelas data from the store for preview
+ 
   const mockKelasData = {
     id: 999,
     title: meta.title || "Your Course Title",

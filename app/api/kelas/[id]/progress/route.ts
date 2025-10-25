@@ -65,7 +65,7 @@ export async function GET(
     // Process materis to determine access and completion status
     const processedMateris = [];
     let completedCount = 0;
-    let totalCount = materis.length;
+    const totalCount = materis.length;
 
     for (let i = 0; i < materis.length; i++) {
       const materi = materis[i];
