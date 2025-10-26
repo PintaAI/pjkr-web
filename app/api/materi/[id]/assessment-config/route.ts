@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({
@@ -14,7 +14,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const materiId = parseInt(params.id);
+    const resolvedParams = await params;
+    const materiId = parseInt(resolvedParams.id);
     if (isNaN(materiId)) {
       return NextResponse.json({ error: 'Invalid materi ID' }, { status: 400 });
     }
