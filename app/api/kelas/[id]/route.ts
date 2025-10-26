@@ -1,20 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { auth } from '@/lib/auth'
+import { canAccessKelas, canModifyKelas } from '@/lib/access-control'
 import { KelasType, Difficulty } from '@prisma/client'
 
 // GET /api/kelas/[id] - Get specific class
 export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+    
     const kelasId = parseInt(params.id)
     const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
+    const userId = session?.user?.id || searchParams.get('userId')
     
     if (isNaN(kelasId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid class ID' },
         { status: 400 }
       )
+    }
+    
+    // Check if user can access this kelas
+    if (userId) {
+      const canAccess = await canAccessKelas(userId, kelasId)
+      if (!canAccess) {
+        return NextResponse.json(
+          { success: false, error: 'Access denied' },
+          { status: 403 }
+        )
+      }
     }
 
     const kelas = await prisma.kelas.findUnique({
@@ -113,12 +130,29 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
 export async function PUT(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
     const kelasId = parseInt(params.id)
     
     if (isNaN(kelasId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid class ID' },
         { status: 400 }
+      )
+    }
+    
+    // Check if user can modify this kelas
+    const canModify = await canModifyKelas(session.user.id, kelasId)
+    if (!canModify) {
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
       )
     }
 
@@ -196,12 +230,29 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
 export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
     const kelasId = parseInt(params.id)
     
     if (isNaN(kelasId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid class ID' },
         { status: 400 }
+      )
+    }
+    
+    // Check if user can modify this kelas
+    const canModify = await canModifyKelas(session.user.id, kelasId)
+    if (!canModify) {
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
       )
     }
 

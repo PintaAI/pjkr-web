@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { auth } from '@/lib/auth'
+import { canAccessVocabularySet, canModifyVocabularySet } from '@/lib/access-control'
 
 // GET /api/vocabulary-sets/[id] - Get specific vocabulary set
 export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+    
     const setId = parseInt(params.id)
     
     if (isNaN(setId)) {
@@ -12,6 +18,30 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
         { success: false, error: 'Invalid vocabulary set ID' },
         { status: 400 }
       )
+    }
+
+    // Check if user can access this vocabulary set
+    if (session?.user?.id) {
+      const canAccess = await canAccessVocabularySet(session.user.id, setId)
+      if (!canAccess) {
+        return NextResponse.json(
+          { success: false, error: 'Access denied' },
+          { status: 403 }
+        )
+      }
+    } else {
+      // For unauthenticated users, only allow public vocabulary sets
+      const vocabularySet = await prisma.vocabularySet.findUnique({
+        where: { id: setId },
+        select: { isPublic: true }
+      })
+      
+      if (!vocabularySet?.isPublic) {
+        return NextResponse.json(
+          { success: false, error: 'Access denied' },
+          { status: 403 }
+        )
+      }
     }
 
     const vocabularySet = await prisma.vocabularySet.findUnique({
@@ -85,12 +115,29 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
 export async function PUT(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
     const setId = parseInt(params.id)
     
     if (isNaN(setId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid vocabulary set ID' },
         { status: 400 }
+      )
+    }
+
+    // Check if user can modify this vocabulary set
+    const canModify = await canModifyVocabularySet(session.user.id, setId)
+    if (!canModify) {
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
       )
     }
 
@@ -161,12 +208,29 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
 export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
     const setId = parseInt(params.id)
     
     if (isNaN(setId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid vocabulary set ID' },
         { status: 400 }
+      )
+    }
+
+    // Check if user can modify this vocabulary set
+    const canModify = await canModifyVocabularySet(session.user.id, setId)
+    if (!canModify) {
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
       )
     }
 

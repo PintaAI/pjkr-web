@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { canAccessMateri, canModifyMateri, filterDemoContent } from '@/lib/access-control'
 
 // GET /api/materi/[id] - Get specific material
 export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
@@ -23,6 +24,15 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
       )
     }
 
+    // Check if user can access this materi
+    const canAccess = await canAccessMateri(session.user.id, materiId)
+    if (!canAccess) {
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
+      )
+    }
+
     const materi = await prisma.materi.findUnique({
       where: { id: materiId },
       include: {
@@ -32,6 +42,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
             title: true,
             type: true,
             level: true,
+            authorId: true,
             author: {
               select: {
                 id: true,
@@ -39,6 +50,10 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
                 email: true,
                 image: true
               }
+            },
+            members: {
+              where: { id: session.user.id },
+              select: { id: true }
             }
           }
         },
@@ -90,9 +105,16 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
       )
     }
 
+    // Check if user is enrolled or is the author
+    const isEnrolled = materi.kelas.authorId === session.user.id ||
+                     materi.kelas.members.length > 0
+
+    // Filter demo content for non-enrolled users
+    const filteredMateri = filterDemoContent(materi, isEnrolled)
+
     return NextResponse.json({
       success: true,
-      data: materi
+      data: filteredMateri
     })
   } catch (error) {
     console.error('Error fetching materi:', error)
@@ -133,6 +155,15 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
       order,
       isDemo
     } = body
+
+    // Check if user can modify this materi
+    const canModify = await canModifyMateri(session.user.id, materiId)
+    if (!canModify) {
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
+      )
+    }
 
     // Check if material exists
     const existingMateri = await prisma.materi.findUnique({
@@ -200,6 +231,15 @@ export async function DELETE(request: NextRequest, props: { params: Promise<{ id
       return NextResponse.json(
         { success: false, error: 'Invalid material ID' },
         { status: 400 }
+      )
+    }
+
+    // Check if user can modify this materi
+    const canModify = await canModifyMateri(session.user.id, materiId)
+    if (!canModify) {
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
       )
     }
 
