@@ -104,7 +104,18 @@ export function updateStreak(
   );
 
   if (lastActiveDay.getTime() === today.getTime()) {
-    // Already active today, no change
+    // Already active today
+    // Special case: if currentStreak is 0, this is the first activity of the day
+    // and streak should be initialized to 1
+    if (currentStreakData.currentStreak === 0) {
+      return {
+        currentStreak: 1,
+        lastActiveDate: today,
+        longestStreak: Math.max(1, currentStreakData.longestStreak),
+        streakHistory: [...currentStreakData.streakHistory, today],
+      };
+    }
+    // Otherwise, no change needed - already counted for today
     return currentStreakData;
   }
 
