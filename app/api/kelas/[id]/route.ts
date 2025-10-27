@@ -24,14 +24,10 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
     }
     
     // Check if user can access this kelas
+    let isEnrolled = false
     if (userId) {
       const canAccess = await canAccessKelas(userId, kelasId)
-      if (!canAccess) {
-        return NextResponse.json(
-          { success: false, error: 'Access denied' },
-          { status: 403 }
-        )
-      }
+      isEnrolled = canAccess
     }
 
     const kelas = await prisma.kelas.findUnique({
@@ -102,7 +98,6 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
     }
 
     // Check if user is enrolled in this class
-    let isEnrolled = false
     if (userId) {
       isEnrolled = kelas.members.some(member => member.id === userId)
     }
