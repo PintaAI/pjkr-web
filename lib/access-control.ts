@@ -170,6 +170,105 @@ export async function canAccessVocabularySet(userId: string, vocabularySetId: nu
 }
 
 /**
+ * Check if user can access koleksi soal (question collection)
+ * User can access if they are:
+ * 1. The owner of the koleksi soal
+ * 2. A member of the kelas that the koleksi soal is associated with
+ * 3. The koleksi soal is public
+ */
+export async function canAccessKoleksiSoal(userId: string, koleksiSoalId: number): Promise<boolean> {
+  try {
+    const koleksiSoal = await prisma.koleksiSoal.findUnique({
+      where: { id: koleksiSoalId },
+      select: {
+        id: true,
+        isPrivate: true,
+        isDraft: true,
+        userId: true,
+        kelasKoleksiSoals: {
+          include: {
+            kelas: {
+              select: {
+                id: true,
+                authorId: true,
+                members: {
+                  where: { id: userId },
+                  select: { id: true }
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+    
+    if (!koleksiSoal) return false
+    
+    // Don't allow access to draft collections
+    if (koleksiSoal.isDraft) return false
+    
+    // Allow access if:
+    // 1. User owns the koleksi soal
+    // 2. It's public (not private)
+    // 3. User is member of associated kelas
+    // 4. User is author of associated kelas
+    const isOwner = koleksiSoal.userId === userId
+    const isPublic = !koleksiSoal.isPrivate
+    const isKelasMember = koleksiSoal.kelasKoleksiSoals?.some(kk =>
+      kk.kelas.members.length > 0 || kk.kelas.authorId === userId
+    )
+    
+    return isOwner || isPublic || isKelasMember
+  } catch (error) {
+    console.error('Error checking koleksi soal access:', error)
+    return false
+  }
+}
+
+/**
+ * Check if user can modify koleksi soal (question collection)
+ * User can modify if they are:
+ * 1. The owner of the koleksi soal
+ * 2. The author of the kelas that the koleksi soal is associated with
+ */
+export async function canModifyKoleksiSoal(userId: string, koleksiSoalId: number): Promise<boolean> {
+  try {
+    const koleksiSoal = await prisma.koleksiSoal.findUnique({
+      where: { id: koleksiSoalId },
+      select: {
+        id: true,
+        userId: true,
+        kelasKoleksiSoals: {
+          include: {
+            kelas: {
+              select: {
+                id: true,
+                authorId: true
+              }
+            }
+          }
+        }
+      }
+    })
+    
+    if (!koleksiSoal) return false
+    
+    // Allow modification if:
+    // 1. User owns the koleksi soal
+    // 2. User is author of associated kelas
+    const isOwner = koleksiSoal.userId === userId
+    const isKelasAuthor = koleksiSoal.kelasKoleksiSoals?.some(kk =>
+      kk.kelas.authorId === userId
+    )
+    
+    return isOwner || isKelasAuthor
+  } catch (error) {
+    console.error('Error checking koleksi soal modification access:', error)
+    return false
+  }
+}
+
+/**
  * Check if user can modify vocabulary set
  * User can modify if they are:
  * 1. The owner of the vocabulary set

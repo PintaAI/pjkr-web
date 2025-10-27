@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { auth } from '@/lib/auth'
+import { canAccessKoleksiSoal, canModifyKoleksiSoal } from '@/lib/access-control'
 
 export async function GET(
   request: NextRequest,
@@ -102,8 +103,8 @@ export async function GET(
       )
     }
 
-    // Check if user has access to this koleksi soal (either owns it or it's public)
-    const hasAccess = koleksiSoal.userId === session.user.id || !koleksiSoal.isPrivate
+    // Check if user has access to this koleksi soal
+    const hasAccess = await canAccessKoleksiSoal(session.user.id, koleksiSoalId)
 
     if (!hasAccess) {
       return NextResponse.json(
@@ -153,17 +154,23 @@ export async function PUT(
       isDraft,
     } = body
 
-    // Check if koleksi soal exists and user owns it
-    const existingKoleksiSoal = await prisma.koleksiSoal.findFirst({
-      where: {
-        id: koleksiSoalId,
-        userId: session.user.id,
-      },
+    // Check if user can modify this koleksi soal
+    const canModify = await canModifyKoleksiSoal(session.user.id, koleksiSoalId)
+    if (!canModify) {
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
+      )
+    }
+
+    // Check if koleksi soal exists
+    const existingKoleksiSoal = await prisma.koleksiSoal.findUnique({
+      where: { id: koleksiSoalId },
     })
 
     if (!existingKoleksiSoal) {
       return NextResponse.json(
-        { success: false, error: 'Koleksi soal not found or access denied' },
+        { success: false, error: 'Koleksi soal not found' },
         { status: 404 }
       )
     }
@@ -259,17 +266,23 @@ export async function DELETE(
       )
     }
 
-    // Check if koleksi soal exists and user owns it
-    const existingKoleksiSoal = await prisma.koleksiSoal.findFirst({
-      where: {
-        id: koleksiSoalId,
-        userId: session.user.id,
-      },
+    // Check if user can modify this koleksi soal
+    const canModify = await canModifyKoleksiSoal(session.user.id, koleksiSoalId)
+    if (!canModify) {
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
+      )
+    }
+
+    // Check if koleksi soal exists
+    const existingKoleksiSoal = await prisma.koleksiSoal.findUnique({
+      where: { id: koleksiSoalId },
     })
 
     if (!existingKoleksiSoal) {
       return NextResponse.json(
-        { success: false, error: 'Koleksi soal not found or access denied' },
+        { success: false, error: 'Koleksi soal not found' },
         { status: 404 }
       )
     }
