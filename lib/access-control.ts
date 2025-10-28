@@ -201,12 +201,9 @@ export async function canAccessKoleksiSoal(userId: string, koleksiSoalId: number
         }
       }
     })
-    
+
     if (!koleksiSoal) return false
-    
-    // Don't allow access to draft collections
-    if (koleksiSoal.isDraft) return false
-    
+
     // Allow access if:
     // 1. User owns the koleksi soal
     // 2. It's public (not private)
@@ -217,7 +214,10 @@ export async function canAccessKoleksiSoal(userId: string, koleksiSoalId: number
     const isKelasMember = koleksiSoal.kelasKoleksiSoals?.some(kk =>
       kk.kelas.members.length > 0 || kk.kelas.authorId === userId
     )
-    
+
+    // Don't allow access to draft collections unless user is owner or kelas member
+    if (koleksiSoal.isDraft && !isOwner && !isKelasMember) return false
+
     return isOwner || isPublic || isKelasMember
   } catch (error) {
     console.error('Error checking koleksi soal access:', error)
