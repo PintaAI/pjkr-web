@@ -94,20 +94,26 @@ export async function GET(
         }
       }
       
-      // Determine if materi is fully completed
+      // Determine completion status
+      let isCompleted = false;
       let isFullyCompleted = false;
-      if (completion?.isCompleted) {
-        if (materi.passingScore) {
-          // Assessment required - need both content AND assessment passed
-          isFullyCompleted = completion.assessmentPassed || false;
-        } else {
-          // No assessment required - content completion is enough
+      
+      if (materi.passingScore) {
+        // Assessment required - check if user passed the assessment
+        if (completion?.assessmentPassed) {
+          isCompleted = true;
           isFullyCompleted = true;
         }
-        
-        if (isFullyCompleted) {
-          completedCount++;
+      } else {
+        // No assessment required - check content completion
+        if (completion?.isCompleted) {
+          isCompleted = true;
+          isFullyCompleted = true;
         }
+      }
+      
+      if (isFullyCompleted) {
+        completedCount++;
       }
       
       processedMateris.push({
@@ -115,7 +121,7 @@ export async function GET(
         title: materi.title,
         order: materi.order,
         isAccessible,
-        isCompleted: completion?.isCompleted || false,
+        isCompleted,
         isFullyCompleted,
         hasAssessment: !!materi.passingScore,
         assessmentPassed: completion?.assessmentPassed || false,
