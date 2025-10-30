@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { auth } from '@/lib/auth'
-import { canAccessKelas, canModifyKelas } from '@/lib/access-control'
+import { canModifyKelas } from '@/lib/access-control'
 import { KelasType, Difficulty } from '@prisma/client'
 
 // GET /api/kelas/[id] - Get specific class
