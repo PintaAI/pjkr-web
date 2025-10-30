@@ -114,13 +114,17 @@ export async function getGuruSoalSets() {
     const soalSets = await prisma.koleksiSoal.findMany({
       where: {
         OR: [
-          { userId: userId },
+          {
+            userId: userId,
+            // User can see their own collections regardless of draft status
+          },
           {
             kelasKoleksiSoals: {
               some: {
                 kelasId: { in: joinedKelasIds }
               }
-            }
+            },
+            isDraft: false // Only show non-draft collections from joined kelas
           }
         ]
       },

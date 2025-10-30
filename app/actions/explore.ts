@@ -181,10 +181,13 @@ export async function getExploreData() {
       },
     });
 
-    // Fetch random Soals - only active ones with connected classes
+    // Fetch random Soals - only active ones from non-draft collections with connected classes
     const soalData = await prisma.soal.findMany({
       where: {
         isActive: true,
+        koleksiSoal: {
+          isDraft: false,
+        }
       },
       include: {
         author: {

@@ -29,13 +29,25 @@ export async function GET(
 
     // Get kelas-related soal collections
     // Only return collections explicitly linked to this kelas via KelasKoleksiSoal
+    // Filter out draft collections unless user is the owner
     const soalCollections = await prisma.koleksiSoal.findMany({
       where: {
         kelasKoleksiSoals: {
           some: {
             kelasId: kelasId
           }
-        }
+        },
+        OR: [
+          // User can see their own draft collections
+          {
+            userId: session.user.id,
+            isDraft: true
+          },
+          // All users can see non-draft collections
+          {
+            isDraft: false
+          }
+        ]
       },
       select: {
         id: true,
