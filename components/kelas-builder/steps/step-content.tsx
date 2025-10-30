@@ -12,6 +12,7 @@ import {
   GripVertical,
   Eye,
   EyeOff,
+  BookOpen,
 } from "lucide-react";
 import {
   DndContext,
@@ -92,6 +93,19 @@ function SortableMateriItem({
                 <p className="text-sm text-muted-foreground truncate mt-1">
                   {materi.description}
                 </p>
+                {materi.koleksiSoalId && (
+                  <div className="flex items-center gap-1 mt-2">
+                    <Badge variant="secondary" className="text-xs">
+                      <BookOpen className="h-3 w-3 mr-1" />
+                      Assessment
+                    </Badge>
+                    {materi.passingScore && (
+                      <span className="text-xs text-muted-foreground">
+                        ({materi.passingScore}%)
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2 ml-4">

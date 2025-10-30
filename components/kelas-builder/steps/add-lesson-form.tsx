@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import NovelEditor from "@/components/novel/novel-editor";
-import { Plus, Edit2, BookOpen, Target } from "lucide-react";
+import { Plus, Edit2, BookOpen, Target, X } from "lucide-react";
 
 interface LessonFormProps {
   mode?: 'add' | 'edit';
@@ -19,7 +19,7 @@ interface LessonFormProps {
     jsonDescription: any;
     htmlDescription: string;
     isDemo: boolean;
-    koleksiSoalId?: number;
+    koleksiSoalId?: number | null;
     passingScore?: number;
   };
   onSubmit: (lesson: {
@@ -28,8 +28,8 @@ interface LessonFormProps {
     jsonDescription: any;
     htmlDescription: string;
     isDemo: boolean;
-    koleksiSoalId?: number;
-    passingScore?: number;
+    koleksiSoalId?: number | null;
+    passingScore?: number | null;
   }) => void;
   trigger?: React.ReactNode;
   kelasId?: number; // For fetching related soal collections
@@ -52,8 +52,8 @@ export function LessonForm({
     jsonDescription: initialData?.jsonDescription || { type: "doc", content: [] },
     htmlDescription: initialData?.htmlDescription || '',
     isDemo: initialData?.isDemo || false,
-    koleksiSoalId: initialData?.koleksiSoalId || undefined,
-    passingScore: initialData?.passingScore || 80,
+    koleksiSoalId: initialData?.koleksiSoalId ?? null,
+    passingScore: initialData?.passingScore ?? null,
   });
 
   // Reset form data when initialData changes (for edit mode)
@@ -65,7 +65,7 @@ export function LessonForm({
         jsonDescription: initialData.jsonDescription,
         htmlDescription: initialData.htmlDescription,
         isDemo: initialData.isDemo,
-        koleksiSoalId: initialData.koleksiSoalId,
+        koleksiSoalId: initialData.koleksiSoalId ?? null,
         passingScore: initialData.passingScore || 80,
       });
     }
@@ -129,8 +129,8 @@ export function LessonForm({
           jsonDescription: { type: "doc", content: [] },
           htmlDescription: '',
           isDemo: false,
-          koleksiSoalId: undefined,
-          passingScore: 80,
+          koleksiSoalId: null,
+          passingScore: null,
         });
       }
       setIsOpen(false);
@@ -146,8 +146,8 @@ export function LessonForm({
         jsonDescription: { type: "doc", content: [] },
         htmlDescription: '',
         isDemo: false,
-        koleksiSoalId: undefined,
-        passingScore: 80,
+        koleksiSoalId: null,
+        passingScore: null,
       });
     } else {
       // Reset to initial data for edit mode
@@ -157,7 +157,7 @@ export function LessonForm({
         jsonDescription: initialData?.jsonDescription || { type: "doc", content: [] },
         htmlDescription: initialData?.htmlDescription || '',
         isDemo: initialData?.isDemo || false,
-        koleksiSoalId: initialData?.koleksiSoalId,
+        koleksiSoalId: initialData?.koleksiSoalId ?? null,
         passingScore: initialData?.passingScore || 80,
       });
     }
@@ -244,7 +244,8 @@ export function LessonForm({
                 value={formData.koleksiSoalId?.toString() || "none"}
                 onValueChange={(value) => setFormData(prev => ({
                   ...prev,
-                  koleksiSoalId: value && value !== "none" ? parseInt(value) : undefined
+                  koleksiSoalId: value && value !== "none" ? parseInt(value) : null,
+                  passingScore: value && value !== "none" ? prev.passingScore : null
                 }))}
                 onOpenChange={setSoalDropdownOpen}
               >
@@ -265,6 +266,35 @@ export function LessonForm({
               </p>
             </div>
 
+            {/* Show connected assessment as badge with remove button */}
+            {formData.koleksiSoalId && (
+              <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
+                <div className="flex items-center gap-2 flex-1">
+                  <BookOpen className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-medium text-blue-800">
+                    Assessment: {availableSoal.find(s => s.id === formData.koleksiSoalId)?.nama || 'Selected'}
+                  </span>
+                  {formData.passingScore && (
+                    <span className="text-xs text-blue-600">
+                      (Passing: {formData.passingScore}%)
+                    </span>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setFormData(prev => ({
+                    ...prev,
+                    koleksiSoalId: null,
+                    passingScore: null
+                  }))}
+                  className="h-6 w-6 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+
             {formData.koleksiSoalId && (
               <div className="space-y-2">
                 <Label htmlFor="passingScore" className="flex items-center gap-2">
@@ -276,7 +306,7 @@ export function LessonForm({
                   type="number"
                   min="0"
                   max="100"
-                  value={formData.passingScore}
+                  value={formData.passingScore || 80}
                   onChange={(e) => setFormData(prev => ({
                     ...prev,
                     passingScore: parseInt(e.target.value) || 80

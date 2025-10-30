@@ -137,6 +137,8 @@ export const useKelasBuilderStore = create<Store>()(
                   order: materi.order,
                   isDemo: materi.isDemo,
                   isDraft: materi.isDraft,
+                  koleksiSoalId: materi.koleksiSoalId,
+                  passingScore: materi.passingScore,
                 })),
                 isLoading: false,
                 currentStep: 'meta',

@@ -10,6 +10,8 @@ const materiSchema = z.object({
   htmlDescription: z.string().min(1),
   jsonDescription: z.any().optional(),
   isDemo: z.boolean().default(false),
+  koleksiSoalId: z.number().int().positive().nullable().optional(),
+  passingScore: z.number().int().min(0).max(100).nullable().optional(),
 });
 
 // Add materis to kelas
