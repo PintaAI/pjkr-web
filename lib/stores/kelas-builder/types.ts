@@ -45,6 +45,7 @@ export interface VocabularySet {
   description: string | null;
   icon: string | null;
   isPublic: boolean;
+  isDraft: boolean;
   userId: string | null;
   kelasId: number | null;
   items: Array<{
