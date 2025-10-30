@@ -15,6 +15,10 @@ export async function GET(request: NextRequest) {
     if (userId) where.userId = userId
     if (kelasId) where.kelasId = parseInt(kelasId)
     if (isPublic !== null) where.isPublic = isPublic === 'true'
+    
+    // By default, only show published vocabulary sets (not drafts)
+    // This ensures only available published vocabulary sets are returned
+    where.isDraft = false
 
     const vocabularySets = await prisma.vocabularySet.findMany({
       where,
@@ -32,7 +36,8 @@ export async function GET(request: NextRequest) {
             id: true,
             title: true,
             type: true,
-            level: true
+            level: true,
+            isDraft: true
           }
         },
         _count: {
@@ -46,11 +51,14 @@ export async function GET(request: NextRequest) {
       skip: offset
     })
 
+    // Filter out vocabulary sets from draft kelas
+    const filteredVocabularySets = vocabularySets.filter(set => !set.kelas?.isDraft)
+
     return NextResponse.json({
       success: true,
-      data: vocabularySets,
+      data: filteredVocabularySets,
       meta: {
-        total: vocabularySets.length,
+        total: filteredVocabularySets.length,
         offset,
         limit
       }

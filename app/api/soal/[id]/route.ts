@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { auth } from '@/lib/auth'
+import { canAccessSoal, canModifySoal } from '@/lib/access-control'
 
 export async function GET(
   request: NextRequest,
@@ -22,11 +23,17 @@ export async function GET(
       )
     }
 
-    const soal = await prisma.soal.findFirst({
-      where: {
-        id: soalId,
-        isActive: true,
-      },
+    // Check if user can access this soal
+    const canAccess = await canAccessSoal(session.user.id, soalId)
+    if (!canAccess) {
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
+      )
+    }
+
+    const soal = await prisma.soal.findUnique({
+      where: { id: soalId },
       include: {
         author: {
           select: {
@@ -41,12 +48,29 @@ export async function GET(
             nama: true,
             deskripsi: true,
             isPrivate: true,
+            isDraft: true,
+            userId: true,
             user: {
               select: {
                 id: true,
                 name: true,
               },
             },
+            kelasKoleksiSoals: {
+              include: {
+                kelas: {
+                  select: {
+                    id: true,
+                    title: true,
+                    authorId: true,
+                    members: {
+                      where: { id: session.user.id },
+                      select: { id: true }
+                    }
+                  }
+                }
+              }
+            }
           },
         },
         opsis: {
@@ -62,20 +86,6 @@ export async function GET(
       return NextResponse.json(
         { success: false, error: 'Soal not found' },
         { status: 404 }
-      )
-    }
-
-    // Check if user has access to this soal (either owns it or koleksi soal is public)
-    const koleksiSoal = await prisma.koleksiSoal.findUnique({
-      where: { id: soal.koleksiSoalId },
-      select: { isPrivate: true },
-    })
-    const hasAccess = soal.authorId === session.user.id || !koleksiSoal?.isPrivate
-
-    if (!hasAccess) {
-      return NextResponse.json(
-        { success: false, error: 'Access denied' },
-        { status: 403 }
       )
     }
 
@@ -123,17 +133,23 @@ export async function PUT(
       attachments,
     } = body
 
-    // Check if soal exists and user owns it
-    const existingSoal = await prisma.soal.findFirst({
-      where: {
-        id: soalId,
-        authorId: session.user.id,
-      },
+    // Check if user can modify this soal
+    const canModify = await canModifySoal(session.user.id, soalId)
+    if (!canModify) {
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
+      )
+    }
+
+    // Check if soal exists
+    const existingSoal = await prisma.soal.findUnique({
+      where: { id: soalId }
     })
 
     if (!existingSoal) {
       return NextResponse.json(
-        { success: false, error: 'Soal not found or access denied' },
+        { success: false, error: 'Soal not found' },
         { status: 404 }
       )
     }
@@ -217,17 +233,23 @@ export async function DELETE(
       )
     }
 
-    // Check if soal exists and user owns it
-    const existingSoal = await prisma.soal.findFirst({
-      where: {
-        id: soalId,
-        authorId: session.user.id,
-      },
+    // Check if user can modify this soal
+    const canModify = await canModifySoal(session.user.id, soalId)
+    if (!canModify) {
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
+      )
+    }
+
+    // Check if soal exists
+    const existingSoal = await prisma.soal.findUnique({
+      where: { id: soalId }
     })
 
     if (!existingSoal) {
       return NextResponse.json(
-        { success: false, error: 'Soal not found or access denied' },
+        { success: false, error: 'Soal not found' },
         { status: 404 }
       )
     }

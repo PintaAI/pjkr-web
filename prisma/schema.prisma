@@ -610,6 +610,7 @@ model VocabularySet {
   description String?
   icon        String?          @default("FaBook")
   isPublic    Boolean          @default(false)
+  isDraft     Boolean          @default(true) // Draft vs Published
   userId      String?
   kelasId     Int? // Optional relation to Kelas
   createdAt   DateTime         @default(now())
@@ -621,6 +622,7 @@ model VocabularySet {
   @@index([userId])
   @@index([kelasId])
   @@index([isPublic])
+  @@index([isDraft])
 }
 
 model VocabularyItem {

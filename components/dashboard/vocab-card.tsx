@@ -15,6 +15,7 @@ interface VocabSet {
   description: string | null;
   icon: string | null;
   isPublic: boolean;
+  isDraft: boolean;
   createdAt?: Date;
   items: Array<{
     id: number;
@@ -94,7 +95,12 @@ export function VocabCard({ vocabSet, onClick, onDelete, compact = false }: Voca
 
           {/* badges */}
           <div className="absolute top-2 left-2 flex gap-2">
-            {vocabSet.isPublic && (
+            {vocabSet.isDraft && (
+              <Badge variant="destructive" className="h-6 px-2 text-[10px]">
+                Draft
+              </Badge>
+            )}
+            {vocabSet.isPublic && !vocabSet.isDraft && (
               <Badge variant="secondary" className="h-6 px-2 text-[10px]">
                 Public
               </Badge>

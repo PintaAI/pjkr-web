@@ -23,13 +23,6 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
       )
     }
     
-    // Check if user can access this kelas
-    let isEnrolled = false
-    if (userId) {
-      const canAccess = await canAccessKelas(userId, kelasId)
-      isEnrolled = canAccess
-    }
-
     const kelas = await prisma.kelas.findUnique({
       where: { id: kelasId },
       select: {
@@ -47,8 +40,6 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
         discount: true,
         promoCode: true,
         isDraft: true,
-        createdAt: true,
-        updatedAt: true,
         authorId: true,
         author: {
           select: {
@@ -97,7 +88,8 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
       )
     }
 
-    // Check if user is enrolled in this class
+    // Check if user is enrolled (for logged-in users)
+    let isEnrolled = false
     if (userId) {
       isEnrolled = kelas.members.some(member => member.id === userId)
     }

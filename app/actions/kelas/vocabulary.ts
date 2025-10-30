@@ -69,6 +69,7 @@ export async function saveVocabularySet(kelasId: number | null, vocabSetData: {
   description?: string;
   icon?: string;
   isPublic: boolean;
+  isDraft: boolean;
   items: Array<{
     id?: number | string; // Can be tempId
     korean: string;
@@ -92,6 +93,7 @@ export async function saveVocabularySet(kelasId: number | null, vocabSetData: {
           description: vocabSetData.description,
           icon: vocabSetData.icon,
           isPublic: vocabSetData.isPublic,
+          isDraft: vocabSetData.isDraft,
         },
       });
       

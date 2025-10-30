@@ -17,6 +17,7 @@ interface FormData {
   description: string;
   icon: string;
   isPublic: boolean;
+  isDraft: boolean;
 }
 
 interface VocabState {
@@ -60,6 +61,7 @@ const initialState: VocabState = {
     description: "",
     icon: "FaBookOpen",
     isPublic: false,
+    isDraft: true,
   },
   items: [
     {
@@ -98,6 +100,7 @@ export const useVocabStore = create<VocabState & VocabActions>()(
         description: "",
         icon: "FaBookOpen",
         isPublic: false,
+        isDraft: true,
       };
       state.items = [];
       state.itemDialogOpen = false;
@@ -113,6 +116,7 @@ export const useVocabStore = create<VocabState & VocabActions>()(
         description: vocabSet.description || "",
         icon: vocabSet.icon || "FaBookOpen",
         isPublic: vocabSet.isPublic || false,
+        isDraft: vocabSet.isDraft ?? true,
       };
       state.currentVocabSetId = vocabSet.id || null; // Set ID for editing
       // items will be set after population

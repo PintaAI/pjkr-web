@@ -5,12 +5,10 @@ import { auth } from '@/lib/auth'
 export async function GET(request: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: request.headers })
-    if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
-    }
+    const userId = session?.user?.id || null
 
     const searchParams = request.nextUrl.searchParams
-    const userId = searchParams.get('userId')
+    const userIdParam = searchParams.get('userId')
     const kelasId = searchParams.get('kelasId')
     const isPrivate = searchParams.get('isPrivate')
     const isDraft = searchParams.get('isDraft')
@@ -19,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     const where: any = {}
 
-    if (userId) where.userId = userId
+    if (userIdParam) where.userId = userIdParam
     if (kelasId) {
       where.kelasKoleksiSoals = {
         some: {
@@ -30,11 +28,22 @@ export async function GET(request: NextRequest) {
     if (isPrivate !== null) where.isPrivate = isPrivate === 'true'
     if (isDraft !== null) where.isDraft = isDraft === 'true'
 
-    // If no userId specified, only return user's own collections or public ones
-    if (!userId) {
+    // If no userId specified and user is not logged in, only return public, non-draft collections
+    if (!userIdParam && !userId) {
+      where.isPrivate = false
+      where.isDraft = false
+    }
+    // If no userId specified but user is logged in, return user's own collections (including drafts) or public non-draft ones
+    else if (!userIdParam && userId) {
       where.OR = [
-        { userId: session.user.id },
-        { isPrivate: false }
+        {
+          userId: userId,
+          // User can see their own collections regardless of draft/private status
+        },
+        {
+          isPrivate: false,
+          isDraft: false
+        }
       ]
     }
 

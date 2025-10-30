@@ -9,6 +9,7 @@ export interface VocabSet {
   description: string | null;
   icon: string | null;
   isPublic: boolean;
+  isDraft: boolean;
   createdAt: Date;
   items: Array<{
     id: number;

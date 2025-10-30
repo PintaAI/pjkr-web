@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { auth } from '@/lib/auth'
+import { canAccessKoleksiSoal } from '@/lib/access-control'
 
 export async function GET(request: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: request.headers })
-    if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
-    }
+    const userId = session?.user?.id || null
 
     const searchParams = request.nextUrl.searchParams
     const koleksiSoalId = searchParams.get('koleksiSoalId')
@@ -19,10 +18,37 @@ export async function GET(request: NextRequest) {
 
     const where: any = {}
 
-    if (koleksiSoalId) where.koleksiSoalId = parseInt(koleksiSoalId)
+    // If koleksiSoalId is specified, check access control first
+    if (koleksiSoalId) {
+      const koleksiSoalIdNum = parseInt(koleksiSoalId)
+      
+      // Check if user has access to this koleksi soal
+      const hasAccess = await canAccessKoleksiSoal(userId, koleksiSoalIdNum)
+      
+      console.log(`[DEBUG] User ${userId} requesting koleksiSoalId ${koleksiSoalIdNum}`)
+      console.log(`[DEBUG] Access result: ${hasAccess}`)
+      
+      if (!hasAccess) {
+        return NextResponse.json(
+          { success: false, error: 'Access denied to this question collection' },
+          { status: 403 }
+        )
+      }
+      
+      where.koleksiSoalId = koleksiSoalIdNum
+    }
+    
     if (authorId) where.authorId = authorId
     if (difficulty) where.difficulty = difficulty
     if (isActive !== null) where.isActive = isActive === 'true'
+    
+    // If user is not logged in, only return questions from public collections
+    if (!userId) {
+      where.koleksiSoal = {
+        isPrivate: false,
+        isDraft: false
+      }
+    }
 
     const soal = await prisma.soal.findMany({
       where,
@@ -40,6 +66,7 @@ export async function GET(request: NextRequest) {
             nama: true,
             deskripsi: true,
             isPrivate: true,
+            isDraft: false,
             user: {
               select: {
                 id: true,

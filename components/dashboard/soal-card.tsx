@@ -147,6 +147,11 @@ export function SoalCard({ soalSet, onClick, onDelete, compact = false }: SoalCa
                 {soalSet.soals.length} questions
               </span>
               <span>{new Date(soalSet.createdAt).toLocaleDateString()}</span>
+              {soalSet.user && (
+                <span className="inline-flex items-center gap-1">
+                  by {soalSet.user.name || 'Unknown'}
+                </span>
+              )}
             </div>
           </div>
         </div>

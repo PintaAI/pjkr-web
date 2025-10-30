@@ -180,6 +180,7 @@ export function VocabCollectionForm({ vocabSet, kelasId,  }: VocabCollectionForm
         description: formData.description || undefined,
         icon: formData.icon || undefined,
         isPublic: formData.isPublic,
+        isDraft: formData.isDraft,
         items: validItems,
       }, vocabSetIdToUse);
 
@@ -239,13 +240,23 @@ export function VocabCollectionForm({ vocabSet, kelasId,  }: VocabCollectionForm
                   </div>
                 )}
               </Label>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="isPublic" className="text-sm text-muted-foreground">Public</Label>
-                <Switch
-                  id="isPublic"
-                  checked={formData.isPublic}
-                  onCheckedChange={(checked) => setFormData({ isPublic: checked })}
-                />
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="isPublic" className="text-sm text-muted-foreground">Public</Label>
+                  <Switch
+                    id="isPublic"
+                    checked={formData.isPublic}
+                    onCheckedChange={(checked) => setFormData({ isPublic: checked })}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="isDraft" className="text-sm text-muted-foreground">Draft</Label>
+                  <Switch
+                    id="isDraft"
+                    checked={formData.isDraft}
+                    onCheckedChange={(checked) => setFormData({ isDraft: checked })}
+                  />
+                </div>
               </div>
             </div>
             <Input

@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
             title: true,
             type: true,
             level: true,
+            isDraft: true,
             author: {
               select: {
                 id: true,
@@ -46,11 +47,14 @@ export async function GET(request: NextRequest) {
       skip: offset
     })
 
+    // Filter out materis from draft kelas
+    const filteredMateris = materis.filter(materi => !materi.kelas.isDraft)
+
     return NextResponse.json({
       success: true,
-      data: materis,
+      data: filteredMateris,
       meta: {
-        total: materis.length,
+        total: filteredMateris.length,
         offset,
         limit
       }

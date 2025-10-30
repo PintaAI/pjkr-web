@@ -7,24 +7,33 @@ import { prisma } from '@/lib/db'
  * 2. A member of the kelas
  * 3. An admin (optional, can be added later)
  */
-export async function canAccessKelas(userId: string, kelasId: number): Promise<boolean> {
+export async function canAccessKelas(userId: string | null, kelasId: number): Promise<boolean> {
   try {
     const kelas = await prisma.kelas.findUnique({
       where: { id: kelasId },
       select: {
         id: true,
         authorId: true,
-        members: {
+        isDraft: true,
+        members: userId ? {
           where: { id: userId },
           select: { id: true }
-        }
+        } : undefined
       }
     })
     
     if (!kelas) return false
     
+    // For non-logged-in users, only allow access to non-draft kelas
+    if (!userId) {
+      return !kelas.isDraft
+    }
+    
+    // Don't allow access to draft kelas unless user is the author
+    if (kelas.isDraft && kelas.authorId !== userId) return false
+    
     // Allow access if user is author or member
-    return kelas.authorId === userId || kelas.members.length > 0
+    return kelas.authorId === userId || (kelas.members && kelas.members.length > 0)
   } catch (error) {
     console.error('Error checking kelas access:', error)
     return false
@@ -176,7 +185,7 @@ export async function canAccessVocabularySet(userId: string, vocabularySetId: nu
  * 2. A member of the kelas that the koleksi soal is associated with
  * 3. The koleksi soal is public
  */
-export async function canAccessKoleksiSoal(userId: string, koleksiSoalId: number): Promise<boolean> {
+export async function canAccessKoleksiSoal(userId: string | null, koleksiSoalId: number): Promise<boolean> {
   try {
     const koleksiSoal = await prisma.koleksiSoal.findUnique({
       where: { id: koleksiSoalId },
@@ -191,10 +200,10 @@ export async function canAccessKoleksiSoal(userId: string, koleksiSoalId: number
               select: {
                 id: true,
                 authorId: true,
-                members: {
+                members: userId ? {
                   where: { id: userId },
                   select: { id: true }
-                }
+                } : undefined
               }
             }
           }
@@ -202,23 +211,46 @@ export async function canAccessKoleksiSoal(userId: string, koleksiSoalId: number
       }
     })
 
-    if (!koleksiSoal) return false
+    if (!koleksiSoal) {
+      console.log(`[DEBUG] KoleksiSoal ${koleksiSoalId} not found`)
+      return false
+    }
 
     // Allow access if:
     // 1. User owns the koleksi soal
-    // 2. It's public (not private)
+    // 2. It's public (not private) and not draft
     // 3. User is member of associated kelas
     // 4. User is author of associated kelas
-    const isOwner = koleksiSoal.userId === userId
+    const isOwner = userId ? koleksiSoal.userId === userId : false
     const isPublic = !koleksiSoal.isPrivate
-    const isKelasMember = koleksiSoal.kelasKoleksiSoals?.some(kk =>
-      kk.kelas.members.length > 0 || kk.kelas.authorId === userId
-    )
+    const isKelasMember = userId && koleksiSoal.kelasKoleksiSoals?.some(kk =>
+      (kk.kelas.members && kk.kelas.members.length > 0) || kk.kelas.authorId === userId
+    ) || false
+
+    console.log(`[DEBUG] KoleksiSoal ${koleksiSoalId} access check for user ${userId}:`)
+    console.log(`[DEBUG] - isOwner: ${isOwner}`)
+    console.log(`[DEBUG] - isPublic: ${isPublic}`)
+    console.log(`[DEBUG] - isDraft: ${koleksiSoal.isDraft}`)
+    console.log(`[DEBUG] - isKelasMember: ${isKelasMember}`)
+    console.log(`[DEBUG] - kelasKoleksiSoals count: ${koleksiSoal.kelasKoleksiSoals?.length || 0}`)
+
+    // For non-logged-in users, only allow access to public, non-draft collections
+    if (!userId) {
+      const result = isPublic && !koleksiSoal.isDraft
+      console.log(`[DEBUG] Non-logged-in user access result: ${result}`)
+      return result
+    }
 
     // Don't allow access to draft collections unless user is owner or kelas member
-    if (koleksiSoal.isDraft && !isOwner && !isKelasMember) return false
+    if (koleksiSoal.isDraft && !isOwner && !isKelasMember) {
+      console.log(`[DEBUG] Draft collection access denied for non-owner/non-member`)
+      return false
+    }
 
-    return isOwner || isPublic || isKelasMember
+    // Only allow access if user is owner or kelas member (remove public access)
+    const finalResult = isOwner || isKelasMember
+    console.log(`[DEBUG] Final access result: ${finalResult}`)
+    return finalResult
   } catch (error) {
     console.error('Error checking koleksi soal access:', error)
     return false
@@ -264,6 +296,127 @@ export async function canModifyKoleksiSoal(userId: string, koleksiSoalId: number
     return isOwner || isKelasAuthor
   } catch (error) {
     console.error('Error checking koleksi soal modification access:', error)
+    return false
+  }
+}
+
+/**
+ * Check if user can access soal (question)
+ * User can access if they are:
+ * 1. The author of the soal
+ * 2. The owner of the koleksi soal that contains the soal
+ * 3. A member of the kelas associated with the koleksi soal
+ * 4. The author of the kelas associated with the koleksi soal
+ * 5. The koleksi soal is public (not private) and not draft
+ */
+export async function canAccessSoal(userId: string | null, soalId: number): Promise<boolean> {
+  try {
+    const soal = await prisma.soal.findUnique({
+      where: { id: soalId },
+      select: {
+        id: true,
+        isActive: true,
+        authorId: true,
+        koleksiSoal: {
+          select: {
+            id: true,
+            isPrivate: true,
+            isDraft: true,
+            userId: true,
+            kelasKoleksiSoals: {
+              include: {
+                kelas: {
+                  select: {
+                    id: true,
+                    authorId: true,
+                    members: userId ? {
+                      where: { id: userId },
+                      select: { id: true }
+                    } : undefined
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+
+    if (!soal || !soal.isActive) return false
+
+    // For non-logged-in users, only allow access to public, non-draft collections
+    if (!userId) {
+      return !soal.koleksiSoal.isPrivate && !soal.koleksiSoal.isDraft
+    }
+
+    // Allow access if:
+    // 1. User authored the soal
+    // 2. User owns the koleksi soal
+    // 3. It's public (not private) and not draft
+    // 4. User is member of associated kelas
+    // 5. User is author of associated kelas
+    const isAuthor = soal.authorId === userId
+    const isKoleksiOwner = soal.koleksiSoal.userId === userId
+    const isPublic = !soal.koleksiSoal.isPrivate && !soal.koleksiSoal.isDraft
+    const isKelasMember = soal.koleksiSoal.kelasKoleksiSoals?.some(kk =>
+      (kk.kelas.members && kk.kelas.members.length > 0) || kk.kelas.authorId === userId
+    ) || false
+
+    return isAuthor || isKoleksiOwner || isPublic || isKelasMember
+  } catch (error) {
+    console.error('Error checking soal access:', error)
+    return false
+  }
+}
+
+/**
+ * Check if user can modify soal (question)
+ * User can modify if they are:
+ * 1. The author of the soal
+ * 2. The owner of the koleksi soal that contains the soal
+ * 3. The author of the kelas associated with the koleksi soal
+ */
+export async function canModifySoal(userId: string, soalId: number): Promise<boolean> {
+  try {
+    const soal = await prisma.soal.findUnique({
+      where: { id: soalId },
+      select: {
+        id: true,
+        authorId: true,
+        koleksiSoal: {
+          select: {
+            id: true,
+            userId: true,
+            kelasKoleksiSoals: {
+              include: {
+                kelas: {
+                  select: {
+                    id: true,
+                    authorId: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+
+    if (!soal) return false
+
+    // Allow modification if:
+    // 1. User authored the soal
+    // 2. User owns the koleksi soal
+    // 3. User is author of associated kelas
+    const isAuthor = soal.authorId === userId
+    const isKoleksiOwner = soal.koleksiSoal.userId === userId
+    const isKelasAuthor = soal.koleksiSoal.kelasKoleksiSoals?.some(kk =>
+      kk.kelas.authorId === userId
+    ) || false
+
+    return isAuthor || isKoleksiOwner || isKelasAuthor
+  } catch (error) {
+    console.error('Error checking soal modification access:', error)
     return false
   }
 }
