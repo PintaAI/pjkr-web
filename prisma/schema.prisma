@@ -112,6 +112,7 @@ model User {
   lastActive    DateTime? @default(now())
   // Core user stats - simplified
   currentStreak Int       @default(0)
+  longestStreak Int       @default(0)
   xp            Int       @default(0)
   level         Int       @default(1)
 
@@ -149,6 +150,7 @@ model User {
 
   // Activity tracking
   activityLogs  ActivityLog[]
+  streakHistory StreakHistory[]
   subscriptions Subscription[]
 
   @@map("user")
@@ -726,4 +728,21 @@ model ActivityLog {
   @@index([userId, createdAt])
   @@index([type, createdAt])
   @@index([xpEarned])
+}
+
+// Streak history for tracking user's streak progression
+
+model StreakHistory {
+  id            String   @id @default(cuid())
+  userId        String
+  streakDate    DateTime @default(now())
+  streakLength  Int      @default(1)
+  isCurrent     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, streakDate])
+  @@index([userId])
+  @@index([streakDate])
+  @@index([isCurrent])
 }

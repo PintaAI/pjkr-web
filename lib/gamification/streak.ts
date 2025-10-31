@@ -61,21 +61,34 @@ export function hasLostStreak(lastActiveDate: Date | null): boolean {
  * Update a user's streak based on their activity
  * @param currentStreakData The current streak data
  * @param activeToday Whether the user was active today
+ * @param userTimeZone Optional user timezone (e.g., 'Asia/Jakarta')
  * @returns Updated streak data
  */
 export function updateStreak(
   currentStreakData: StreakData,
-  activeToday: boolean = true
+  activeToday: boolean = true,
+  userTimeZone?: string
 ): StreakData {
   const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const lastActiveDate = currentStreakData.lastActiveDate 
-    ? new Date(currentStreakData.lastActiveDate) 
+  
+  // Use user timezone if provided, otherwise use server time
+  const userNow = userTimeZone
+    ? new Date(now.toLocaleString("en-US", { timeZone: userTimeZone }))
+    : now;
+  
+  const today = new Date(userNow.getFullYear(), userNow.getMonth(), userNow.getDate());
+  const lastActiveDate = currentStreakData.lastActiveDate
+    ? new Date(currentStreakData.lastActiveDate)
     : null;
+  
+  // Convert last active date to user timezone if provided
+  const userLastActive = userTimeZone && lastActiveDate
+    ? new Date(lastActiveDate.toLocaleString("en-US", { timeZone: userTimeZone }))
+    : lastActiveDate;
   
   if (!activeToday) {
     // User wasn't active today, check if streak is lost
-    if (hasLostStreak(lastActiveDate)) {
+    if (hasLostStreak(userLastActive)) {
       return {
         currentStreak: 0,
         lastActiveDate: null,
@@ -87,7 +100,7 @@ export function updateStreak(
   }
 
   // User was active today
-  if (!lastActiveDate) {
+  if (!userLastActive) {
     // First time activity
     return {
       currentStreak: 1,
@@ -97,11 +110,28 @@ export function updateStreak(
     };
   }
 
-  const lastActiveDay = new Date(
-    lastActiveDate.getFullYear(), 
-    lastActiveDate.getMonth(), 
-    lastActiveDate.getDate()
-  );
+  // Check if streak is lost based on 24-hour window
+  if (hasLostStreak(userLastActive)) {
+    // Streak lost, start new streak
+    return {
+      currentStreak: 1,
+      lastActiveDate: today,
+      longestStreak: currentStreakData.longestStreak,
+      streakHistory: [...currentStreakData.streakHistory, today],
+    };
+  }
+
+  const lastActiveDay = userTimeZone && userLastActive
+    ? new Date(
+        userLastActive.getFullYear(),
+        userLastActive.getMonth(),
+        userLastActive.getDate()
+      )
+    : new Date(
+        userLastActive.getFullYear(),
+        userLastActive.getMonth(),
+        userLastActive.getDate()
+      );
 
   if (lastActiveDay.getTime() === today.getTime()) {
     // Already active today

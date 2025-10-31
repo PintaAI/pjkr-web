@@ -16,11 +16,18 @@ import {
   StreakData
 } from '@/lib/gamification/streak'
 
+// Simple in-memory lock for preventing race conditions
+const processingLocks = new Map<string, { timestamp: number }>();
+
+const LOCK_TIMEOUT = 30000; // 30 seconds timeout
+
 // POST /api/gamification/events - Process gamified user actions
 export async function POST(request: NextRequest) {
+  let session: any;
+  
   try {
     // Get authenticated session
-    const session = await auth.api.getSession({
+    session = await auth.api.getSession({
       headers: await headers()
     });
 
@@ -30,6 +37,20 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       )
     }
+
+    // Check for existing lock to prevent race conditions
+    const existingLock = processingLocks.get(session.user.id);
+    const now = Date.now();
+    
+    if (existingLock && (now - existingLock.timestamp) < LOCK_TIMEOUT) {
+      return NextResponse.json(
+        { success: false, error: 'Request already in progress' },
+        { status: 429 }
+      )
+    }
+
+    // Set lock
+    processingLocks.set(session.user.id, { timestamp: now });
 
     // Parse request body
     const body = await request.json()
@@ -51,6 +72,7 @@ export async function POST(request: NextRequest) {
         xp: true,
         level: true,
         currentStreak: true,
+        longestStreak: true,
         lastActive: true
       }
     })
@@ -62,12 +84,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Get current streak history
+    const currentStreakHistory = await prisma.streakHistory.findMany({
+      where: { userId: session.user.id },
+      orderBy: { streakDate: 'desc' },
+      take: 1
+    });
+
     // Prepare user game data for reward processing
     const streakData: StreakData = {
       currentStreak: user.currentStreak,
       lastActiveDate: user.lastActive,
-      longestStreak: user.currentStreak, // We'll need to track this separately in a real implementation
-      streakHistory: [] // This would need to be tracked separately
+      longestStreak: user.longestStreak || user.currentStreak,
+      streakHistory: currentStreakHistory.map(h => h.streakDate)
     }
 
     const userData: UserGameData = {
@@ -75,43 +104,89 @@ export async function POST(request: NextRequest) {
       streakData
     }
 
-    // Process the reward
-    const rewardResult = processReward(event, userData)
+    // Process the reward with timezone awareness
+    const rewardResult = processReward(event, userData, true)
 
     // Get the base XP for the event
     const baseXP = getEventXP(event)
 
+    // Map GameEvent to ActivityType
+    const mapGameEventToActivityType = (gameEvent: GameEvent): ActivityType => {
+      const eventMap: Record<GameEvent, ActivityType> = {
+        COMPLETE_MATERI: ActivityType.COMPLETE_MATERI,
+        COMPLETE_SOAL: ActivityType.COMPLETE_QUIZ,
+        COMPLETE_VOCABULARY: ActivityType.VOCABULARY_PRACTICE,
+        DAILY_LOGIN: ActivityType.LOGIN,
+        CREATE_POST: ActivityType.CREATE_POST,
+        LIKE_POST: ActivityType.LIKE_POST,
+        COMMENT_POST: ActivityType.COMMENT_POST,
+        JOIN_KELAS: ActivityType.OTHER, // No direct equivalent in ActivityType
+        COMPLETE_ASSESSMENT: ActivityType.COMPLETE_QUIZ, // Using COMPLETE_QUIZ as closest equivalent
+        PERFECT_SCORE: ActivityType.OTHER, // No direct equivalent in ActivityType
+        STREAK_MILESTONE: ActivityType.OTHER, // No direct equivalent in ActivityType
+      };
+      
+      return eventMap[gameEvent] || ActivityType.OTHER;
+    };
+
     // Start a transaction for data consistency
     const result = await prisma.$transaction(async (tx) => {
+      let totalXPEarned = rewardResult.totalXP;
+      
+      // Check for streak milestone and award bonus if reached
+      if (rewardResult.streakMilestoneReached) {
+        const milestoneXP = rewardResult.streakData.currentStreak * 10 // 10 XP per streak day
+        totalXPEarned += milestoneXP;
+
+        await tx.activityLog.create({
+          data: {
+            userId: session.user.id,
+            type: ActivityType.OTHER,
+            description: `Streak milestone: ${rewardResult.streakData.currentStreak} days`,
+            xpEarned: milestoneXP,
+            metadata: {
+              type: 'STREAK_MILESTONE',
+              streak: rewardResult.streakData.currentStreak
+            }
+          }
+        })
+      }
+
       // Update user's XP, level, and streak
       const updatedUser = await tx.user.update({
         where: { id: session.user.id },
         data: {
-          xp: rewardResult.levelProgress.totalXP,
+          xp: rewardResult.levelProgress.totalXP + (rewardResult.streakMilestoneReached ? rewardResult.streakData.currentStreak * 10 : 0),
           level: rewardResult.levelProgress.currentLevel,
           currentStreak: rewardResult.streakData.currentStreak,
+          longestStreak: Math.max(user.longestStreak || 0, rewardResult.streakData.currentStreak),
           lastActive: new Date()
         }
       })
 
-      // Map GameEvent to ActivityType
-      const mapGameEventToActivityType = (gameEvent: GameEvent): ActivityType => {
-        const eventMap: Record<GameEvent, ActivityType> = {
-          COMPLETE_MATERI: ActivityType.COMPLETE_MATERI,
-          COMPLETE_SOAL: ActivityType.COMPLETE_QUIZ,
-          COMPLETE_VOCABULARY: ActivityType.VOCABULARY_PRACTICE,
-          DAILY_LOGIN: ActivityType.LOGIN,
-          CREATE_POST: ActivityType.CREATE_POST,
-          LIKE_POST: ActivityType.LIKE_POST,
-          COMMENT_POST: ActivityType.COMMENT_POST,
-          JOIN_KELAS: ActivityType.OTHER, // No direct equivalent in ActivityType
-          COMPLETE_ASSESSMENT: ActivityType.COMPLETE_QUIZ, // Using COMPLETE_QUIZ as closest equivalent
-          PERFECT_SCORE: ActivityType.OTHER, // No direct equivalent in ActivityType
-          STREAK_MILESTONE: ActivityType.OTHER, // No direct equivalent in ActivityType
-        };
-        
-        return eventMap[gameEvent] || ActivityType.OTHER;
-      };
+      // Update streak history if streak changed
+      if (rewardResult.streakData.currentStreak !== user.currentStreak) {
+        // Mark previous current streak as not current
+        if (currentStreakHistory.length > 0) {
+          await tx.streakHistory.updateMany({
+            where: {
+              userId: session.user.id,
+              isCurrent: true
+            },
+            data: { isCurrent: false }
+          });
+        }
+
+        // Create new streak history entry
+        await tx.streakHistory.create({
+          data: {
+            userId: session.user.id,
+            streakDate: new Date(),
+            streakLength: rewardResult.streakData.currentStreak,
+            isCurrent: true
+          }
+        });
+      }
 
       // Create activity log entry
       const activityLog = await tx.activityLog.create({
@@ -129,34 +204,10 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      // Check for streak milestone and award bonus if reached
-      if (rewardResult.streakMilestoneReached) {
-        const milestoneXP = rewardResult.streakData.currentStreak * 10 // 10 XP per streak day
-        
-        await tx.user.update({
-          where: { id: session.user.id },
-          data: {
-            xp: updatedUser.xp + milestoneXP
-          }
-        })
-
-        await tx.activityLog.create({
-          data: {
-            userId: session.user.id,
-            type: ActivityType.OTHER,
-            description: `Streak milestone: ${rewardResult.streakData.currentStreak} days`,
-            xpEarned: milestoneXP,
-            metadata: {
-              type: 'STREAK_MILESTONE',
-              streak: rewardResult.streakData.currentStreak
-            }
-          }
-        })
-      }
-
       return {
         user: updatedUser,
-        activityLog
+        activityLog,
+        totalXPEarned
       }
     })
 
@@ -192,5 +243,10 @@ export async function POST(request: NextRequest) {
       { success: false, error: 'Failed to process gamification event' },
       { status: 500 }
     )
+  } finally {
+    // Always release the lock if userId exists
+    if (session?.user?.id) {
+      processingLocks.delete(session.user.id);
+    }
   }
 }
