@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { auth } from '@/lib/auth'
-import { canAccessKoleksiSoal, canModifyKoleksiSoal } from '@/lib/access-control'
+import { canAccessKoleksiSoal, canModifyKoleksiSoal, canAccessKoleksiSoalForPractice } from '@/lib/access-control'
 
 export async function GET(
   request: NextRequest,
@@ -21,6 +21,27 @@ export async function GET(
         { success: false, error: 'Invalid koleksi soal ID' },
         { status: 400 }
       )
+    }
+
+    // Get query parameters including kelasId for practice access
+    const { searchParams } = new URL(request.url)
+    const kelasIdParam = searchParams.get('kelasId')
+    const kelasId = kelasIdParam ? parseInt(kelasIdParam) : null
+
+    // If kelasId is provided, check practice access specifically
+    if (kelasId && !isNaN(kelasId)) {
+      const hasPracticeAccess = await canAccessKoleksiSoalForPractice(
+        session.user.id,
+        koleksiSoalId,
+        kelasId
+      )
+
+      if (!hasPracticeAccess) {
+        return NextResponse.json(
+          { success: false, error: 'Access denied: not enrolled in class' },
+          { status: 403 }
+        )
+      }
     }
 
     const koleksiSoal = await prisma.koleksiSoal.findUnique({
@@ -103,14 +124,16 @@ export async function GET(
       )
     }
 
-    // Check if user has access to this koleksi soal
-    const hasAccess = await canAccessKoleksiSoal(session.user.id, koleksiSoalId)
+    // If no kelasId provided, use the general access check
+    if (!kelasId) {
+      const hasAccess = await canAccessKoleksiSoal(session.user.id, koleksiSoalId)
 
-    if (!hasAccess) {
-      return NextResponse.json(
-        { success: false, error: 'Access denied' },
-        { status: 403 }
-      )
+      if (!hasAccess) {
+        return NextResponse.json(
+          { success: false, error: 'Access denied' },
+          { status: 403 }
+        )
+      }
     }
 
     return NextResponse.json({

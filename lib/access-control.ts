@@ -258,6 +258,64 @@ export async function canAccessKoleksiSoal(userId: string | null, koleksiSoalId:
 }
 
 /**
+ * Check if user can access koleksi soal for practice
+ * User can access for practice if they are enrolled in a class that uses this koleksi soal
+ */
+export async function canAccessKoleksiSoalForPractice(userId: string | null, koleksiSoalId: number, kelasId: number): Promise<boolean> {
+  try {
+    // First check if user is authenticated
+    if (!userId) {
+      console.log(`[DEBUG] Practice access denied: no user ID provided`)
+      return false
+    }
+
+    // Check if the kelas exists and user is enrolled in it
+    const kelas = await prisma.kelas.findUnique({
+      where: { id: kelasId },
+      select: {
+        id: true,
+        authorId: true,
+        members: {
+          where: { id: userId },
+          select: { id: true }
+        }
+      }
+    })
+
+    if (!kelas) {
+      console.log(`[DEBUG] Practice access denied: kelas ${kelasId} not found`)
+      return false
+    }
+
+    // Check if user is enrolled in the kelas (member or author)
+    const isEnrolled = kelas.authorId === userId || (kelas.members && kelas.members.length > 0)
+    if (!isEnrolled) {
+      console.log(`[DEBUG] Practice access denied: user ${userId} not enrolled in kelas ${kelasId}`)
+      return false
+    }
+
+    // Check if the koleksi soal is associated with this kelas
+    const kelasKoleksiSoal = await prisma.kelasKoleksiSoal.findFirst({
+      where: {
+        kelasId: kelasId,
+        koleksiSoalId: koleksiSoalId
+      }
+    })
+
+    if (!kelasKoleksiSoal) {
+      console.log(`[DEBUG] Practice access denied: koleksi soal ${koleksiSoalId} not associated with kelas ${kelasId}`)
+      return false
+    }
+
+    console.log(`[DEBUG] Practice access granted: user ${userId} enrolled in kelas ${kelasId} with koleksi soal ${koleksiSoalId}`)
+    return true
+  } catch (error) {
+    console.error('Error checking koleksi soal practice access:', error)
+    return false
+  }
+}
+
+/**
  * Check if user can modify koleksi soal (question collection)
  * User can modify if they are:
  * 1. The owner of the koleksi soal
