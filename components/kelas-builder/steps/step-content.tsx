@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LessonForm } from "./add-lesson-form";
 import {
   FileText,
@@ -90,9 +91,18 @@ function SortableMateriItem({
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-base truncate">{materi.title}</h3>
-                <p className="text-sm text-muted-foreground truncate mt-1">
-                  {materi.description}
-                </p>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p className="text-sm text-muted-foreground line-clamp-2 mt-1 cursor-help">
+                        {materi.description}
+                      </p>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-md">
+                      <p className="text-sm">{materi.description}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 {materi.koleksiSoalId && (
                   <div className="flex items-center gap-1 mt-2">
                     <Badge variant="secondary" className="text-xs">
