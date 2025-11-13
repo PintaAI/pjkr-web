@@ -245,6 +245,7 @@ export const useKelasBuilderStore = create<Store>()(
               meta: false,
               content: false,
               resources: false,
+              members: false,
               review: false,
             },
             optimisticUpdates: {},

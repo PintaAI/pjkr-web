@@ -17,7 +17,8 @@ import {
   AlertCircle,
   ArrowLeft,
   Eye,
-  Archive
+  Archive,
+  Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +44,12 @@ const steps = [
     title: 'Koneksi Sumber Belajar',
     description: 'Hubungkan kosakata dan soal ke kelas',
     icon: BookOpen,
+  },
+  {
+    id: 'members',
+    title: 'Kelola Anggota',
+    description: 'Tambahkan anggota ke kelas',
+    icon: Users,
   },
   {
     id: 'review',
@@ -114,6 +121,10 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
       case 'resources':
         // Resources step is optional
         return { hasRequiredData: true, message: 'Optional: Connect vocabulary and question sets' };
+
+      case 'members':
+        // Members step is optional
+        return { hasRequiredData: true, message: 'Optional: Add members by email' };
 
       case 'review':
         const metaComplete = meta.title.trim() !== '' && meta.description;

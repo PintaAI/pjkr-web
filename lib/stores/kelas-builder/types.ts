@@ -32,7 +32,7 @@ export interface MateriData {
 }
 
 // The steps in the builder UI
-export type BuilderStep = 'meta' | 'content' | 'resources' | 'review';
+export type BuilderStep = 'meta' | 'content' | 'resources' | 'members' | 'review';
 
 export type ActionResult<T> =
   | { success: true; data: T }
