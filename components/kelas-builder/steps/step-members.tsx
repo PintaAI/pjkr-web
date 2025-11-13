@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useKelasBuilderStore } from "@/lib/stores/kelas-builder";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Users,
@@ -35,16 +34,9 @@ export function StepMembers() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Load members when component mounts or draftId changes
-  useEffect(() => {
-    if (draftId) {
-      loadMembers();
-    }
-  }, [draftId]);
-
-  const loadMembers = async () => {
+  const loadMembers = useCallback(async () => {
     if (!draftId) return;
-    
+
     setIsLoading(true);
     try {
       const result = await getKelasMembers(draftId);
@@ -54,12 +46,19 @@ export function StepMembers() {
       } else {
         setError(result.error || "Failed to load members");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to load members");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [draftId]);
+
+  // Load members when component mounts or draftId changes
+  useEffect(() => {
+    if (draftId) {
+      loadMembers();
+    }
+  }, [draftId, loadMembers]);
 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +70,7 @@ export function StepMembers() {
 
     try {
       const result = await addMemberByEmail({ email: email.trim(), kelasId: draftId });
-      
+
       if (result.success) {
         setSuccess(result.message || "Member added successfully");
         setEmail("");
@@ -80,7 +79,7 @@ export function StepMembers() {
       } else {
         setError(result.error || "Failed to add member");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to add member");
     } finally {
       setIsLoading(false);
@@ -96,7 +95,7 @@ export function StepMembers() {
 
     try {
       const result = await removeMemberFromKelas(draftId, memberId);
-      
+
       if (result.success) {
         setSuccess(result.message || "Member removed successfully");
         // Reload members list
@@ -104,7 +103,7 @@ export function StepMembers() {
       } else {
         setError(result.error || "Failed to remove member");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to remove member");
     } finally {
       setIsLoading(false);
@@ -250,8 +249,8 @@ export function StepMembers() {
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          <strong>Note:</strong> Members added here will be able to access this class immediately after it's published.
-          You can only add users who are already registered in the system.
+          <strong>Note:</strong> member yang ditambahkan akan memiliki akses penuh ke
+          kelas ini, termasuk materi dan sumber daya yang ada di dalamnya.
         </AlertDescription>
       </Alert>
     </div>
