@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { KelasBuilderState, BuilderStep } from './types';
 
-const stepOrder: BuilderStep[] = ['meta', 'content', 'resources', 'review'];
+const stepOrder: BuilderStep[] = ['meta', 'content', 'resources', 'members', 'review'];
 
 export interface Navigation {
   currentStep: BuilderStep;
@@ -23,6 +23,7 @@ export const createNavigation: StateCreator<
     meta: false,
     content: false,
     resources: false,
+    members: false,
     review: false,
   },
   // Helper function to ensure draft exists before navigation
