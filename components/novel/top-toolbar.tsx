@@ -20,6 +20,7 @@ import {
   Trash,
   ImageIcon,
   Youtube,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -355,6 +356,86 @@ export const TopToolbar = () => {
         className="h-8 w-8 p-0"
       >
         <Youtube className="h-4 w-4" />
+      </Button>
+
+      {/* PDF */}
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        onClick={() => {
+          const input = document.createElement("input");
+          input.type = "file";
+          input.accept = "application/pdf";
+          input.onchange = async (event) => {
+            const file = (event.target as HTMLInputElement).files?.[0];
+            if (file) {
+              if (!file.type.includes("pdf")) {
+                toast.error("Please select a PDF file.");
+                return;
+              }
+              if (file.size / 1024 / 1024 > 20) {
+                toast.error("File size too big (max 20MB).");
+                return;
+              }
+
+              const formData = new FormData();
+              formData.append("file", file);
+              formData.append("type", "document");
+              formData.append("folder", "editor");
+
+              const uploadPromise = fetch("/api/upload", {
+                method: "POST",
+                body: formData,
+              });
+
+              toast.promise(
+                uploadPromise.then(async (res) => {
+                  if (res.status === 200) {
+                    const result = await res.json();
+                    if (result.success && result.data?.url) {
+                      const filename = file.name;
+                      const fileSize = file.size;
+                      
+                      editor
+                        .chain()
+                        .focus()
+                        .insertContent({
+                          type: 'pdf',
+                          attrs: {
+                            src: result.data.url,
+                            filename: filename,
+                            size: fileSize,
+                          },
+                        })
+                        .run();
+                    } else {
+                      throw new Error(result.error || "Upload failed");
+                    }
+                  } else {
+                    const errorResult = await res.json().catch(() => ({}));
+                    throw new Error(errorResult.error || "Error uploading PDF. Please try again.");
+                  }
+                }),
+                {
+                  loading: "Uploading PDF...",
+                  success: "PDF uploaded successfully.",
+                  error: (e) => {
+                    if (e instanceof Error) {
+                      return e.message;
+                    }
+                    return "Error uploading PDF. Please try again.";
+                  },
+                }
+              );
+            }
+          };
+          input.click();
+        }}
+        className="h-8 gap-1 px-2"
+      >
+        <FileText className="h-4 w-4" />
+        <span className="text-xs">PDF</span>
       </Button>
     </div>
   );
