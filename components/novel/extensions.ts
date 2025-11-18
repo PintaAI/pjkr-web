@@ -21,6 +21,7 @@ import {
 } from "novel";
 
 import { YoutubeExtension } from "@/lib/editor/extensions/youtube";
+import { PdfExtension } from "@/components/novel/pdf-extension";
 import { cx } from "class-variance-authority";
 import { common, createLowlight } from "lowlight";
 
@@ -158,6 +159,7 @@ export const defaultExtensions = [
   codeBlockLowlight,
   twitter,
   YoutubeExtension,
+  PdfExtension,
   mathematics,
   characterCount,
   TiptapUnderline,

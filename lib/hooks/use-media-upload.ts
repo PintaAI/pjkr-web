@@ -24,6 +24,7 @@ const getUploadType = (file: File): string => {
   if (file.type.startsWith('image/')) return 'image';
   if (file.type.startsWith('video/')) return 'video';
   if (file.type.startsWith('audio/')) return 'audio';
+  if (file.type.includes('pdf')) return 'document';
   return 'document';
 };
 

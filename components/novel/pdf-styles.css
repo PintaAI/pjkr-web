@@ -1,0 +1,95 @@
+/* PDF Embed Styles */
+.pdf-node-view {
+  @apply my-4 rounded-lg border border-border bg-card;
+}
+
+.pdf-embed-wrapper {
+  @apply space-y-3;
+}
+
+.pdf-preview {
+  @apply relative;
+}
+
+.pdf-iframe {
+  @apply w-full rounded-lg;
+}
+
+.pdf-info-bar {
+  @apply flex items-center justify-between p-3 bg-muted border-t border-border;
+}
+
+.pdf-details {
+  @apply flex items-center space-x-2;
+}
+
+.pdf-icon {
+  @apply text-lg;
+}
+
+.pdf-filename {
+  @apply font-medium text-foreground;
+}
+
+.pdf-size {
+  @apply text-sm text-muted-foreground;
+}
+
+.pdf-actions {
+  @apply flex space-x-2;
+}
+
+.pdf-action-btn {
+  @apply px-3 py-1.5 text-sm font-medium rounded-md transition-colors;
+  @apply bg-primary text-primary-foreground hover:bg-primary/90;
+}
+
+.pdf-view {
+  @apply text-blue-600 hover:text-blue-800;
+}
+
+.pdf-download {
+  @apply bg-green-600 text-white hover:bg-green-700;
+}
+
+/* Fallback styles for when rendered as HTML */
+.pdf-embed {
+  @apply my-4 p-4 border border-border rounded-lg bg-card;
+}
+
+.pdf-placeholder {
+  @apply flex items-center space-x-3 p-4 bg-muted rounded-lg;
+}
+
+.pdf-icon {
+  @apply text-2xl;
+}
+
+.pdf-info {
+  @apply space-y-1;
+}
+
+.pdf-filename {
+  @apply font-medium text-foreground;
+}
+
+.pdf-size {
+  @apply text-sm text-muted-foreground;
+}
+
+.pdf-actions {
+  @apply flex space-x-2 pt-2;
+}
+
+.pdf-view-btn,
+.pdf-download-btn {
+  @apply px-3 py-1.5 text-sm font-medium rounded-md transition-colors;
+}
+
+.pdf-view-btn {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90;
+}
+
+.pdf-download-btn {
+  @apply bg-green-600 text-white hover:bg-green-700;
+}

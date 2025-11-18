@@ -9,6 +9,7 @@ import {
   Text,
   TextQuote,
   Youtube,
+  FileText,
 } from "lucide-react";
 import { createSuggestionItems, Command, renderItems } from "novel";
 import { toast } from "sonner";
@@ -192,6 +193,87 @@ export const suggestionItems = createSuggestionItems([
         .toggleNode("paragraph", "paragraph")
         .toggleBlockquote()
         .run(),
+  },
+  {
+    title: "PDF",
+    description: "Upload and embed a PDF document.",
+    searchTerms: ["pdf", "document", "file"],
+    icon: <FileText size={18} />,
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).run();
+      
+      // Create file input
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "application/pdf";
+      input.onchange = async (event) => {
+        const file = (event.target as HTMLInputElement).files?.[0];
+        if (file) {
+          // Validate file
+          if (!file.type.includes("pdf")) {
+            toast.error("Please select a PDF file.");
+            return;
+          }
+          if (file.size / 1024 / 1024 > 20) {
+            toast.error("File size too big (max 20MB).");
+            return;
+          }
+
+          // Create FormData for Cloudinary upload
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("type", "document");
+          formData.append("folder", "editor");
+
+          const uploadPromise = fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          toast.promise(
+            uploadPromise.then(async (res) => {
+              if (res.status === 200) {
+                const result = await res.json();
+                if (result.success && result.data?.url) {
+                  // Extract filename from file object
+                  const filename = file.name;
+                  const fileSize = file.size;
+                  
+                  editor
+                    .chain()
+                    .focus()
+                    .insertContent({
+                      type: 'pdf',
+                      attrs: {
+                        src: result.data.url,
+                        filename: filename,
+                        size: fileSize,
+                      },
+                    })
+                    .run();
+                } else {
+                  throw new Error(result.error || "Upload failed");
+                }
+              } else {
+                const errorResult = await res.json().catch(() => ({}));
+                throw new Error(errorResult.error || "Error uploading PDF. Please try again.");
+              }
+            }),
+            {
+              loading: "Uploading PDF...",
+              success: "PDF uploaded successfully.",
+              error: (e) => {
+                if (e instanceof Error) {
+                  return e.message;
+                }
+                return "Error uploading PDF. Please try again.";
+              },
+            }
+          );
+        }
+      };
+      input.click();
+    },
   },
 ]);
 

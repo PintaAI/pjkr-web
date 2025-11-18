@@ -337,6 +337,8 @@ export function StepMeta() {
                       <NovelEditor
                         initialContent={watch("jsonDescription")}
                         onUpdate={(data: { json: any; html: string }) => {
+                          console.log("📄 Novel Editor Update - JSON Description:", JSON.stringify(data.json, null, 2));
+                          console.log("📄 Novel Editor Update - Has PDF node:", data.json?.content?.some((node: any) => node.type === 'pdf'));
                           form.setValue("jsonDescription", data.json, { shouldTouch: true, shouldDirty: true });
                           form.setValue("htmlDescription", data.html, { shouldTouch: true, shouldDirty: true });
                         }}

@@ -24,14 +24,30 @@ export async function POST(request: NextRequest) {
     const baseOptions = uploadOptions[uploadType as keyof typeof uploadOptions] || uploadOptions.image;
 
     // Set public_id if provided, else default
-    const publicId = customPublicId || `${uploadType}_${Date.now()}`;
+    let publicId = customPublicId || `${uploadType}_${Date.now()}`;
+    
+    // Add extension for PDFs
+    if (file.type === 'application/pdf') {
+      publicId = publicId + '.pdf';
+    }
 
     // Build options with overrides
-    const options = {
+    const options: any = {
       ...baseOptions,
       public_id: publicId,
       ...(customFolder ? { folder: `pjkr/${customFolder}` } : {}),
     };
+    
+    // Special handling for PDF files
+    if (file.type === 'application/pdf') {
+      // Override folder for PDFs to ensure proper organization
+      options.folder = 'pjkr/kelas-materials';
+      // Ensure it's uploaded as raw (for binary files like PDF)
+      options.resource_type = 'raw';
+      // Make it publicly accessible
+      options.access_mode = 'public';
+      options.type = 'upload';
+    }
 
     // Upload to Cloudinary using stream for buffer
     const result = await new Promise<any>((resolve, reject) => {
@@ -54,7 +70,6 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Upload error:', error);
     return NextResponse.json(
       { success: false, error: 'Upload failed' },
       { status: 500 }
@@ -112,7 +127,6 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('List resources error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to list resources' },
       { status: 500 }
@@ -146,7 +160,6 @@ export async function DELETE(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Delete error:', error);
     return NextResponse.json(
       { success: false, error: 'Delete failed' },
       { status: 500 }
