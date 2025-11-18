@@ -64,7 +64,7 @@ export const PdfNodeView = ({ node }: any) => {
             <div className="flex flex-col items-center justify-center h-full gap-4 text-center p-8">
               <FileText className="h-16 w-16 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
-                Your browser doesn't support PDF viewing.
+                Your browser doesn&apos;t support PDF viewing.
               </p>
               <button
                 onClick={() => window.open(src, "_blank")}

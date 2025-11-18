@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Upload failed' },
       { status: 500 }
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to list resources' },
       { status: 500 }
@@ -159,7 +159,7 @@ export async function DELETE(request: NextRequest) {
       },
     });
 
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Delete failed' },
       { status: 500 }

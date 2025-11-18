@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { PdfNodeView } from "@/components/novel/PdfNodeView";
@@ -126,17 +125,6 @@ export const PdfExtension = Node.create({
 
   addNodeView() {
     return ReactNodeViewRenderer(PdfNodeView);
-  },
-
-  addCommands() {
-    return {
-      setPdf: (attributes: any) => ({ commands }: any) => {
-        return commands.insertContent({
-          type: this.name,
-          attrs: attributes,
-        });
-      },
-    };
   },
 });
 
