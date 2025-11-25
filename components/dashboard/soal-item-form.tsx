@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Difficulty } from "@prisma/client";
@@ -90,10 +89,20 @@ export function SoalItemForm({ item, onSave, onCancel }: SoalItemFormProps) {
     setFormData({ ...formData, explanation: data.html });
   };
 
+  const handleOpsiUpdate = (index: number, data: { json: any; html: string }) => {
+    const updatedOpsis = formData.opsis!.map((opsi, i) =>
+      i === index ? { ...opsi, opsiText: data.html } : opsi
+    );
+    setFormData({ ...formData, opsis: updatedOpsis });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Filter out empty options
-    const filteredOpsis = formData.opsis!.filter(o => o.opsiText.trim());
+    // Filter out empty options - strip HTML tags to check if content is empty
+    const filteredOpsis = formData.opsis!.filter(o => {
+      const textContent = o.opsiText.replace(/<[^>]*>/g, '').trim();
+      return textContent.length > 0;
+    });
     const finalItem = {
       ...formData,
       opsis: filteredOpsis.length > 0 ? filteredOpsis : [],
@@ -213,17 +222,17 @@ export function SoalItemForm({ item, onSave, onCancel }: SoalItemFormProps) {
                     </div>
                   </div>
 
-                  {/* Option Text Input */}
+                  {/* Option Text Input with NovelEditor */}
                   <div className="flex-1 relative">
-                    <Input
-                      value={opsi.opsiText}
-                      onChange={(e) => updateOpsi(index, 'opsiText', e.target.value)}
-                      placeholder={`Enter option ${optionLetter}`}
-                      className={`w-full border-0 bg-transparent text-base placeholder:text-muted-foreground/60 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all duration-200 ${
+                    <NovelEditor
+                      initialContent={getInitialContent(opsi.opsiText)}
+                      onUpdate={(data) => handleOpsiUpdate(index, data)}
+                      className={`min-h-[60px] border-0 bg-transparent rounded-lg focus-within:bg-background focus-within:border focus-within:border-primary/20 transition-all ${
                         opsi.isCorrect ? 'font-medium' : ''
                       } ${
                         formData.opsis!.length > 2 ? 'group-hover:pr-10' : ''
                       }`}
+                      placeholder={`Enter option ${optionLetter}`}
                     />
                   </div>
 

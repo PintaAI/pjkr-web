@@ -22,6 +22,7 @@ import {
 
 import { YoutubeExtension } from "@/lib/editor/extensions/youtube";
 import { PdfExtension } from "@/components/novel/pdf-extension";
+import { AudioExtension } from "@/lib/editor/extensions/audio";
 import { cx } from "class-variance-authority";
 import { common, createLowlight } from "lowlight";
 
@@ -160,6 +161,7 @@ export const defaultExtensions = [
   twitter,
   YoutubeExtension,
   PdfExtension,
+  AudioExtension,
   mathematics,
   characterCount,
   TiptapUnderline,

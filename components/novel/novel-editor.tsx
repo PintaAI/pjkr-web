@@ -32,6 +32,7 @@ import { uploadFn } from "./image-upload";
 import { LinkSelector } from "./selectors/link-selector";
 import { TopToolbar } from "./top-toolbar";
 import { YoutubeDialog } from "./youtube-dialog";
+import { AudioDialog } from "./audio-dialog";
 import hljs from "highlight.js";
 
 interface NovelEditorProps {
@@ -58,6 +59,7 @@ const NovelEditor = ({
   const [openColor, setOpenColor] = useState(false);
   const [openLink, setOpenLink] = useState(false);
   const [openYoutube, setOpenYoutube] = useState(false);
+  const [openAudio, setOpenAudio] = useState(false);
   const [currentEditor, setCurrentEditor] = useState<EditorInstance | null>(null);
 
   // Create extensions with custom placeholder if provided
@@ -117,24 +119,73 @@ const NovelEditor = ({
     }
   }, [propInitialContent]);
 
-  // Handle YouTube dialog opening
+  // Handle dialog opening with singleton pattern to prevent multiple listeners
   useEffect(() => {
+    // Check if handlers already exist
+    if ((window as any).__youtubeDialogHandler || (window as any).__audioDialogHandler) {
+      return;
+    }
+
     const handleOpenYoutubeDialog = (event: CustomEvent) => {
-      setCurrentEditor(event.detail.editor);
-      setOpenYoutube(true);
+      event.stopPropagation();
+      
+      // Only open if not already open and this is the current editor instance
+      if (!openYoutube) {
+        setCurrentEditor(event.detail.editor);
+        setOpenYoutube(true);
+      }
     };
 
+    const handleOpenAudioDialog = (event: CustomEvent) => {
+      event.stopPropagation();
+      
+      // Only open if not already open and this is the current editor instance
+      if (!openAudio) {
+        setCurrentEditor(event.detail.editor);
+        setOpenAudio(true);
+      }
+    };
+
+    // Store handlers globally to prevent duplicates
+    (window as any).__youtubeDialogHandler = handleOpenYoutubeDialog;
+    (window as any).__audioDialogHandler = handleOpenAudioDialog;
+
     document.addEventListener('openYoutubeDialog', handleOpenYoutubeDialog as EventListener);
+    document.addEventListener('openAudioDialog', handleOpenAudioDialog as EventListener);
     
     return () => {
-      document.removeEventListener('openYoutubeDialog', handleOpenYoutubeDialog as EventListener);
+      // Only remove if this is the handler that was added
+      if ((window as any).__youtubeDialogHandler === handleOpenYoutubeDialog) {
+        document.removeEventListener('openYoutubeDialog', handleOpenYoutubeDialog as EventListener);
+        delete (window as any).__youtubeDialogHandler;
+      }
+      if ((window as any).__audioDialogHandler === handleOpenAudioDialog) {
+        document.removeEventListener('openAudioDialog', handleOpenAudioDialog as EventListener);
+        delete (window as any).__audioDialogHandler;
+      }
     };
-  }, []);
+  }, [openYoutube, openAudio]);
 
   const handleYoutubeSubmit = (url: string) => {
     if (currentEditor) {
       currentEditor.commands.setYoutubeVideo({
         src: url,
+      });
+    }
+  };
+
+  const handleAudioSubmit = (audioData: {
+    src: string;
+    filename?: string;
+    size?: number;
+    duration?: number;
+    autoplay?: boolean;
+    loop?: boolean;
+  }) => {
+    if (currentEditor) {
+      currentEditor.commands.insertContent({
+        type: 'audio',
+        attrs: audioData,
       });
     }
   };
@@ -216,6 +267,11 @@ const NovelEditor = ({
           open={openYoutube}
           onOpenChange={setOpenYoutube}
           onSubmit={handleYoutubeSubmit}
+        />
+        <AudioDialog
+          open={openAudio}
+          onOpenChange={setOpenAudio}
+          onSubmit={handleAudioSubmit}
         />
       </div>
   );

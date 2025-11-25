@@ -6,6 +6,7 @@ import {
   ImageIcon,
   List,
   ListOrdered,
+  Music,
   Text,
   TextQuote,
   Youtube,
@@ -79,6 +80,20 @@ export const suggestionItems = createSuggestionItems([
         }
       };
       input.click();
+    },
+  },
+  {
+    title: "Audio",
+    description: "Upload or embed an audio file.",
+    searchTerms: ["audio", "music", "sound", "mp3", "wav"],
+    icon: <Music size={18} />,
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).run();
+      
+      const event = new CustomEvent('openAudioDialog', {
+        detail: { editor, range }
+      });
+      document.dispatchEvent(event);
     },
   },
   {
