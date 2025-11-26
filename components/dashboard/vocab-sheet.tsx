@@ -51,7 +51,7 @@ export function VocabSheet({ isOpen, onOpenChange, vocabSet, onSuccess, onCancel
       <SheetContent className="w-full sm:max-w-2xl overflow-y-auto m-0">
         <SheetHeader>
           <SheetTitle className="text-center">
-            {vocabSet ? "Edit Vocabulary Set" : "Create Vocabulary Set"}
+            {vocabSet ? "Edit Set Kosakata" : "Buat Set Kosakata"}
           </SheetTitle>
         </SheetHeader>
         <VocabCollectionForm

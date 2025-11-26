@@ -114,52 +114,57 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
     {
       href: "/dashboard/guru/kelas-builder",
       isLink: true,
-      icon: <PlusCircle className="h-6 w-6 text-emerald-500" />,
-      badge: { text: "Available", variant: "default", className: "bg-emerald-100 text-emerald-800" },
-      title: "Kelas Builder",
-      description: "Create comprehensive Korean language classes with guided steps",
-      footerLeft: "Build Classes",
-      footerRight: "Step-by-step",
+      icon: <PlusCircle className="h-10 w-10 text-white" />,
+      badge: { text: "Tersedia", variant: "default", className: "bg-white/20 text-white hover:bg-white/30 border-0" },
+      title: "Pembuat Kelas",
+      description: "Buat kelas bahasa Korea yang komprehensif dengan panduan langkah demi langkah",
+      footerLeft: "Buat Kelas",
+      footerRight: "Langkah-demi-Langkah",
+      gradient: "from-emerald-500 to-emerald-700",
     },
     {
       href: "/dashboard/guru/teach/white-board",
       isLink: true,
-      icon: <BookOpen className="h-6 w-6 text-blue-600" />,
-      badge: { text: "New", variant: "outline", className: "" },
-      title: "Whiteboard",
-      description: "Open a collaborative whiteboard (Excalidraw)",
-      footerLeft: "Interactive Tool",
+      icon: <BookOpen className="h-10 w-10 text-white" />,
+      badge: { text: "Baru", variant: "outline", className: "text-white border-white/40" },
+      title: "Papan Tulis",
+      description: "Buka papan tulis kolaboratif (Excalidraw)",
+      footerLeft: "Alat Interaktif",
       footerRight: "Excalidraw",
+      gradient: "from-blue-500 to-blue-700",
     },
     {
       href: "/dashboard/guru/teach/live-session",
       isLink: true,
-      icon: <Calendar className="h-6 w-6 text-purple-600" />,
-      badge: { text: "Coming Soon", variant: "outline", className: "" },
-      title: "Live Session",
-      description: "Start or join a real-time class session",
-      footerLeft: "Realtime",
-      footerRight: "Soon",
+      icon: <Calendar className="h-10 w-10 text-white" />,
+      badge: { text: "Segera Hadir", variant: "outline", className: "text-white border-white/40" },
+      title: "Sesi Langsung",
+      description: "Mulai atau bergabung dengan sesi kelas real-time",
+      footerLeft: "Real-time",
+      footerRight: "Segera",
+      gradient: "from-purple-500 to-purple-700",
     },
     {
       onClick: () => setSheetOpen(true),
       isLink: false,
-      icon: <PlusCircle className="h-6 w-6 text-teal-600" />,
-      badge: { text: "Available", variant: "default", className: "bg-teal-100 text-teal-800" },
-      title: "Create Vocabulary Set",
-      description: "Build and manage custom vocabulary sets for your classes",
-      footerLeft: "Vocabulary",
-      footerRight: "Set Builder",
+      icon: <PlusCircle className="h-10 w-10 text-white" />,
+      badge: { text: "Tersedia", variant: "default", className: "bg-white/20 text-white hover:bg-white/30 border-0" },
+      title: "Buat Set Kosakata",
+      description: "Bangun dan kelola set kosakata khusus untuk kelas Anda",
+      footerLeft: "Kosakata",
+      footerRight: "Pembuat Set",
+      gradient: "from-teal-500 to-teal-700",
     },
     {
       onClick: () => setSoalSheetOpen(true),
       isLink: false,
-      icon: <PlusCircle className="h-6 w-6 text-rose-600" />,
-      badge: { text: "Available", variant: "default", className: "bg-teal-100 text-teal-800" },
-      title: "Create Soal Set",
-      description: "Create question sets for latihan or tryout assessments",
-      footerLeft: "Assessment",
-      footerRight: "Soal Builder",
+      icon: <PlusCircle className="h-10 w-10 text-white" />,
+      badge: { text: "Tersedia", variant: "default", className: "bg-white/20 text-white hover:bg-white/30 border-0" },
+      title: "Buat Set Soal",
+      description: "Buat set soal untuk asesmen latihan atau tryout",
+      footerLeft: "Asesmen",
+      footerRight: "Pembuat Soal",
+      gradient: "from-rose-500 to-rose-700",
     },
   ];
 
@@ -168,9 +173,9 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Teacher Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard Guru</h1>
           <p className="text-muted-foreground">
-            Welcome back, {user.name || user.email}! Di sini tempat untuk mengelola kelas jadwal live, materi, dan kosa kata
+            Selamat datang kembali, {user.name || user.email}! Di sini tempat untuk mengelola kelas, jadwal live, materi, dan kosakata
           </p>
         </div>
         <div className="flex gap-2 w-90">
@@ -181,30 +186,30 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <StatsCard
-          title="Total Classes"
+          title="Total Kelas"
           value={stats.totalClasses}
-          description={`${stats.publishedClasses} published, ${stats.draftClasses} drafts`}
+          description={`${stats.publishedClasses} dipublikasi, ${stats.draftClasses} draf`}
           icon={<BookOpen className="h-4 w-4" />}
         />
 
         <StatsCard
-          title="Total Students"
+          title="Total Siswa"
           value={stats.totalStudents}
-          description="Across all classes"
+          description="Di semua kelas"
           icon={<Users className="h-4 w-4" />}
         />
 
         <StatsCard
-          title="Published Classes"
+          title="Kelas Dipublikasi"
           value={stats.publishedClasses}
-          description="Live for students"
+          description="Tersedia untuk siswa"
           icon={<FileText className="h-4 w-4" />}
         />
 
         <StatsCard
-          title="Total Materials"
+          title="Total Materi"
           value={stats.totalMateris}
-          description="Learning materials"
+          description="Materi pembelajaran"
           icon={<BookOpen className="h-4 w-4" />}
         />
       </div>
@@ -214,23 +219,23 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="tools">
             <Wrench className="w-4 h-4 mr-2" />
-            Tools
+            Alat
           </TabsTrigger>
           <TabsTrigger value="classes">
             <BookOpen className="w-4 h-4 mr-2" />
-            Manage Classes
+            Kelola Kelas
           </TabsTrigger>
           <TabsTrigger value="vocabulary">
             <FileText className="w-4 h-4 mr-2" />
-            Manage Vocabulary
+            Kelola Kosakata
           </TabsTrigger>
           <TabsTrigger value="soals">
             <FileQuestion className="w-4 h-4 mr-2" />
-            Manage Soals
+            Kelola Soal
           </TabsTrigger>
           <TabsTrigger value="statistics">
             <BarChart3 className="w-4 h-4 mr-2" />
-            Statistics
+            Statistik
           </TabsTrigger>
         </TabsList>
 
@@ -240,67 +245,50 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
             <CardHeader>
               <CardTitle className="text-xl">Alat untuk Mengajar</CardTitle>
               <CardDescription>
-                Manage your classes and content
+                Kelola kelas dan konten Anda
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {teachingTools.map((tool) => (
-                  tool.isLink ? (
-                    <Link href={tool.href!} key={tool.title}>
-                      <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            {tool.icon}
-                            {tool.badge && (
-                              <Badge
-                                variant={tool.badge.variant as "default" | "secondary" | "outline" | "destructive" | undefined}
-                                className={`text-xs ${tool.badge.className}`}
-                              >
-                                {tool.badge.text}
-                              </Badge>
-                            )}
-                          </div>
-                          <CardTitle className="text-lg">{tool.title}</CardTitle>
-                          <CardDescription>
-                            {tool.description}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">{tool.footerLeft}</span>
-                            <span className="font-medium">
-                              {tool.footerRight === "stats.totalClasses"
-                                ? stats.totalClasses
-                                : tool.footerRight}
-                            </span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ) : (
-                    <Card onClick={tool.onClick} key={tool.title} className="cursor-pointer hover:shadow-md transition-shadow h-full">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
+                {teachingTools.map((tool) => {
+                  const CardContentBody = (
+                    <Card className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 bg-card transition-all cursor-pointer py-0 gap-0 h-full border-0 shadow-sm ring-1 ring-border/50 flex flex-col">
+                      {/* Visual Header - Reduced height */}
+                      <div className={`relative w-full h-24 bg-gradient-to-br ${tool.gradient} flex items-center justify-center shrink-0`}>
+                        {/* Pattern overlay */}
+                        <div className="absolute inset-0 bg-[url('/file.svg')] opacity-10 bg-repeat space-x-2" style={{ backgroundSize: '20px' }} />
+                        <div className="absolute inset-0 bg-black/10" />
+                        
+                        <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300 drop-shadow-md">
                           {tool.icon}
-                          {tool.badge && (
+                        </div>
+
+                        {/* Badge top right */}
+                        {tool.badge && (
+                          <div className="absolute top-2 right-2">
                             <Badge
-                              variant={tool.badge.variant as "default" | "secondary" | "outline" | "destructive" | undefined}
-                              className={`text-xs ${tool.badge.className}`}
+                              variant={tool.badge.variant as any}
+                              className={`text-[10px] h-5 px-1.5 backdrop-blur-sm ${tool.badge.className}`}
                             >
                               {tool.badge.text}
                             </Badge>
-                          )}
+                          </div>
+                        )}
+                      </div>
+
+                      <CardContent className="p-4 flex flex-col flex-1">
+                        <div className="space-y-1.5 mb-2">
+                          <CardTitle className="text-base font-semibold leading-tight group-hover:text-primary transition-colors">
+                            {tool.title}
+                          </CardTitle>
+                          <CardDescription className="line-clamp-2 text-xs leading-relaxed">
+                            {tool.description}
+                          </CardDescription>
                         </div>
-                        <CardTitle className="text-lg">{tool.title}</CardTitle>
-                        <CardDescription>
-                          {tool.description}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">{tool.footerLeft}</span>
-                          <span className="font-medium">
+                        
+                        <div className="mt-auto pt-3 border-t flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
+                          <span className="font-medium text-foreground/70 truncate mr-2">{tool.footerLeft}</span>
+                          <span className="bg-secondary/50 px-1.5 py-0.5 rounded text-secondary-foreground shrink-0 whitespace-nowrap">
                             {tool.footerRight === "stats.totalClasses"
                               ? stats.totalClasses
                               : tool.footerRight}
@@ -308,8 +296,18 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
                         </div>
                       </CardContent>
                     </Card>
-                  )
-                ))}
+                  );
+
+                  return tool.isLink ? (
+                    <Link href={tool.href!} key={tool.title} className="block h-full">
+                      {CardContentBody}
+                    </Link>
+                  ) : (
+                    <div onClick={tool.onClick} key={tool.title} className="h-full">
+                      {CardContentBody}
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

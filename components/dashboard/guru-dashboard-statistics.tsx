@@ -29,14 +29,14 @@ const viewsData = [
   { month: "Feb", views: 600 },
   { month: "Mar", views: 800 },
   { month: "Apr", views: 1000 },
-  { month: "May", views: 1200 },
+  { month: "Mei", views: 1200 },
   { month: "Jun", views: 1250 },
 ];
 
 const engagementData = [
-  { name: "Completed", value: 78, color: "#10b981" },
-  { name: "In Progress", value: 15, color: "#f59e0b" },
-  { name: "Not Started", value: 7, color: "#ef4444" },
+  { name: "Selesai", value: 78, color: "#10b981" },
+  { name: "Dalam Progres", value: 15, color: "#f59e0b" },
+  { name: "Belum Dimulai", value: 7, color: "#ef4444" },
 ];
 
 const ratingData = [
@@ -48,13 +48,13 @@ const ratingData = [
 ];
 
 const activityData = [
-  { day: "Mon", activity: 85 },
-  { day: "Tue", activity: 92 },
-  { day: "Wed", activity: 78 },
-  { day: "Thu", activity: 95 },
-  { day: "Fri", activity: 88 },
-  { day: "Sat", activity: 65 },
-  { day: "Sun", activity: 72 },
+  { day: "Sen", activity: 85 },
+  { day: "Sel", activity: 92 },
+  { day: "Rab", activity: 78 },
+  { day: "Kam", activity: 95 },
+  { day: "Jum", activity: 88 },
+  { day: "Sab", activity: 65 },
+  { day: "Min", activity: 72 },
 ];
 
 // helpers
@@ -71,14 +71,14 @@ export function GuruDashboardStatistics() {
         { month: "Feb", views: 600 },
         { month: "Mar", views: 800 },
         { month: "Apr", views: 1000 },
-        { month: "May", views: 1200 },
+        { month: "Mei", views: 1200 },
         { month: "Jun", views: 1250 },
         { month: "Jul", views: 1320 },
-        { month: "Aug", views: 1390 },
+        { month: "Agu", views: 1390 },
         { month: "Sep", views: 1460 },
-        { month: "Oct", views: 1520 },
+        { month: "Okt", views: 1520 },
         { month: "Nov", views: 1600 },
-        { month: "Dec", views: 1710 },
+        { month: "Des", views: 1710 },
       ];
     }
     return viewsData;
@@ -118,30 +118,30 @@ export function GuruDashboardStatistics() {
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
         <StatsCard
-          title="Total Views"
+          title="Total Tayangan"
           value={1250}
-          description="Content views this month"
+          description="Tayangan konten bulan ini"
           icon={<Eye className="h-4 w-4" />}
         />
 
         <StatsCard
-          title="Average Rating"
+          title="Rating Rata-rata"
           value={4.8}
-          description="Student satisfaction"
+          description="Kepuasan siswa"
           icon={<Star className="h-4 w-4" />}
         />
 
         <StatsCard
-          title="Completion Rate"
+          title="Tingkat Penyelesaian"
           value="78%"
-          description="Course completion"
+          description="Penyelesaian kursus"
           icon={<TrendingUp className="h-4 w-4" />}
         />
 
         <StatsCard
-          title="Student Engagement"
+          title="Keterlibatan Siswa"
           value="92%"
-          description="Active participation"
+          description="Partisipasi aktif"
           icon={<Activity className="h-4 w-4" />}
         />
       </div>
@@ -176,12 +176,12 @@ export function GuruDashboardStatistics() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      Views Over Time
+                      Tayangan dari Waktu ke Waktu
                       <span className={`text-xs px-1.5 py-0.5 rounded-full ${viewsDeltaPct >= 0 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400" : "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-400"}`}>
                         {viewsDeltaPct >= 0 ? `+${viewsDeltaPct}%` : `${viewsDeltaPct}%`}
                       </span>
                     </CardTitle>
-                    <CardDescription>Monthly content views</CardDescription>
+                    <CardDescription>Tayangan konten bulanan</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
@@ -215,8 +215,8 @@ export function GuruDashboardStatistics() {
         {/* Completion Status */}
         <Card>
           <CardHeader>
-            <CardTitle>Completion Status</CardTitle>
-            <CardDescription>Student progress distribution • {completedPct}% completed</CardDescription>
+            <CardTitle>Status Penyelesaian</CardTitle>
+            <CardDescription>Distribusi progres siswa • {completedPct}% selesai</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -245,8 +245,8 @@ export function GuruDashboardStatistics() {
         {/* Rating Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle>Rating Distribution</CardTitle>
-            <CardDescription>Student ratings breakdown</CardDescription>
+            <CardTitle>Distribusi Rating</CardTitle>
+            <CardDescription>Detail rating siswa</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -270,8 +270,8 @@ export function GuruDashboardStatistics() {
         {/* Weekly Activity */}
         <Card>
           <CardHeader>
-            <CardTitle>Weekly Activity</CardTitle>
-            <CardDescription>Daily engagement percentage</CardDescription>
+            <CardTitle>Aktivitas Mingguan</CardTitle>
+            <CardDescription>Persentase keterlibatan harian</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>

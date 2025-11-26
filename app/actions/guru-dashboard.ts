@@ -8,7 +8,7 @@ export async function getGuruDashboardData() {
     const session = await assertAuthenticated();
     
     if (session.user.role !== "GURU") {
-      return { success: false, error: "Not authorized" };
+      return { success: false, error: "Tidak memiliki otorisasi" };
     }
 
     const userId = session.user.id;
@@ -71,6 +71,6 @@ export async function getGuruDashboardData() {
     };
   } catch (error) {
     console.error("Get guru dashboard data error:", error);
-    return { success: false, error: "Failed to get dashboard data" };
+    return { success: false, error: "Gagal mengambil data dashboard" };
   }
 }
