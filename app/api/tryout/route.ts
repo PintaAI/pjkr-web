@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
     try {
-        const session = await auth.api.getSession({ headers: request.headers });
+        // const session = await auth.api.getSession({ headers: request.headers });
 
         // Filters
         const searchParams = request.nextUrl.searchParams;

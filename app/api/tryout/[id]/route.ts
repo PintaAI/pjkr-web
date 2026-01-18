@@ -8,7 +8,7 @@ export async function GET(
 ) {
     try {
         const { id } = await params;
-        const session = await auth.api.getSession({ headers: request.headers });
+        // const session = await auth.api.getSession({ headers: request.headers });
         // Tryout details usually accessible if active or if owned by guru
 
         const tryout = await prisma.tryout.findUnique({

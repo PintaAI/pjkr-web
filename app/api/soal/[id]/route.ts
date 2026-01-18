@@ -22,7 +22,7 @@ export async function GET(
 ) {
     try {
         const { id } = await params;
-        const session = await auth.api.getSession({ headers: request.headers });
+        // const session = await auth.api.getSession({ headers: request.headers });
         // Optional: check if user has access to this soal (private?)
         // For now, allow reading if authenticated or public logic (skipped for brevity, strict CRUD)
 
