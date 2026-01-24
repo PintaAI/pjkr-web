@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/sidebar"
-import { useSession } from "@/lib/hooks/use-session"
+import { useSession } from "@/hooks/use-session"
 
 interface LayoutWrapperProps {
   children: React.ReactNode

@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { useKelasColors } from "@/lib/hooks/use-kelas-colors"
+import { useKelasColors } from "@/hooks/use-kelas-colors"
 import { ColorExtractor } from "react-color-extractor"
 
 interface KelasColorExtractorProps {

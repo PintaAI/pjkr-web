@@ -14,7 +14,7 @@ import { Difficulty } from "@prisma/client";
 import { z } from "zod";
 import { useSoalStore } from "@/lib/dashboard/manage-soal-state";
 import { generateItems, soalItemsSchema } from "@/lib/dashboard/ai-generation";
-import { useDebouncedAutoSave } from "@/lib/hooks/use-debounced-auto-save";
+import { useDebouncedAutoSave } from "@/hooks/use-debounced-auto-save";
 import { Loader2, Check } from "lucide-react";
 
 type GeneratedSoalItem = z.infer<typeof soalItemsSchema.element>;

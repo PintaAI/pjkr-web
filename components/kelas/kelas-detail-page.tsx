@@ -3,8 +3,8 @@
 import {  MessageSquare, GraduationCap, Megaphone, FileText, BookOpen, Brain, BarChart3 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { KelasType, Difficulty } from "@prisma/client";
-import { useSession } from "@/lib/hooks/use-session";
-import { useKelasEnrollment } from "@/lib/hooks/use-kelas-enrollment";
+import { useSession } from "@/hooks/use-session";
+import { useKelasEnrollment } from "@/hooks/use-kelas-enrollment";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import DetailTab from "./tabs/detail-tab";
@@ -14,7 +14,7 @@ import VocabularyTab from "./tabs/vocabulary-tab";
 import SoalTab from "./tabs/soal-tab";
 import { useState } from "react";
 import React from "react";
-import { useKelasColors } from "@/lib/hooks/use-kelas-colors";
+import { useKelasColors } from "@/hooks/use-kelas-colors";
 import { ColorExtractor } from "react-color-extractor";
 
 

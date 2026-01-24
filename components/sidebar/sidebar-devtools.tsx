@@ -21,12 +21,12 @@ import { SidebarProject } from "./sidebar-data"
 
 interface SidebarDevToolsProps {
   projects: SidebarProject[]
-  session: ReturnType<typeof import("@/lib/hooks/use-session").useSession>
+  session: ReturnType<typeof import("@/hooks/use-session").useSession>
 }
 
 export function SidebarDevTools({ projects, session }: SidebarDevToolsProps) {
   const { user } = session
-  
+
   // Only show development tools to admin users
   if (!user || user.role !== 'ADMIN') {
     return null

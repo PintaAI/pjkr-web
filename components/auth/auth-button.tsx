@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "../../lib/auth-client";
-import { useSession } from "../../lib/hooks/use-session";
+import { useSession } from "@/hooks/use-session";
 import { DEFAULT_LOGOUT_REDIRECT, DEFAULT_AUTH_REDIRECT } from "../../lib/routes";
 import { Button } from "../ui/button";
 

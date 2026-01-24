@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithGoogle, signOut, signInWithEmailPassword, signUpWithEmailPassword } from "../../lib/auth-client";
-import { useSession, getPermissions } from "../../lib/hooks/use-session";
+import { useSession, getPermissions } from "@/hooks/use-session";
 import { DEFAULT_LOGIN_REDIRECT } from "../../lib/routes";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";

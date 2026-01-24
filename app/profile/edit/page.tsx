@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Save, X } from "lucide-react";
-import { useSession } from "@/lib/hooks/use-session";
+import { useSession } from "@/hooks/use-session";
 import { updateProfile } from "@/app/actions/profile";
 
 export default function EditProfilePage() {

@@ -3,8 +3,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AdminDashboard } from "../../components/dashboard/admin-dashboard";
 import { GuruDashboard } from "../../components/dashboard/guru-dashboard";
-import { getGuruDashboardData } from "../actions/guru-dashboard";
-import { getAdminDashboardData } from "../actions/admin-dashboard";
+import { getGuruDashboardData } from "../actions/dashboard/guru";
+import { getAdminDashboardData } from "../actions/dashboard/admin";
 import { getUserKelasList } from "../actions/kelas";
 
 type UserRoles = "GURU" | "MURID" | "ADMIN";

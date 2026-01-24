@@ -15,7 +15,7 @@ import { IconPicker, } from "@/components/shared/icon-picker";
 import { z } from "zod";
 import { generateItems, vocabularyItemsSchema } from "@/lib/dashboard/ai-generation";
 import { useVocabStore } from "@/lib/dashboard/manage-vocab-state";
-import { useDebouncedAutoSave } from "@/lib/hooks/use-debounced-auto-save";
+import { useDebouncedAutoSave } from "@/hooks/use-debounced-auto-save";
 import { Loader2, Check } from "lucide-react";
 
 type GeneratedVocabularyItem = z.infer<typeof vocabularyItemsSchema.element>;

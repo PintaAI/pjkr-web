@@ -1,4 +1,4 @@
-import { getMateriDetail } from "@/app/actions/kelas-detail";
+import { getMateriDetail } from "@/app/actions/kelas/detail";
 import MateriDetailPage from "@/components/kelas/materi-detail-page";
 import { notFound } from "next/navigation";
 

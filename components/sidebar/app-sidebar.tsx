@@ -11,10 +11,10 @@ import { SidebarNav } from "./sidebar-nav"
 import { SidebarDevTools } from "./sidebar-devtools"
 import { AppSidebarFooter } from "./sidebar-footer"
 import { getSidebarData } from "./sidebar-data"
-import { useSession } from "@/lib/hooks/use-session"
+import { useSession } from "@/hooks/use-session"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  session?: ReturnType<typeof import("@/lib/hooks/use-session").useSession>
+  session?: ReturnType<typeof import("@/hooks/use-session").useSession>
 }
 
 export function AppSidebar({ session: passedSession, ...props }: AppSidebarProps) {

@@ -9,7 +9,7 @@ import {
   bulkUpdateUsers,
   bulkDeleteUsers,
   getUserStats,
-} from "@/app/actions/admin-dashboard";
+} from "@/app/actions/dashboard/admin";
 import { UserWithStats, UserFormData, UserManagementData, DatabaseUserStats } from "./types";
 
 export function useUserManagement(initialData: UserManagementData) {

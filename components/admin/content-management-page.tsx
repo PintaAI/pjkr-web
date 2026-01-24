@@ -33,7 +33,7 @@ import {
   adminDeleteClass,
   type ClassFilters,
   type ClassWithAuthor 
-} from "@/app/actions/admin-dashboard";
+} from "@/app/actions/dashboard/admin";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 

@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { AuthButton } from "../auth/auth-button";
-import { AdminDashboardData } from "@/app/actions/admin-dashboard";
+import { AdminDashboardData } from "@/app/actions/dashboard/admin";
 
 type UserRoles = "GURU" | "MURID" | "ADMIN";
 

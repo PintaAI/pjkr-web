@@ -13,7 +13,7 @@ import {
   Eye
 } from "lucide-react";
 import KelasDetailPage from "@/components/kelas/kelas-detail-page";
-import { useSession } from "@/lib/hooks/use-session";
+import { useSession } from "@/hooks/use-session";
 
 export function StepReview() {
   const router = useRouter();

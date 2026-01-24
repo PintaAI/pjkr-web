@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { VocabularyType, PartOfSpeech } from "@prisma/client";
 import { Plus, Trash2 } from "lucide-react";
-import { useMediaUpload } from "@/lib/hooks/use-media-upload";
+import { useMediaUpload } from "@/hooks/use-media-upload";
 
 interface VocabItem {
   id?: number | string;

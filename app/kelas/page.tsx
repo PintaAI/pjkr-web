@@ -1,4 +1,4 @@
-import { getPublishedKelasList, getKelasStats, getJoinedKelasList, getUserKelasList } from "@/app/actions/kelas-public";
+import { getPublishedKelasList, getKelasStats, getJoinedKelasList, getUserKelasList } from "@/app/actions/kelas/public";
 import KelasListPage from "@/components/kelas/kelas-list-page";
 import { getServerSession } from "@/lib/session";
 import { redirect } from "next/navigation";

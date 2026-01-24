@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BookOpen, Users, Search, Filter, Star, Clock } from "lucide-react";
 import { KelasType, Difficulty } from "@prisma/client";
-import { filterKelas } from "@/app/actions/kelas-public";
+import { filterKelas } from "@/app/actions/kelas/public";
 import { KelasCard } from "@/components/kelas/kelas-card";
 import Link from "next/link";
 

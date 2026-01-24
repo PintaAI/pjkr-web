@@ -22,7 +22,7 @@ import { useState } from "react"
 import { ThemeToggle } from "@/components/theme/theme-toggle"
 
 interface AppSidebarFooterProps {
-  session: ReturnType<typeof import("@/lib/hooks/use-session").useSession>
+  session: ReturnType<typeof import("@/hooks/use-session").useSession>
 }
 
 export function AppSidebarFooter({ session }: AppSidebarFooterProps) {
@@ -127,7 +127,7 @@ export function AppSidebarFooter({ session }: AppSidebarFooterProps) {
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={handleLogout}
                 disabled={isLoggingOut}
                 className="cursor-pointer"

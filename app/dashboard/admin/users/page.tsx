@@ -1,5 +1,5 @@
 import { UserManagementPage } from "@/components/admin/user-management/user-management-page";
-import { getAllUsers, getUserStats } from "@/app/actions/admin-dashboard";
+import { getAllUsers, getUserStats } from "@/app/actions/dashboard/admin";
 import { Suspense } from "react";
 import Loading from "./loading";
 

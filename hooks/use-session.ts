@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession as useBetterAuthSession } from "../auth-client";
+import { useSession as useBetterAuthSession } from "@/lib/auth-client";
 import { useMemo, } from "react";
 
 type UserRole = "MURID" | "GURU" | "ADMIN";
@@ -23,7 +23,7 @@ export function useSession() {
 
   const user = useMemo(() => {
     if (!session?.user) return null;
-    
+
     const rawUser = session.user as Record<string, unknown>;
     return {
       ...session.user,
@@ -51,7 +51,7 @@ export function useSession() {
  */
 export function useRole(requiredRole: string) {
   const { user, isLoading } = useSession();
-  
+
   return useMemo(() => ({
     hasRole: user?.role === requiredRole,
     isLoading,
@@ -65,11 +65,11 @@ export function useRole(requiredRole: string) {
  */
 export function useRequireAuth() {
   const { session, isLoading, error } = useSession();
-  
+
   if (!isLoading && !session) {
     throw new Error("Authentication required");
   }
-  
+
   return { session, isLoading, error };
 }
 
@@ -78,7 +78,7 @@ export function useRequireAuth() {
  */
 export function usePermissions() {
   const { user, isLoading } = useSession();
-  
+
   const permissions = useMemo(() => {
     if (!user) return {
       canCreateCourse: false,
@@ -96,7 +96,7 @@ export function usePermissions() {
       canManageUsers: role === "ADMIN",
       canAccessPremium: role === "ADMIN", // Premium access now determined by Subscription model separately
       isGuru: role === "GURU",
-      isAdmin: role === "ADMIN", 
+      isAdmin: role === "ADMIN",
       isMurid: role === "MURID",
     };
   }, [user]);
@@ -128,7 +128,7 @@ export function getPermissions(user: ExtendedUser | null) {
     canManageUsers: role === "ADMIN",
     canAccessPremium: role === "ADMIN", // Premium access now determined by Subscription model separately
     isGuru: role === "GURU",
-    isAdmin: role === "ADMIN", 
+    isAdmin: role === "ADMIN",
     isMurid: role === "MURID",
   };
 }

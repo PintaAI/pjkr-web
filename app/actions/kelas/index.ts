@@ -1,4 +1,4 @@
- // Kelas management
+// Kelas management
 export { createDraftKelas, updateKelas, deleteDraftKelas, getKelasById, getUserKelasList, publishKelas, unpublishKelas } from './kelas';
 
 // Enrollment management
@@ -14,3 +14,9 @@ export { saveKoleksiSoal, saveSoal, saveOpsi, deleteKoleksiSoal, deleteSoal, reo
 
 // Vocabulary management
 export { saveVocabularySet, updateVocabularyItem, deleteVocabularySet, deleteVocabularyItem, reorderVocabularyItems } from './vocabulary';
+
+// Detail & Access
+export * from './detail';
+
+// Public & Listing
+export * from './public';

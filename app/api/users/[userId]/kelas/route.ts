@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
-import { getJoinedKelasList } from '@/app/actions/kelas-public'
+import { getJoinedKelasList } from '@/app/actions/kelas/public'
 
 // GET /api/users/[userId]/kelas - Get classes joined by a user
 export async function GET(

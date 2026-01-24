@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 import { Progress } from "@/components/ui/progress"
 import {  Target,  Star, Zap,  GraduationCap } from "lucide-react"
-import { useSession } from "@/lib/hooks/use-session"
+import { useSession } from "@/hooks/use-session"
 
 
 export default function GamePage() {

@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { redirect } from "next/navigation";
 import { assertAuthenticated } from "@/lib/auth-actions";
-import { getAllClasses, getContentStats } from "@/app/actions/admin-dashboard";
+import { getAllClasses, getContentStats } from "@/app/actions/dashboard/admin";
 import { ContentManagementPage } from "@/components/admin/content-management-page";
 
 export const metadata = {

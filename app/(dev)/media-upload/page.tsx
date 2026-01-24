@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { MediaUpload } from '@/components/ui/media-upload';
 import { CloudinaryImage } from '@/components/media/cloudinary-image';
-import { useMediaUpload } from '@/lib/hooks/use-media-upload';
+import { useMediaUpload } from '@/hooks/use-media-upload';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +22,7 @@ interface UploadedFile {
 
 export default function MediaUploadDemo() {
   const [selectedFiles, setSelectedFiles] = useState<UploadedFile[]>([]);
-  
+
   const {
     files: hookFiles,
     uploading,
@@ -67,7 +67,7 @@ export default function MediaUploadDemo() {
           <TabsTrigger value="hook">Upload Hook</TabsTrigger>
           <TabsTrigger value="gallery">Image Gallery</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="component" className="space-y-6">
           <Card>
             <CardHeader>
@@ -200,25 +200,25 @@ export default function MediaUploadDemo() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {selectedFiles.filter(f => f.type === 'image').length > 0 || 
-               hookFiles.filter(f => f.type === 'image').length > 0 ? (
+              {selectedFiles.filter(f => f.type === 'image').length > 0 ||
+                hookFiles.filter(f => f.type === 'image').length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {[...selectedFiles, ...hookFiles]
                     .filter(file => file.type === 'image')
                     .map((file) => (
-                    <div key={file.publicId} className="space-y-2">
-                      <CloudinaryImage
-                        publicId={file.publicId}
-                        alt="Uploaded image"
-                        width={300}
-                        height={200}
-                        className="rounded-lg"
-                      />
-                      <p className="text-sm text-muted-foreground truncate">
-                        {file.publicId}
-                      </p>
-                    </div>
-                  ))}
+                      <div key={file.publicId} className="space-y-2">
+                        <CloudinaryImage
+                          publicId={file.publicId}
+                          alt="Uploaded image"
+                          width={300}
+                          height={200}
+                          className="rounded-lg"
+                        />
+                        <p className="text-sm text-muted-foreground truncate">
+                          {file.publicId}
+                        </p>
+                      </div>
+                    ))}
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
@@ -241,12 +241,12 @@ export default function MediaUploadDemo() {
               Add your Cloudinary credentials to your <code>.env</code> file:
             </p>
             <pre className="bg-secondary p-3 rounded text-sm">
-{`NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="your-cloud-name"
+              {`NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="your-cloud-name"
 CLOUDINARY_API_KEY="your-api-key"
 CLOUDINARY_API_SECRET="your-api-secret"`}
             </pre>
           </div>
-          
+
           <div className="space-y-2">
             <h4 className="font-medium">2. Features</h4>
             <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">

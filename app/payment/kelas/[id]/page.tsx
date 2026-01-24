@@ -18,9 +18,9 @@ import {
   Shield,
   Clock
 } from "lucide-react";
-import { getKelasDetail } from "@/app/actions/kelas-detail";
+import { getKelasDetail } from "@/app/actions/kelas/detail";
 import { enrollInKelas } from "@/app/actions/kelas/enrollment";
-import { useSession } from "@/lib/hooks/use-session";
+import { useSession } from "@/hooks/use-session";
 
 interface PaymentPageProps {
   params: Promise<{ id: string }>;
