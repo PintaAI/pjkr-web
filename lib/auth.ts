@@ -15,6 +15,9 @@ export const auth = betterAuth({
     requireEmailVerification: false,
     autoSignIn: true,
   },
+  experimental: {
+    joins: true,
+  },
   socialProviders: {
     google: {
       clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
@@ -61,7 +64,7 @@ export const auth = betterAuth({
         if (newSession?.user) {
           try {
             await logUserRegistration(
-              newSession.user.id, 
+              newSession.user.id,
               newSession.user.role || "MURID"
             );
           } catch (error) {
@@ -69,7 +72,7 @@ export const auth = betterAuth({
           }
         }
       }
-      
+
       // Handle sign-in
       if (ctx.path.startsWith("/sign-in")) {
         const newSession = ctx.context.newSession;

@@ -1,7 +1,7 @@
 "use client"
 
 
-import { Search, BookOpen, Brain, Users, Headphones, PlayCircle, Trophy, Calendar, Target } from "lucide-react"
+import { Search, BookOpen, Brain, Users, Headphones, Trophy, Calendar, Target } from "lucide-react"
 import {
   CommandDialog,
   CommandInput,

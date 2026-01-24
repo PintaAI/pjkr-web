@@ -6,13 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import {
   Users,
-  Settings,
   Shield,
   Activity,
   BookOpen,
-  UserCheck,
   TrendingUp,
-  AlertCircle,
   Database
 } from "lucide-react";
 import Link from "next/link";
@@ -51,10 +48,6 @@ export function AdminDashboard({ user, dashboardData }: AdminDashboardProps) {
     pendingApprovals: 0
   };
 
-  // Use already formatted activities or empty array
-  const recentActivities = dashboardData
-    ? dashboardData.recentActivities
-    : [];
   // Admin Tools Configuration
   const adminTools = [
     {
