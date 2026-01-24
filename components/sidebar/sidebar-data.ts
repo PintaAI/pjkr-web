@@ -1,7 +1,7 @@
 import {
   Home,
   GraduationCap,
-  Gamepad2,
+
   Frame,
   LifeBuoy,
   Send,
@@ -47,38 +47,12 @@ export function getSidebarData(userRole?: UserRole) {
       icon: GraduationCap,
       items: [
         {
-          title: "My Kelas",
+          title: "Kelas Saya",
           url: "/kelas",
-        },
-        {
-          title: "Vocabulary",
-          url: "/vocabulary",
-        },
-        {
-          title: "Paket Soal & Tryout",
-          url: "/soal",
-        },
+        }
       ],
     },
-    {
-      title: "Games",
-      url: "/game",
-      icon: Gamepad2,
-      items: [
-        {
-          title: "All Game",
-          url: "/game",
-        },
-        {
-          title: "Leaderboard",
-          url: "/game/leaderboard",
-        },
-        {
-          title: "My Stats",
-          url: "/game/my-stats",
-        },
-      ],
-    },
+
   ];
 
   // Role-specific navigation items

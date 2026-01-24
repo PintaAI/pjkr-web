@@ -27,7 +27,7 @@ export const protectedRoutes = [
   "/kelas",
   "/vocabulary",
   "/soal",
-  "/game",
+
 ] as const;
 
 // Admin routes that require admin role (currently none - using dashboard with role checks)
@@ -75,7 +75,7 @@ export function requiresRoleBasedAccess(pathname: string): { route: string; role
   if (pathname === "/dashboard") {
     return { route: "/dashboard", roles: ["GURU", "ADMIN"] };
   }
-  
+
   return null;
 }
 

@@ -44,22 +44,22 @@ export function SearchComponent() {
       >
         <div className="flex items-center">
           <Search className="mr-2 h-4 w-4" />
-          cari kosa kata,kelas,game, informasi lainya
+          cari kosa kata,kelas, informasi lainya
         </div>
         <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
           <span className="text-xs">⌘</span>K
         </kbd>
       </Button>
-      
+
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput
-          placeholder="cari kosa kata,kelas,game, informasi lainya"
+          placeholder="cari kosa kata,kelas, informasi lainya"
           value={value}
           onValueChange={handleValueChange}
         />
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
-          
+
           <CommandGroup heading="Alat Pembelajaran">
             <CommandItem>
               <Brain className="mr-2 h-4 w-4" />
@@ -78,18 +78,15 @@ export function SearchComponent() {
               <span>Tes Mendengar</span>
             </CommandItem>
           </CommandGroup>
-          
+
           <CommandSeparator />
-          
+
           <CommandGroup heading="Navigasi">
             <CommandItem>
               <BookOpen className="mr-2 h-4 w-4" />
               <span>Kelas</span>
             </CommandItem>
-            <CommandItem>
-              <PlayCircle className="mr-2 h-4 w-4" />
-              <span>Game</span>
-            </CommandItem>
+
             <CommandItem>
               <Search className="mr-2 h-4 w-4" />
               <span>Jelajahi</span>
@@ -99,9 +96,9 @@ export function SearchComponent() {
               <span>Kosa Kata</span>
             </CommandItem>
           </CommandGroup>
-          
+
           <CommandSeparator />
-          
+
           <CommandGroup heading="Aktivitas">
             <CommandItem>
               <Target className="mr-2 h-4 w-4" />

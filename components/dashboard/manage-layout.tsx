@@ -21,7 +21,7 @@ interface ManageLayoutProps {
   error: string | null;
   items: any[];
   renderItem: (item: any) => React.ReactNode;
-  createNewCard: CreateNewCardConfig;
+  createNewCard?: CreateNewCardConfig;
   emptyTitle: string;
   emptyMessage: string;
   children?: React.ReactNode;
@@ -91,20 +91,22 @@ export function ManageLayout({
 
             {!loading && !error && (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <Card
-                  className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer border-dashed border-2"
-                  onClick={createNewCard.onClick}
-                >
-                  <CardContent className="flex flex-col items-center justify-center h-48">
-                    <Plus className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-sm sm:text-base font-semibold leading-snug text-center">
-                      {createNewCard.title}
-                    </h3>
-                    <p className="mt-1 text-xs sm:text-sm text-muted-foreground text-center">
-                      {createNewCard.subtitle}
-                    </p>
-                  </CardContent>
-                </Card>
+                {createNewCard && (
+                  <Card
+                    className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer border-dashed border-2"
+                    onClick={createNewCard.onClick}
+                  >
+                    <CardContent className="flex flex-col items-center justify-center h-48">
+                      <Plus className="h-12 w-12 text-muted-foreground mb-4" />
+                      <h3 className="text-sm sm:text-base font-semibold leading-snug text-center">
+                        {createNewCard.title}
+                      </h3>
+                      <p className="mt-1 text-xs sm:text-sm text-muted-foreground text-center">
+                        {createNewCard.subtitle}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
                 {items.length === 0 ? (
                   <Card className="col-span-full">
                     <CardHeader>

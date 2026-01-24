@@ -52,9 +52,43 @@ export function AdminDashboard({ user, dashboardData }: AdminDashboardProps) {
   };
 
   // Use already formatted activities or empty array
-  const recentActivities = dashboardData 
+  const recentActivities = dashboardData
     ? dashboardData.recentActivities
     : [];
+  // Admin Tools Configuration
+  const adminTools = [
+    {
+      href: "/dashboard/admin/users",
+      icon: <Users className="h-10 w-10 text-white" />,
+      badge: { text: "Manage", variant: "default", className: "bg-white/20 text-white hover:bg-white/30 border-0" },
+      title: "User Management",
+      description: "Manage user accounts, roles, and permissions across the platform",
+      footerLeft: "Users",
+      footerRight: `${stats.totalUsers} Total`,
+      gradient: "from-blue-500 to-blue-700",
+    },
+    {
+      href: "/dashboard/admin/content",
+      icon: <BookOpen className="h-10 w-10 text-white" />,
+      badge: { text: "Manage", variant: "default", className: "bg-white/20 text-white hover:bg-white/30 border-0" },
+      title: "Content Management",
+      description: "Oversee all classes, lessons, and learning materials created by teachers",
+      footerLeft: "Classes",
+      footerRight: `${stats.totalClasses} Total`,
+      gradient: "from-emerald-500 to-emerald-700",
+    },
+    {
+      href: "/dashboard/admin/storage",
+      icon: <Database className="h-10 w-10 text-white" />,
+      badge: { text: "System", variant: "outline", className: "text-white border-white/40" },
+      title: "Storage Management",
+      description: "Monitor usage, manage files, and optimize storage via Cloudinary",
+      footerLeft: "Storage",
+      footerRight: "Cloudinary",
+      gradient: "from-cyan-500 to-cyan-700",
+    },
+  ];
+
   return (
     <div className="container mx-auto px-6 py-8 max-w-6xl flex flex-col gap-6">
       {/* Header */}
@@ -66,7 +100,7 @@ export function AdminDashboard({ user, dashboardData }: AdminDashboardProps) {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button>
+          <Button variant="outline">
             <Shield className="h-4 w-4 mr-2" />
             System Status
           </Button>
@@ -102,181 +136,65 @@ export function AdminDashboard({ user, dashboardData }: AdminDashboardProps) {
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Management Cards */}
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Administrative Tools</CardTitle>
-              <CardDescription>
-                Manage users, content, and system settings
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Link href="dashboard/admin/users">
-                  <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <Users className="h-6 w-6 text-primary" />
-                        {stats.pendingApprovals > 0 && (
-                          <Badge variant="destructive" className="text-xs">
-                            {stats.pendingApprovals} pending
-                          </Badge>
-                        )}
-                      </div>
-                      <CardTitle className="text-lg">User Management</CardTitle>
-                      <CardDescription>
-                        View, edit, and manage all user accounts and permissions
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Total Users</span>
-                        <span className="font-medium">{stats.totalUsers}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+      {/* Administrative Tools */}
+      <Card className="bg-gradient-to-br from-card to-muted/20">
+        <CardHeader>
+          <CardTitle className="text-xl">Administrative Tools</CardTitle>
+          <CardDescription>
+            Manage users, content, and system settings
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {adminTools.map((tool) => (
+              <Link href={tool.href} key={tool.title} className="block h-full">
+                <Card className="group overflow-hidden hover:shadow-lg hover:-translate-y-1 bg-card transition-all cursor-pointer py-0 gap-0 h-full border-0 shadow-sm ring-1 ring-border/50 flex flex-col">
+                  {/* Visual Header */}
+                  <div className={`relative w-full h-24 bg-gradient-to-br ${tool.gradient} flex items-center justify-center shrink-0`}>
+                    {/* Pattern overlay */}
+                    <div className="absolute inset-0 bg-[url('/file.svg')] opacity-10 bg-repeat space-x-2" style={{ backgroundSize: '20px' }} />
+                    <div className="absolute inset-0 bg-black/10" />
 
-                <Link href="/dashboard/admin/content">
-                  <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <BookOpen className="h-6 w-6 text-secondary" />
-                        <Badge variant="secondary" className="text-xs">
-                          {stats.totalClasses} classes
-                        </Badge>
-                      </div>
-                      <CardTitle className="text-lg">Content Management</CardTitle>
-                      <CardDescription>
-                        Oversee all classes, lessons, and learning materials
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Active Classes</span>
-                        <span className="font-medium">{stats.totalClasses}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-
-                <Link href="/admin/settings">
-                  <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <Settings className="h-6 w-6 text-orange-500" />
-                        <Badge variant="outline" className="text-xs">
-                          System
-                        </Badge>
-                      </div>
-                      <CardTitle className="text-lg">System Settings</CardTitle>
-                      <CardDescription>
-                        Configure system settings and global preferences
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Uptime</span>
-                        <span className="font-medium">{stats.systemHealth}%</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-
-                <Link href="/admin/analytics">
-                  <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <TrendingUp className="h-6 w-6 text-green-500" />
-                        <Badge variant="outline" className="text-xs">
-                          Reports
-                        </Badge>
-                      </div>
-                      <CardTitle className="text-lg">Analytics & Reports</CardTitle>
-                      <CardDescription>
-                        View detailed analytics and generate reports
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Active Users</span>
-                        <span className="font-medium">{stats.activeUsers}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-
-                <Link href="/dashboard/admin/storage">
-                  <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <Database className="h-6 w-6 text-blue-500" />
-                        <Badge variant="outline" className="text-xs">
-                          Cloudinary
-                        </Badge>
-                      </div>
-                      <CardTitle className="text-lg">Storage Management</CardTitle>
-                      <CardDescription>
-                        Monitor usage, manage files, and optimize storage
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Storage Stats</span>
-                        <span className="font-medium">Loading...</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Recent Activity */}
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>
-                Latest system events and user activities
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentActivities.length > 0 ? (
-                  recentActivities.map((activity, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        {activity.type === "user" && <UserCheck className="h-4 w-4 text-primary" />}
-                        {activity.type === "content" && <BookOpen className="h-4 w-4 text-primary" />}
-                        {activity.type === "system" && <Settings className="h-4 w-4 text-primary" />}
-                        {activity.type === "issue" && <AlertCircle className="h-4 w-4 text-primary" />}
-                      </div>
-                      <div className="flex-1 space-y-1">
-                        <p className="font-medium text-sm">{activity.action}</p>
-                        <p className="text-xs text-muted-foreground">{activity.user}</p>
-                        <p className="text-xs text-muted-foreground">{activity.time}</p>
-                      </div>
+                    <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300 drop-shadow-md">
+                      {tool.icon}
                     </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8">
-                    <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-sm text-muted-foreground">No recent activity found</p>
-                    <p className="text-xs text-muted-foreground mt-1">Activities will appear here as users interact with the platform</p>
+
+                    {/* Badge top right */}
+                    {tool.badge && (
+                      <div className="absolute top-2 right-2">
+                        <Badge
+                          variant={tool.badge.variant as any}
+                          className={`text-[10px] h-5 px-1.5 backdrop-blur-sm ${tool.badge.className}`}
+                        >
+                          {tool.badge.text}
+                        </Badge>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              <Button variant="outline" className="w-full mt-4">
-                View All Activities
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+
+                  <CardContent className="p-4 flex flex-col flex-1">
+                    <div className="space-y-1.5 mb-2">
+                      <CardTitle className="text-base font-semibold leading-tight group-hover:text-primary transition-colors">
+                        {tool.title}
+                      </CardTitle>
+                      <CardDescription className="line-clamp-2 text-xs leading-relaxed">
+                        {tool.description}
+                      </CardDescription>
+                    </div>
+
+                    <div className="mt-auto pt-3 border-t flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground/70 truncate mr-2">{tool.footerLeft}</span>
+                      <span className="bg-secondary/50 px-1.5 py-0.5 rounded text-secondary-foreground shrink-0 whitespace-nowrap">
+                        {tool.footerRight}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
