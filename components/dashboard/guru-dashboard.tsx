@@ -258,7 +258,7 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
                         {/* Pattern overlay */}
                         <div className="absolute inset-0 bg-[url('/file.svg')] opacity-10 bg-repeat space-x-2" style={{ backgroundSize: '20px' }} />
                         <div className="absolute inset-0 bg-black/10" />
-                        
+
                         <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300 drop-shadow-md">
                           {tool.icon}
                         </div>
@@ -285,7 +285,7 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
                             {tool.description}
                           </CardDescription>
                         </div>
-                        
+
                         <div className="mt-auto pt-3 border-t flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
                           <span className="font-medium text-foreground/70 truncate mr-2">{tool.footerLeft}</span>
                           <span className="bg-secondary/50 px-1.5 py-0.5 rounded text-secondary-foreground shrink-0 whitespace-nowrap">

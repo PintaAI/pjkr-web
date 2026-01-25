@@ -93,7 +93,7 @@ export const auth = betterAuth({
   },
   plugins: [
     expo(),
-    nextCookies() // This should be the last plugin in the array
+    nextCookies()
   ],
 });
 
