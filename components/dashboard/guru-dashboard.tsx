@@ -12,7 +12,8 @@ import {
   Calendar,
   Wrench,
   FileQuestion,
-  BarChart3
+  BarChart3,
+  Bell
 } from "lucide-react";
 import Link from "next/link";
 
@@ -24,6 +25,7 @@ import { ManageSoals } from "@/components/dashboard/manage-soals";
 import { GuruDashboardStatistics } from "@/components/dashboard/guru-dashboard-statistics";
 import { VocabSheet, VocabSet } from "@/components/dashboard/vocab-sheet";
 import { SoalSheet, SoalSet } from "@/components/dashboard/soal-sheet";
+import { NotificationSheet } from "@/components/dashboard/notification-sheet";
 import { getGuruVocabularySets } from "@/app/actions/kelas/vocabulary";
 import { getGuruSoalSets } from "@/app/actions/kelas/soal-set";
 import { useEffect, useState } from "react";
@@ -72,6 +74,7 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
   const [soalSets, setSoalSets] = useState<SoalSet[]>([]);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [soalSheetOpen, setSoalSheetOpen] = useState(false);
+  const [notificationSheetOpen, setNotificationSheetOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.slice(1);
@@ -108,6 +111,10 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
   const handleSoalSuccess = () => {
     setSoalSheetOpen(false);
     fetchData();
+  };
+
+  const handleNotificationSuccess = () => {
+    setNotificationSheetOpen(false);
   };
 
   const teachingTools = [
@@ -165,6 +172,17 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
       footerLeft: "Asesmen",
       footerRight: "Pembuat Soal",
       gradient: "from-rose-500 to-rose-700",
+    },
+    {
+      onClick: () => setNotificationSheetOpen(true),
+      isLink: false,
+      icon: <Bell className="h-10 w-10 text-white" />,
+      badge: { text: "Tersedia", variant: "default", className: "bg-white/20 text-white hover:bg-white/30 border-0" },
+      title: "Kirim Notifikasi",
+      description: "Kirim push notifikasi ke siswa tentang kelas, materi, atau pengumuman",
+      footerLeft: "Notifikasi",
+      footerRight: "Kirim",
+      gradient: "from-amber-500 to-amber-700",
     },
   ];
 
@@ -344,6 +362,13 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
         soalSet={null}
         onSuccess={handleSoalSuccess}
         onCancel={() => setSoalSheetOpen(false)}
+      />
+
+      <NotificationSheet
+        isOpen={notificationSheetOpen}
+        onOpenChange={setNotificationSheetOpen}
+        onSuccess={handleNotificationSuccess}
+        onCancel={() => setNotificationSheetOpen(false)}
       />
     </div>
   );
