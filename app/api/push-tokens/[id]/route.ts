@@ -5,7 +5,7 @@ import { auth } from '@/lib/auth';
 // DELETE /api/push-tokens/[id] - Delete a specific push token
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
@@ -13,7 +13,7 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Check if the token exists and belongs to the user
     const token = await prisma.expoPushToken.findUnique({
