@@ -50,4 +50,5 @@ next-env.d.ts
 packages/*/dist
 packages/*/node_modules
 packages/*/.turbo
-/packages
+packages/hakgyo-expo-sdk
+
