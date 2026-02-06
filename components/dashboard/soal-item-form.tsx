@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Difficulty } from "@prisma/client";
 import { Plus, Trash2, CheckCircle2 } from "lucide-react";
 import NovelEditor from "@/components/novel/novel-editor";
+import { htmlToJSON } from "@/lib/novel-utils";
 
 interface OpsiItem {
   id?: number | string;
@@ -98,14 +99,9 @@ export function SoalItemForm({ item, onSave, onCancel }: SoalItemFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Filter out empty options - strip HTML tags to check if content is empty
-    const filteredOpsis = formData.opsis!.filter(o => {
-      const textContent = o.opsiText.replace(/<[^>]*>/g, '').trim();
-      return textContent.length > 0;
-    });
     const finalItem = {
       ...formData,
-      opsis: filteredOpsis.length > 0 ? filteredOpsis : [],
+      opsis: formData.opsis!,
     };
     onSave(finalItem);
   };
@@ -113,22 +109,8 @@ export function SoalItemForm({ item, onSave, onCancel }: SoalItemFormProps) {
   // Convert HTML to JSON for initial content if editing
   const getInitialContent = (content?: string) => {
     if (content) {
-      // For now, we'll use a simple text node. In a real implementation,
-      // you might want to parse HTML back to JSON or store JSON separately
-      return {
-        type: "doc",
-        content: [
-          {
-            type: "paragraph",
-            content: [
-              {
-                type: "text",
-                text: content.replace(/<[^>]*>/g, ''), // Strip HTML for initial text
-              },
-            ],
-          },
-        ],
-      };
+      // Use htmlToJSON utility to properly parse HTML including images and other rich content
+      return htmlToJSON(content);
     }
     return null;
   };
