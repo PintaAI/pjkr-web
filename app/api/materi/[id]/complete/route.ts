@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { GamificationService } from '@/lib/gamification/service';
+
+// Simple in-memory lock for preventing race conditions
+const processingLocks = new Map<string, { timestamp: number }>();
+const LOCK_TIMEOUT = 30000; // 30 seconds timeout
 
 export async function POST(
   request: NextRequest,
@@ -13,6 +18,20 @@ export async function POST(
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Check for existing lock to prevent race conditions
+    const existingLock = processingLocks.get(session.user.id);
+    const now = Date.now();
+    
+    if (existingLock && (now - existingLock.timestamp) < LOCK_TIMEOUT) {
+      return NextResponse.json(
+        { error: 'Request already in progress' },
+        { status: 429 }
+      );
+    }
+
+    // Set lock
+    processingLocks.set(session.user.id, { timestamp: now });
 
     const resolvedParams = await params;
     const materiId = parseInt(resolvedParams.id);
@@ -69,6 +88,17 @@ export async function POST(
       }
     });
 
+    // Trigger gamification event for completing materi
+    const gamificationResult = await GamificationService.triggerEvent(
+      session.user.id,
+      'COMPLETE_MATERI',
+      {
+        materiId: materi.id,
+        materiTitle: materi.title,
+        kelasId: materi.kelasId
+      }
+    );
+
     // Check if next materi should be unlocked
     const nextMateri = await prisma.materi.findFirst({
       where: {
@@ -93,12 +123,19 @@ export async function POST(
           id: nextMateri.id,
           title: nextMateri.title,
           order: nextMateri.order
-        } : null
+        } : null,
+        gamification: gamificationResult.success ? gamificationResult.data : undefined
       }
     });
   } catch (error) {
     console.error('Error marking materi as complete:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } finally {
+    // Always release the lock if session exists
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (session?.user?.id) {
+      processingLocks.delete(session.user.id);
+    }
   }
 }
 

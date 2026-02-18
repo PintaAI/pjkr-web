@@ -52,6 +52,9 @@ export {
   getEligibleSpecialRewards,
 } from './reward';
 
+// Gamification Service
+export { GamificationService, type GamificationResult } from './service';
+
 // Utility Functions
 export {
   formatNumber,

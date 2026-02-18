@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
+import { GamificationService } from '@/lib/gamification/service';
+
+// Simple in-memory lock for preventing race conditions
+const processingLocks = new Map<string, { timestamp: number }>();
+const LOCK_TIMEOUT = 30000; // 30 seconds timeout
 
 export async function GET(request: NextRequest) {
   try {
@@ -101,6 +106,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Check for existing lock to prevent race conditions
+    const existingLock = processingLocks.get(session.user.id);
+    const now = Date.now();
+    
+    if (existingLock && (now - existingLock.timestamp) < LOCK_TIMEOUT) {
+      return NextResponse.json(
+        { error: 'Request already in progress' },
+        { status: 429 }
+      );
+    }
+
+    // Set lock
+    processingLocks.set(session.user.id, { timestamp: now });
+
     const body = await request.json();
     const { title, htmlDescription, jsonDescription, type = 'DISCUSSION', kelasId, isPinned = false } = body;
 
@@ -150,9 +169,30 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(post, { status: 201 });
+    // Trigger gamification event for creating a post
+    const gamificationResult = await GamificationService.triggerEvent(
+      session.user.id,
+      'CREATE_POST',
+      {
+        postId: post.id,
+        postTitle: post.title,
+        kelasId: post.kelasId,
+        postType: post.type
+      }
+    );
+
+    return NextResponse.json({
+      ...post,
+      gamification: gamificationResult.success ? gamificationResult.data : undefined
+    }, { status: 201 });
   } catch (error) {
     console.error('Error creating post:', error);
     return NextResponse.json({ error: 'Failed to create post' }, { status: 500 });
+  } finally {
+    // Always release the lock if session exists
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (session?.user?.id) {
+      processingLocks.delete(session.user.id);
+    }
   }
 }

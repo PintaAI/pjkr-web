@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { auth } from '@/lib/auth'
 
 // GET /api/vocabulary-sets - Get all vocabulary sets
 export async function GET(request: NextRequest) {
   try {
+    const session = await auth.api.getSession({
+      headers: await request.headers
+    });
+    
     const searchParams = request.nextUrl.searchParams
     const userId = searchParams.get('userId')
     const kelasId = searchParams.get('kelasId')
@@ -12,13 +17,102 @@ export async function GET(request: NextRequest) {
     const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : 0
 
     const where: any = {}
-    if (userId) where.userId = userId
-    if (kelasId) where.kelasId = parseInt(kelasId)
-    if (isPublic !== null) where.isPublic = isPublic === 'true'
     
-    // By default, only show published vocabulary sets (not drafts)
-    // This ensures only available published vocabulary sets are returned
-    where.isDraft = false
+    // Handle authenticated user logic
+    if (session?.user) {
+      // Get classes the user has joined
+      const joinedClasses = await prisma.kelas.findMany({
+        where: {
+          members: {
+            some: {
+              id: session.user.id
+            }
+          }
+        },
+        select: { id: true }
+      });
+      
+      const joinedClassIds = joinedClasses.map(c => c.id);
+
+      // Base query condition for authenticated users:
+      // 1. Sets owned by the user (can be drafts)
+      // 2. Sets attached to classes the user has joined (must be published and class must be published)
+      // 3. Public sets (must be published)
+      const accessConditions: any[] = [
+        { userId: session.user.id }, // Own sets
+        {
+          kelasId: { in: joinedClassIds },
+          isDraft: false,
+          kelas: { isDraft: false } // Ensure the class itself is not a draft
+        }
+      ];
+
+      // If explicit filters are provided, they must be respected within the allowed access
+      if (userId) {
+        // If filtering by specific user, ensure we only return if it matches access rights
+        if (userId === session.user.id) {
+          // Looking for own sets
+          where.userId = userId;
+        } else {
+          // Looking for another user's sets - must be public or shared via class
+          where.userId = userId;
+          where.OR = [
+            { isPublic: true, isDraft: false },
+            {
+              kelasId: { in: joinedClassIds },
+              isDraft: false,
+              kelas: { isDraft: false }
+            }
+          ];
+        }
+      } else if (kelasId) {
+        // Filtering by specific class
+        const kid = parseInt(kelasId);
+        where.kelasId = kid;
+        where.isDraft = false; // Class sets must be published unless owned (handled below)
+        
+        // If owned by user, can be draft
+        if (where.OR) {
+           where.OR.push({ userId: session.user.id, kelasId: kid });
+        } else {
+           where.OR = [
+             { isDraft: false },
+             { userId: session.user.id }
+           ];
+        }
+      } else {
+        // No specific filter, apply general access
+        where.OR = accessConditions;
+        
+      }
+      
+      // If isPublic filter is explicitly set, we handle it
+      if (isPublic !== null) {
+        if (isPublic === 'true') {
+             // User wants public sets. Add public sets to the OR condition.
+             // This means: Show (My Sets) OR (Class Sets) OR (Public Sets)
+             const publicCondition = { isPublic: true, isDraft: false };
+             
+             if (where.OR) {
+                 where.OR.push(publicCondition);
+             } else {
+                 where.OR = [publicCondition];
+             }
+        } else if (isPublic === 'false') {
+            // User explicitly wants non-public sets (private)
+            // This intersects with the base access conditions (must own or be in class)
+            where.isPublic = false;
+        }
+      }
+
+    } else {
+      // Unauthenticated: Only public published sets
+      where.isPublic = true;
+      where.isDraft = false;
+      
+      if (userId) where.userId = userId;
+      if (kelasId) where.kelasId = parseInt(kelasId);
+    }
 
     const vocabularySets = await prisma.vocabularySet.findMany({
       where,
@@ -40,6 +134,11 @@ export async function GET(request: NextRequest) {
             isDraft: true
           }
         },
+        items: {
+          select: {
+            isLearned: true
+          }
+        },
         _count: {
           select: {
             items: true
@@ -51,8 +150,19 @@ export async function GET(request: NextRequest) {
       skip: offset
     })
 
-    // Filter out vocabulary sets from draft kelas
-    const filteredVocabularySets = vocabularySets.filter(set => !set.kelas?.isDraft)
+    // Process vocabulary sets to add counts
+    // Note: We don't filter by kelas.isDraft here anymore because it's handled in the query
+    // ensuring owners can see their sets in draft classes, but others only see published ones
+    const filteredVocabularySets = vocabularySets
+      .map(set => {
+        const learnedCount = set.items.filter(item => item.isLearned).length
+        const { items, ...rest } = set
+        return {
+          ...rest,
+          itemCount: set._count.items,
+          learnedCount
+        }
+      })
 
     return NextResponse.json({
       success: true,

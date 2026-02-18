@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { GamificationService } from '@/lib/gamification/service';
+
+// Simple in-memory lock for preventing race conditions
+const processingLocks = new Map<string, { timestamp: number }>();
+const LOCK_TIMEOUT = 30000; // 30 seconds timeout
 
 export async function GET(
   request: NextRequest,
@@ -123,6 +128,20 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Check for existing lock to prevent race conditions
+    const existingLock = processingLocks.get(session.user.id);
+    const now = Date.now();
+    
+    if (existingLock && (now - existingLock.timestamp) < LOCK_TIMEOUT) {
+      return NextResponse.json(
+        { error: 'Request already in progress' },
+        { status: 429 }
+      );
+    }
+
+    // Set lock
+    processingLocks.set(session.user.id, { timestamp: now });
+
     const resolvedParams = await params;
     const materiId = parseInt(resolvedParams.id);
     if (isNaN(materiId)) {
@@ -179,6 +198,7 @@ export async function POST(
     const score = Math.round((correctAnswers / totalQuestions) * 100);
     const passingScore = materi.passingScore || 80;
     const isPassed = score >= passingScore;
+    const isPerfectScore = score === 100;
 
     // Save assessment result
     const assessmentResult = await prisma.userMateriAssessment.upsert({
@@ -246,6 +266,45 @@ export async function POST(
       }
     }
 
+    // Trigger gamification events
+    const gamificationResults: any = {};
+
+    // Trigger COMPLETE_ASSESSMENT event
+    const assessmentGamificationResult = await GamificationService.triggerEvent(
+      session.user.id,
+      'COMPLETE_ASSESSMENT',
+      {
+        materiId: materi.id,
+        materiTitle: materi.title,
+        kelasId: materi.kelasId,
+        score,
+        isPassed
+      }
+    );
+
+    if (assessmentGamificationResult.success) {
+      gamificationResults.assessment = assessmentGamificationResult.data;
+    }
+
+    // Trigger PERFECT_SCORE event if user got 100%
+    if (isPerfectScore) {
+      const perfectScoreResult = await GamificationService.triggerEvent(
+        session.user.id,
+        'PERFECT_SCORE',
+        {
+          materiId: materi.id,
+          materiTitle: materi.title,
+          kelasId: materi.kelasId,
+          score: 100,
+          totalQuestions
+        }
+      );
+
+      if (perfectScoreResult.success) {
+        gamificationResults.perfectScore = perfectScoreResult.data;
+      }
+    }
+
     const result = {
       score,
       isPassed,
@@ -253,13 +312,20 @@ export async function POST(
       totalQuestions,
       passingScore,
       nextMateriUnlocked: nextMateriUnlocked ? nextMateri?.id : null,
-      assessment: assessmentResult
+      assessment: assessmentResult,
+      gamification: Object.keys(gamificationResults).length > 0 ? gamificationResults : undefined
     };
 
     return NextResponse.json(result);
   } catch (error) {
     console.error('Error submitting assessment:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } finally {
+    // Always release the lock if session exists
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (session?.user?.id) {
+      processingLocks.delete(session.user.id);
+    }
   }
 }
 

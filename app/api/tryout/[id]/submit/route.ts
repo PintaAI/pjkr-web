@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
+import { GamificationService } from '@/lib/gamification/service';
+
+// Simple in-memory lock for preventing race conditions
+const processingLocks = new Map<string, { timestamp: number }>();
+const LOCK_TIMEOUT = 30000; // 30 seconds timeout
 
 export async function POST(
     request: NextRequest,
@@ -12,6 +17,20 @@ export async function POST(
         if (!session?.user?.id) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
+
+        // Check for existing lock to prevent race conditions
+        const existingLock = processingLocks.get(session.user.id);
+        const now = Date.now();
+        
+        if (existingLock && (now - existingLock.timestamp) < LOCK_TIMEOUT) {
+            return NextResponse.json(
+                { error: 'Request already in progress' },
+                { status: 429 }
+            );
+        }
+
+        // Set lock
+        processingLocks.set(session.user.id, { timestamp: now });
 
         const tryoutId = parseInt(id);
         const body = await request.json();
@@ -25,7 +44,9 @@ export async function POST(
         // We need to fetch all questions for this tryout's collection
         const tryout = await prisma.tryout.findUnique({
             where: { id: tryoutId },
-            include: {
+            select: {
+                id: true,
+                nama: true,
                 koleksiSoal: {
                     include: {
                         soals: {
@@ -65,6 +86,7 @@ export async function POST(
         });
 
         const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+        const isPerfectScore = score === 100;
 
         // 3. Update Participant Record
         const participant = await prisma.tryoutParticipant.update({
@@ -81,6 +103,44 @@ export async function POST(
             },
         });
 
+        // Trigger gamification events
+        const gamificationResults: any = {};
+
+        // Trigger COMPLETE_SOAL event for completing the quiz
+        const quizResult = await GamificationService.triggerEvent(
+            session.user.id,
+            'COMPLETE_SOAL',
+            {
+                tryoutId: tryout.id,
+                tryoutTitle: tryout.nama,
+                score,
+                correctCount,
+                totalQuestions
+            }
+        );
+
+        if (quizResult.success) {
+            gamificationResults.quiz = quizResult.data;
+        }
+
+        // Trigger PERFECT_SCORE event if user got 100%
+        if (isPerfectScore) {
+            const perfectScoreResult = await GamificationService.triggerEvent(
+                session.user.id,
+                'PERFECT_SCORE',
+                {
+                    tryoutId: tryout.id,
+                    tryoutTitle: tryout.nama,
+                    score: 100,
+                    totalQuestions
+                }
+            );
+
+            if (perfectScoreResult.success) {
+                gamificationResults.perfectScore = perfectScoreResult.data;
+            }
+        }
+
         return NextResponse.json({
             success: true,
             data: {
@@ -88,6 +148,7 @@ export async function POST(
                 correctCount,
                 totalQuestions,
                 participant,
+                gamification: Object.keys(gamificationResults).length > 0 ? gamificationResults : undefined,
             },
         });
 
@@ -99,5 +160,11 @@ export async function POST(
             { success: false, error: 'Failed to submit tryout' },
             { status: 500 }
         );
+    } finally {
+        // Always release the lock if session exists
+        const session = await auth.api.getSession({ headers: request.headers });
+        if (session?.user?.id) {
+            processingLocks.delete(session.user.id);
+        }
     }
 }

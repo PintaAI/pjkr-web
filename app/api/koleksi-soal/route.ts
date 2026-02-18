@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const userIdParam = searchParams.get('userId')
     const kelasId = searchParams.get('kelasId')
+    const onlyJoinedClasses = searchParams.get('onlyJoinedClasses') === 'true'
     const isPrivate = searchParams.get('isPrivate')
     const isDraft = searchParams.get('isDraft')
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined
@@ -18,13 +19,43 @@ export async function GET(request: NextRequest) {
     const where: any = {}
 
     if (userIdParam) where.userId = userIdParam
-    if (kelasId) {
+    
+    if (onlyJoinedClasses) {
+      if (!userId) {
+        return NextResponse.json(
+          { success: false, error: 'Authentication required for onlyJoinedClasses' },
+          { status: 401 }
+        )
+      }
+      
+      // Get user's joined classes
+      const joinedKelas = await prisma.kelas.findMany({
+        where: {
+          members: {
+            some: {
+              id: userId
+            }
+          }
+        },
+        select: { id: true }
+      })
+      
+      const joinedKelasIds = joinedKelas.map(k => k.id)
+      
+      // Filter collections by joined classes
+      where.kelasKoleksiSoals = {
+        some: {
+          kelasId: { in: joinedKelasIds }
+        }
+      }
+    } else if (kelasId) {
       where.kelasKoleksiSoals = {
         some: {
           kelasId: parseInt(kelasId)
         }
       }
     }
+    
     if (isPrivate !== null) where.isPrivate = isPrivate === 'true'
     if (isDraft !== null) where.isDraft = isDraft === 'true'
 
@@ -56,29 +87,6 @@ export async function GET(request: NextRequest) {
             name: true,
             image: true,
           },
-        },
-        soals: {
-          select: {
-            id: true,
-            pertanyaan: true,
-            difficulty: true,
-            isActive: true,
-            order: true,
-            author: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
-            },
-            opsis: {
-              orderBy: {
-                order: 'asc',
-              },
-            },
-            attachments: true,
-          },
-          orderBy: { order: 'asc' },
         },
         kelasKoleksiSoals: {
           include: {
@@ -158,29 +166,6 @@ export async function POST(request: NextRequest) {
             name: true,
             image: true,
           },
-        },
-        soals: {
-          select: {
-            id: true,
-            pertanyaan: true,
-            difficulty: true,
-            isActive: true,
-            order: true,
-            author: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
-            },
-            opsis: {
-              orderBy: {
-                order: 'asc',
-              },
-            },
-            attachments: true,
-          },
-          orderBy: { order: 'asc' },
         },
         kelasKoleksiSoals: {
           include: {
