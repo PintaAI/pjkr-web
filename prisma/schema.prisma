@@ -137,6 +137,7 @@ model User {
   joinedLiveSessions  LiveSession[]          @relation("LiveSessionParticipants")
   vocabularySets      VocabularySet[]
   vocabularyItems     VocabularyItem[]       @relation("VocabularyItemCreator")
+  vocabularyProgress  VocabularyItemProgress[]
 
   // Assessment relations - simplified
   soals                Soal[]              @relation("SoalAuthor")
@@ -632,7 +633,6 @@ model VocabularyItem {
   id               Int            @id @default(autoincrement())
   korean           String
   indonesian       String
-  isLearned        Boolean        @default(false)
   type             VocabularyType @default(WORD)
   pos              PartOfSpeech? // Part of Speech
   audioUrl         String?
@@ -644,12 +644,30 @@ model VocabularyItem {
   collectionId     Int? // Optional relation to VocabularySet
   creator          User           @relation("VocabularyItemCreator", fields: [creatorId], references: [id], onDelete: Cascade)
   collection       VocabularySet? @relation("VocabularySetItems", fields: [collectionId], references: [id], onDelete: SetNull)
+  progress         VocabularyItemProgress[]
 
   @@index([creatorId])
   @@index([collectionId])
   @@index([order])
-  @@index([isLearned])
   @@index([type])
+}
+
+model VocabularyItemProgress {
+  id           Int            @id @default(autoincrement())
+  itemId       Int
+  userId       String
+  isLearned    Boolean        @default(false)
+  learnedAt    DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  
+  item         VocabularyItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([itemId, userId])
+  @@index([itemId])
+  @@index([userId])
+  @@index([isLearned])
 }
 
 model ExcalidrawDrawing {

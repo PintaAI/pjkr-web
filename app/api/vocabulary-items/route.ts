@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { auth } from '@/lib/auth'
 import { VocabularyType, PartOfSpeech } from '@prisma/client'
 
 // GET /api/vocabulary-items - Get all vocabulary items
@@ -15,12 +16,16 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined
     const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : 0
 
+    // Get current user session for isLearned filter
+    const session = await auth.api.getSession({
+      headers: await request.headers
+    });
+
     const where: any = {}
     if (creatorId) where.creatorId = creatorId
     if (collectionId) where.collectionId = parseInt(collectionId)
     if (type) where.type = type
     if (pos) where.pos = pos
-    if (isLearned !== null) where.isLearned = isLearned === 'true'
     
     // Search in Korean or Indonesian text
     if (search) {
@@ -30,7 +35,7 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    const vocabularyItems = await prisma.vocabularyItem.findMany({
+    let vocabularyItems = await prisma.vocabularyItem.findMany({
       where,
       include: {
         creator: {
@@ -55,6 +60,19 @@ export async function GET(request: NextRequest) {
       take: limit,
       skip: offset
     })
+
+    // Filter by isLearned if requested and user is authenticated
+    if (isLearned !== null && session?.user) {
+      const userProgress = await prisma.vocabularyItemProgress.findMany({
+        where: {
+          userId: session.user.id,
+          isLearned: isLearned === 'true'
+        }
+      });
+      
+      const learnedItemIds = new Set(userProgress.map(p => p.itemId));
+      vocabularyItems = vocabularyItems.filter(item => learnedItemIds.has(item.id));
+    }
 
     return NextResponse.json({
       success: true,
@@ -81,7 +99,6 @@ export async function POST(request: NextRequest) {
     const {
       korean,
       indonesian,
-      isLearned = false,
       type = 'WORD',
       pos,
       audioUrl,
@@ -128,7 +145,6 @@ export async function POST(request: NextRequest) {
       data: {
         korean,
         indonesian,
-        isLearned,
         type: type as VocabularyType,
         pos: pos as PartOfSpeech,
         audioUrl,

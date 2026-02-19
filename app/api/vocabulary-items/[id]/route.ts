@@ -90,7 +90,6 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
     const {
       korean,
       indonesian,
-      isLearned,
       type,
       pos,
       audioUrl,
@@ -112,7 +111,6 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
     const updateData: any = {}
     if (korean !== undefined) updateData.korean = korean
     if (indonesian !== undefined) updateData.indonesian = indonesian
-    if (isLearned !== undefined) updateData.isLearned = isLearned
     if (type !== undefined) updateData.type = type as VocabularyType
     if (pos !== undefined) updateData.pos = pos as PartOfSpeech
     if (audioUrl !== undefined) updateData.audioUrl = audioUrl

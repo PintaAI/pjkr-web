@@ -172,6 +172,11 @@ export class GamificationService {
       }
 
       // Update user's XP, level, and streak
+      const streakChanged = rewardResult.streakData.currentStreak !== user.currentStreak;
+      if (streakChanged) {
+        console.log(`[GAMIFICATION] Streak updated for user ${userId}: ${user.currentStreak} -> ${rewardResult.streakData.currentStreak}`);
+      }
+      
       await tx.user.update({
         where: { id: userId },
         data: {
@@ -221,6 +226,15 @@ export class GamificationService {
           newLevel: rewardResult.levelProgress.currentLevel,
           metadata: metadata || {},
         },
+      });
+
+      console.log(`[GAMIFICATION] Activity log created for user ${userId}:`, {
+        event,
+        xpEarned: rewardResult.totalXP,
+        streakUpdated: streakChanged,
+        newStreak: rewardResult.streakData.currentStreak,
+        newLevel: rewardResult.levelProgress.currentLevel,
+        levelsGained: rewardResult.levelsGained
       });
 
       return { activityLogId: activityLog.id };

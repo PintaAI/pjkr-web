@@ -134,11 +134,6 @@ export async function GET(request: NextRequest) {
             isDraft: true
           }
         },
-        items: {
-          select: {
-            isLearned: true
-          }
-        },
         _count: {
           select: {
             items: true
@@ -150,19 +145,44 @@ export async function GET(request: NextRequest) {
       skip: offset
     })
 
+    // Get user's vocabulary progress if authenticated
+    const userProgress = session?.user ? await prisma.vocabularyItemProgress.findMany({
+      where: {
+        userId: session.user.id,
+        itemId: {
+          in: vocabularySets.flatMap(set => set.id ? [] : []) // Will be populated after we get item IDs
+        }
+      }
+    }) : []
+
     // Process vocabulary sets to add counts
     // Note: We don't filter by kelas.isDraft here anymore because it's handled in the query
     // ensuring owners can see their sets in draft classes, but others only see published ones
-    const filteredVocabularySets = vocabularySets
-      .map(set => {
-        const learnedCount = set.items.filter(item => item.isLearned).length
-        const { items, ...rest } = set
+    const filteredVocabularySets = await Promise.all(
+      vocabularySets.map(async (set) => {
+        // Get learned count for this set based on user's progress
+        const learnedCount = session?.user
+          ? await prisma.vocabularyItemProgress.count({
+              where: {
+                userId: session.user.id,
+                itemId: {
+                  in: (await prisma.vocabularyItem.findMany({
+                    where: { collectionId: set.id },
+                    select: { id: true }
+                  })).map(item => item.id)
+                },
+                isLearned: true
+              }
+            })
+          : 0
+
         return {
-          ...rest,
+          ...set,
           itemCount: set._count.items,
           learnedCount
         }
       })
+    )
 
     return NextResponse.json({
       success: true,
