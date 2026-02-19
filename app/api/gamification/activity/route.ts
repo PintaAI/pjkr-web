@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 import { prisma } from '@/lib/db'
 import { ActivityType } from '@prisma/client'
+import { getHoursUntilReset, getHoursUntilNewStreak } from '@/lib/gamification/streak'
 
 // GET /api/gamification/activity - Get user's activity history
 export async function GET(request: NextRequest) {
@@ -129,6 +130,16 @@ export async function GET(request: NextRequest) {
       metadata: activity.metadata
     }))
 
+    // Get user's last active date for streak calculations
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { lastActive: true, currentStreak: true }
+    })
+
+    // Calculate hours until reset and new streak
+    const hoursUntilReset = getHoursUntilReset(user?.lastActive || null)
+    const hoursUntilNewStreak = getHoursUntilNewStreak(user?.lastActive || null)
+
     // Calculate pagination meta
     const totalPages = Math.ceil(total / limit)
     const hasNextPage = page < totalPages
@@ -137,6 +148,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: formattedActivities,
+      streakInfo: {
+        hoursUntilReset,
+        hoursUntilNewStreak,
+        currentStreak: user?.currentStreak || 0,
+        lastActive: user?.lastActive?.toISOString() || null
+      },
       meta: {
         total,
         page,

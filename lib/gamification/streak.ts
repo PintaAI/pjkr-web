@@ -69,6 +69,15 @@ export function updateStreak(
   activeToday: boolean = true,
   userTimeZone?: string
 ): StreakData {
+  console.log(`[STREAK] ========== UPDATE STREAK START ==========`);
+  console.log(`[STREAK] Input streak data:`, {
+    currentStreak: currentStreakData.currentStreak,
+    lastActiveDate: currentStreakData.lastActiveDate,
+    longestStreak: currentStreakData.longestStreak,
+    activeToday,
+    userTimeZone
+  });
+  
   const now = new Date();
   
   // Use user timezone if provided, otherwise use server time
@@ -166,12 +175,22 @@ export function updateStreak(
 
   const newLongestStreak = Math.max(newStreak, currentStreakData.longestStreak);
 
-  return {
+  const result = {
     currentStreak: newStreak,
     lastActiveDate: today,
     longestStreak: newLongestStreak,
     streakHistory: newHistory,
   };
+  
+  console.log(`[STREAK] Output streak data:`, {
+    currentStreak: result.currentStreak,
+    lastActiveDate: result.lastActiveDate,
+    longestStreak: result.longestStreak,
+    streakHistoryLength: result.streakHistory.length
+  });
+  console.log(`[STREAK] ========== UPDATE STREAK END ==========`);
+  
+  return result;
 }
 
 /**
@@ -224,7 +243,76 @@ export function hasReachedMilestone(
   previousStreak: number,
   milestones: number[] = [3, 7, 14, 30, 60, 100]
 ): boolean {
-  return milestones.some(milestone => 
+  return milestones.some(milestone =>
     currentStreak >= milestone && previousStreak < milestone
   );
+}
+
+/**
+ * Calculate hours until streak reset
+ * @param lastActiveDate The last date the user was active
+ * @returns Hours until streak resets (0 if already lost or no activity)
+ */
+export function getHoursUntilReset(lastActiveDate: Date | null): number {
+  if (!lastActiveDate) return 0;
+  
+  const now = new Date();
+  const lastActive = new Date(lastActiveDate);
+  const hoursSinceLastActive = (now.getTime() - lastActive.getTime()) / (1000 * 60 * 60);
+  
+  // If already lost streak, return 0
+  if (hoursSinceLastActive >= 24) return 0;
+  
+  // Return remaining hours until 24-hour mark
+  return Math.max(0, 24 - hoursSinceLastActive);
+}
+
+/**
+ * Calculate hours until user can add new streak
+ * @param lastActiveDate The last date the user was active
+ * @param userTimeZone Optional user timezone (e.g., 'Asia/Jakarta')
+ * @returns Hours until user can add new streak (0 if already available)
+ */
+export function getHoursUntilNewStreak(
+  lastActiveDate: Date | null,
+  userTimeZone?: string
+): number {
+  if (!lastActiveDate) return 0;
+  
+  const now = new Date();
+  
+  // Use user timezone if provided, otherwise use server time
+  const userNow = userTimeZone
+    ? new Date(now.toLocaleString("en-US", { timeZone: userTimeZone }))
+    : now;
+  
+  const today = new Date(userNow.getFullYear(), userNow.getMonth(), userNow.getDate());
+  const lastActive = new Date(lastActiveDate);
+  
+  // Convert last active date to user timezone if provided
+  const userLastActive = userTimeZone
+    ? new Date(lastActive.toLocaleString("en-US", { timeZone: userTimeZone }))
+    : lastActive;
+  
+  const lastActiveDay = new Date(
+    userLastActive.getFullYear(),
+    userLastActive.getMonth(),
+    userLastActive.getDate()
+  );
+  
+  // Check if already lost streak (24+ hours)
+  const hoursSinceLastActive = (now.getTime() - lastActive.getTime()) / (1000 * 60 * 60);
+  if (hoursSinceLastActive >= 24) return 0;
+  
+  // Check if already active today - user can only add to streak once per day
+  if (lastActiveDay.getTime() === today.getTime()) {
+    // Calculate hours until midnight (next day)
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const hoursUntilTomorrow = (tomorrow.getTime() - userNow.getTime()) / (1000 * 60 * 60);
+    return Math.max(0, hoursUntilTomorrow);
+  }
+  
+  // User can add to streak now (on a new consecutive day)
+  return 0;
 }
