@@ -145,15 +145,7 @@ export async function GET(request: NextRequest) {
       skip: offset
     })
 
-    // Get user's vocabulary progress if authenticated
-    const userProgress = session?.user ? await prisma.vocabularyItemProgress.findMany({
-      where: {
-        userId: session.user.id,
-        itemId: {
-          in: vocabularySets.flatMap(set => set.id ? [] : []) // Will be populated after we get item IDs
-        }
-      }
-    }) : []
+  
 
     // Process vocabulary sets to add counts
     // Note: We don't filter by kelas.isDraft here anymore because it's handled in the query
