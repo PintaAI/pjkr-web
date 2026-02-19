@@ -279,7 +279,6 @@ async function createVocabularyItems(users: any[], vocabularySets: any[]) {
         data: {
           korean: vocab.korean,
           indonesian: vocab.indonesian,
-          isLearned: faker.datatype.boolean(0.3),
           type: vocab.type as any,
           pos: vocab.pos as any,
           audioUrl: faker.datatype.boolean(0.4) ? faker.internet.url() + '/audio.mp3' : null,
@@ -301,7 +300,6 @@ async function createVocabularyItems(users: any[], vocabularySets: any[]) {
       data: {
         korean: vocab.korean,
         indonesian: vocab.indonesian,
-        isLearned: faker.datatype.boolean(0.2),
         type: vocab.type as any,
         pos: vocab.pos as any,
         audioUrl: faker.datatype.boolean(0.3) ? faker.internet.url() + '/audio.mp3' : null,

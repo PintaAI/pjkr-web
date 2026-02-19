@@ -67,7 +67,6 @@ export async function getUserProfile() {
             indonesian: true,
             type: true,
             pos: true,
-            isLearned: true,
             createdAt: true,
             collection: {
               select: {
@@ -359,7 +358,6 @@ export async function getUserProfileById(targetUserId: string) {
             indonesian: true,
             type: true,
             pos: true,
-            isLearned: true,
             createdAt: true,
             collection: {
               select: {
