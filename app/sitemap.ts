@@ -11,22 +11,34 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
-      url: `${baseUrl}/explore`,
+      url: `${baseUrl}/kelas`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.95,
+    },
+    {
+      url: `${baseUrl}/soal/latihan`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/kelas`,
+      url: `${baseUrl}/soal/tryout`,
       lastModified: new Date(),
-      changeFrequency: 'daily',
+      changeFrequency: 'weekly',
       priority: 0.9,
     },
     {
       url: `${baseUrl}/vocabulary`,
       lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.8,
+      changeFrequency: 'daily',
+      priority: 0.85,
+    },
+    {
+      url: `${baseUrl}/live-session`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.85,
     },
     {
       url: `${baseUrl}/soal`,
@@ -35,23 +47,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/soal/latihan`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/soal/tryout`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.7,
-    },
-
-    {
       url: `${baseUrl}/home`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/explore`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/dashboard`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.6,
     },
   ]
 }

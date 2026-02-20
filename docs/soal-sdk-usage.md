@@ -6,9 +6,9 @@ This guide explains how to use the **Soal API** from the Hakgyo Expo SDK in your
 
 - [Installation](#installation)
 - [Setup](#setup)
+- [Daily Soal](#daily-soal)
 - [Collections (Koleksi Soal)](#collections-koleksi-soal)
 - [Individual Questions (Soal)](#individual-questions-soal)
-- [Practice Mode](#practice-mode)
 - [Type Definitions](#type-definitions)
 - [Error Handling](#error-handling)
 
@@ -31,6 +31,43 @@ Import the `soalApi` from the SDK:
 ```typescript
 import { soalApi } from 'hakgyo-expo-sdk';
 ```
+
+---
+
+## Daily Soal
+
+Get random daily questions for practice. This endpoint returns personalized questions based on:
+- Questions from user's joined classes
+- Questions from user's own collections
+- Questions created directly by the user
+
+### Get Daily Questions
+
+```typescript
+import { soalApi } from 'hakgyo-expo-sdk';
+
+const fetchDailyQuestions = async (userId: string, take: number = 5) => {
+  try {
+    const questions = await soalApi.getDaily(userId, take);
+    console.log('Daily questions:', questions);
+  } catch (error) {
+    console.error('Error fetching daily questions:', error);
+  }
+};
+```
+
+**Parameters:**
+- `userId` (required): The user's ID for personalized questions
+- `take` (optional): Number of questions to return (default: 5, max: 10)
+
+**Response:**
+Returns an array of `Soal` objects with:
+- `id`: Question ID
+- `pertanyaan`: Question text
+- `difficulty`: Difficulty level (BEGINNER, INTERMEDIATE, ADVANCED)
+- `explanation`: Explanation for the correct answer
+- `opsis`: Array of answer options with `opsiText`, `isCorrect`, and `order`
+- `koleksiSoal`: Collection info with `nama` and `deskripsi`
 
 ---
 
@@ -274,46 +311,6 @@ const toggleQuestion = async (questionId: number) => {
 
 ---
 
-## Practice Mode
-
-Practice mode allows users to take quizzes and get results.
-
-### Start a Practice Session
-
-```typescript
-const startPractice = async (collectionId: number) => {
-  try {
-    const session = await soalApi.practice(collectionId);
-
-    if (session.success) {
-      console.log('Session started:', session.data);
-      // Store session ID for submitting answers later
-    }
-  } catch (error) {
-    console.error('Error starting practice:', error);
-  }
-};
-```
-
-### Submit Practice Answers
-
-```typescript
-const submitAnswers = async (sessionId: string, answers: unknown[]) => {
-  try {
-    const result = await soalApi.submitPractice(sessionId, answers);
-
-    if (result.success) {
-      console.log('Results:', result.data);
-      // Display score, correct answers, etc.
-    }
-  } catch (error) {
-    console.error('Error submitting answers:', error);
-  }
-};
-```
-
----
-
 ## Type Definitions
 
 ### KoleksiSoal (Collection)
@@ -373,35 +370,6 @@ interface Attachment {
 }
 ```
 
-### PracticeSession
-
-```typescript
-interface PracticeSession {
-  id: string;
-  collectionId: number;
-  userId: string;
-  startedAt: Date;
-  // ... other fields
-}
-```
-
-### PracticeResult
-
-```typescript
-interface PracticeResult {
-  sessionId: string;
-  score: number;
-  totalQuestions: number;
-  correctAnswers: number;
-  answers: {
-    questionId: number;
-    selectedOptionId: number;
-    isCorrect: boolean;
-  }[];
-  // ... other fields
-}
-```
-
 ---
 
 ## Error Handling
@@ -430,55 +398,6 @@ try {
   // Network error, timeout, etc.
   Alert.alert('Error', 'Failed to fetch collections');
 }
-```
-
----
-
-## Example: Complete Practice Flow
-
-```typescript
-import { soalApi } from 'hakgyo-expo-sdk';
-import { useState } from 'react';
-
-export const usePracticeFlow = () => {
-  const [currentSession, setCurrentSession] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  // 1. Start practice
-  const startPractice = async (collectionId: number) => {
-    setLoading(true);
-    try {
-      const response = await soalApi.practice(collectionId);
-      if (response.success) {
-        setCurrentSession(response.data.id);
-        return response.data;
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 2. Submit answers
-  const submitAnswers = async (answers: unknown[]) => {
-    if (!currentSession) return;
-
-    setLoading(true);
-    try {
-      const response = await soalApi.submitPractice(currentSession, answers);
-      if (response.success) {
-        return response.data;
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return { startPractice, submitAnswers, loading };
-};
 ```
 
 ---

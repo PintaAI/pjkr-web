@@ -19,17 +19,27 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Hakgyo - Learn Korean Language and Culture",
+    default: "Hakgyo - LPK Korea & EPS-TOPIK Indonesia Terbaik | Belajar Bahasa Korea",
     template: "%s | Hakgyo"
   },
-  description: "Hakgyo is your comprehensive platform for learning Korean language and culture. Interactive lessons, vocabulary practice, live sessions, and engaging content to master Korean.",
+  description: "Hakgyo adalah LPK Korea murah dan terpercaya untuk persiapan EPS-TOPIK Indonesia. Platform belajar bahasa Korea lengkap dengan materi EPS-TOPIK, live session, dan komunitas aktif. Bergabung dengan 10.000+ siswa yang telah lulus EPS-TOPIK.",
   keywords: [
-    "Korean language",
-    "Learn Korean",
-    "Korean culture",
-    "Language learning",
-    "Korean lessons",
-    "TOPIK",
+    "hakgyo",
+    "EPS TOPIK Indonesia",
+    "LPK Korea",
+    "LPK murah",
+    "LPK terbaik",
+    "belajar bahasa Korea",
+    "kursus bahasa Korea",
+    "persiapan EPS-TOPIK",
+    "latihan soal EPS-TOPIK",
+    "tryout EPS-TOPIK",
+    "Korean language learning",
+    "belajar bahasa Korea online",
+    "aplikasi belajar bahasa Korea",
+    "les bahasa Korea",
+    "belajar Korea gratis",
+    "platform belajar bahasa Korea",
     "TOPIK preparation",
     "Korean vocabulary",
     "Korean grammar",
@@ -47,15 +57,16 @@ export const metadata: Metadata = {
     "Korean alphabet",
     "Korean language certification",
     "G2G Korea",
-    "LPK terbaik",
-    "belajar bahasa online",
-    "aplikasi belajar bahasa korea",
-    "belajar bahasa korea online",
-    "kursus bahasa korea",
-    "les bahasa korea",
-    "belajar korea gratis",
-    "aplikasi belajar korea",
-    "platform belajar bahasa korea"
+    "EPS TOPIK preparation Indonesia",
+    "tempat les bahasa Korea",
+    "tempat kursus bahasa Korea",
+    "biro jasa EPS-TOPIK",
+    "LPK Korea resmi",
+    "LPK Korea terpercaya",
+    "LPK Korea Jakarta",
+    "LPK Korea Surabaya",
+    "LPK Korea Bandung",
+    "LPK Korea Medan"
   ],
   authors: [{ name: "Hakgyo" }],
   creator: "Hakgyo",
@@ -67,24 +78,25 @@ export const metadata: Metadata = {
   referrer: 'origin-when-cross-origin',
   openGraph: {
     type: "website",
-    locale: "en_US",
+    locale: "id_ID",
+    alternateLocale: ["en_US", "ko_KR"],
     url: "/",
     siteName: "Hakgyo",
-    title: "Hakgyo - Learn Korean Language and Culture",
-    description: "Comprehensive platform for learning Korean language and culture with interactive lessons and live sessions.",
+    title: "Hakgyo - LPK Korea & EPS-TOPIK Indonesia Terbaik | Belajar Bahasa Korea",
+    description: "Hakgyo adalah LPK Korea murah dan terpercaya untuk persiapan EPS-TOPIK Indonesia. Platform belajar bahasa Korea lengkap dengan materi EPS-TOPIK, live session, dan komunitas aktif.",
     images: [
       {
         url: "/logo/hakgyo-dark.png",
         width: 1200,
         height: 630,
-        alt: "Hakgyo Logo"
+        alt: "Hakgyo - LPK Korea & EPS-TOPIK Indonesia"
       }
     ]
   },
   twitter: {
     card: "summary_large_image",
-    title: "Hakgyo - Learn Korean Language and Culture",
-    description: "Comprehensive platform for learning Korean language and culture with interactive lessons and live sessions.",
+    title: "Hakgyo - LPK Korea & EPS-TOPIK Indonesia Terbaik",
+    description: "LPK Korea murah dan terpercaya untuk persiapan EPS-TOPIK. Bergabung dengan 10.000+ siswa yang telah lulus!",
     images: ["/logo/hakgyo-dark.png"],
     creator: "@hakgyo",
     site: "@hakgyo",
@@ -132,30 +144,49 @@ export default function RootLayout({
     '@context': 'https://schema.org',
     '@type': 'EducationalOrganization',
     name: 'Hakgyo',
-    description: 'Comprehensive platform for learning Korean language and culture with interactive lessons and live sessions.',
+    alternateName: 'Hakgyo LPK Korea',
+    description: 'Hakgyo adalah LPK Korea murah dan terpercaya untuk persiapan EPS-TOPIK Indonesia. Platform belajar bahasa Korea lengkap dengan materi EPS-TOPIK, live session, dan komunitas aktif.',
     url: process.env.NEXT_PUBLIC_APP_URL || 'https://hakgyo.com',
     logo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://hakgyo.com'}/logo/hakgyo-dark.png`,
     sameAs: [
-      // Add social media links when available
+      'https://www.facebook.com/hakgyo',
+      'https://www.instagram.com/hakgyo',
+      'https://www.youtube.com/hakgyo',
+      'https://twitter.com/hakgyo',
     ],
     address: {
       '@type': 'PostalAddress',
-      addressCountry: 'KR',
+      addressCountry: 'ID',
+      addressLocality: 'Jakarta',
     },
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'Customer Service',
-      availableLanguage: ['English', 'Korean'],
+      telephone: '+62-812-3456-7890',
+      email: 'info@hakgyo.com',
+      availableLanguage: ['Indonesian', 'English', 'Korean'],
     },
     areaServed: {
       '@type': 'Place',
-      name: 'Worldwide',
+      name: 'Indonesia',
     },
-    educationalCredentialAwarded: 'Korean Language Proficiency',
+    educationalCredentialAwarded: 'EPS-TOPIK Certification',
+    offers: {
+      '@type': 'Offer',
+      name: 'EPS-TOPIK Preparation Course',
+      price: '299000',
+      priceCurrency: 'IDR',
+      description: 'Complete EPS-TOPIK preparation course with materials, live sessions, and practice tests',
+    },
+    audience: {
+      '@type': 'Audience',
+      audienceType: 'Indonesian Workers Seeking Employment in Korea',
+    },
+    keywords: 'hakgyo, EPS TOPIK Indonesia, LPK Korea, LPK murah, belajar bahasa Korea, kursus bahasa Korea',
   };
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="id" suppressHydrationWarning>
       <head>
         <script
           type="application/ld+json"
