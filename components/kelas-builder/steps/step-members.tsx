@@ -87,7 +87,7 @@ export function StepMembers() {
   };
 
   const handleRemoveMember = async (memberId: string) => {
-    if (!draftId || !confirm("Are you sure you want to remove this member?")) return;
+    if (!draftId || !confirm("Apakah Anda yakin ingin menghapus anggota ini?")) return;
 
     setIsLoading(true);
     setError(null);
@@ -115,7 +115,7 @@ export function StepMembers() {
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          Please save your class information first before managing members.
+          Silakan simpan informasi kelas Anda terlebih dahulu sebelum mengelola anggota.
         </AlertDescription>
       </Alert>
     );
@@ -128,13 +128,13 @@ export function StepMembers() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Members Summary
+            Ringkasan Anggota
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center">
             <div className="text-3xl font-bold text-primary">{totalCount}</div>
-            <div className="text-sm text-muted-foreground">Total Members</div>
+            <div className="text-sm text-muted-foreground">Total Anggota</div>
           </div>
         </CardContent>
       </Card>
@@ -144,7 +144,7 @@ export function StepMembers() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserPlus className="h-5 w-5" />
-            Add Member by Email
+            Tambah Anggota Melalui Email
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -153,7 +153,7 @@ export function StepMembers() {
               <div className="flex-1">
                 <Input
                   type="email"
-                  placeholder="Enter user email address"
+                  placeholder="Masukkan alamat email pengguna"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
@@ -162,7 +162,7 @@ export function StepMembers() {
               </div>
               <Button type="submit" disabled={isLoading || !email.trim()}>
                 <Mail className="h-4 w-4 mr-2" />
-                {isLoading ? "Adding..." : "Add Member"}
+                {isLoading ? "Menambahkan..." : "Tambah Anggota"}
               </Button>
             </div>
 
@@ -194,17 +194,17 @@ export function StepMembers() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Current Members ({totalCount})
+            Anggota Saat Ini ({totalCount})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading && members.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Loading members...
+              Memuat anggota...
             </div>
           ) : members.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No members yet. Add members using the form above.
+              Belum ada anggota. Tambahkan anggota menggunakan formulir di atas.
             </div>
           ) : (
             <div className="space-y-3">
@@ -222,7 +222,7 @@ export function StepMembers() {
                     </Avatar>
                     <div>
                       <div className="font-semibold">
-                        {member.name || "No name"}
+                        {member.name || "Tidak ada nama"}
                       </div>
                       <div className="text-sm text-muted-foreground flex items-center gap-1">
                         <Mail className="h-3 w-3" />

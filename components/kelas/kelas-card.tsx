@@ -172,7 +172,7 @@ export function KelasCard({
                     }
                   }}>
                     <Eye className="h-4 w-4 mr-2" />
-                    View Class
+                    Lihat Kelas
                   </DropdownMenuItem>
                   {onEdit && (
                     <>
@@ -199,7 +199,7 @@ export function KelasCard({
                           disabled={data._count.materis === 0}
                         >
                           <FileText className="h-4 w-4 mr-2" />
-                          Publish
+                          Publikasikan
                         </DropdownMenuItem>
                       )}
                       {onDelete && (
@@ -212,7 +212,7 @@ export function KelasCard({
                           }}
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
+                          Hapus
                         </DropdownMenuItem>
                       )}
                     </>
@@ -228,7 +228,7 @@ export function KelasCard({
                                 onSelect={(e) => e.preventDefault()}
                               >
                                 <EyeOff className="h-4 w-4 mr-2" />
-                                Unpublish
+                                Batalkan Publikasi
                               </DropdownMenuItem>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
@@ -239,12 +239,12 @@ export function KelasCard({
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogCancel>Batal</AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() => onUnpublish(data.id)}
                                   className="bg-orange-600 hover:bg-orange-700"
                                 >
-                                  Unpublish
+                                  Batalkan Publikasi
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -274,7 +274,7 @@ export function KelasCard({
                   </AvatarFallback>
                 </Avatar>
                 <span className="truncate text-xs text-white drop-shadow">
-                  {data.author.name || "Unknown"}
+                  {data.author.name || "Tidak Diketahui"}
                 </span>
               </div>
 
@@ -304,7 +304,7 @@ export function KelasCard({
         <p
           className="mt-1 text-xs sm:text-sm text-muted-foreground line-clamp-2"
           dangerouslySetInnerHTML={{
-            __html: data.description || "No description available"
+            __html: data.description || "Tidak ada deskripsi tersedia"
           }}
         />
 

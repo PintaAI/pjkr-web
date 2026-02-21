@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -60,70 +60,146 @@ interface SoalSetFormProps {
   soalSet?: SoalSet;
   kelasId?: number;
   onCancel?: () => void;
+  onAutoSaveStatusChange?: (status: 'idle' | 'saving' | 'saved' | 'error') => void;
+  onBeforeCloseRef?: React.MutableRefObject<(() => Promise<boolean>) | null>;
 }
 
-export function SoalSetForm({ soalSet, kelasId, }: SoalSetFormProps) {
+export function SoalSetForm({ soalSet, kelasId, onAutoSaveStatusChange, onBeforeCloseRef }: SoalSetFormProps) {
    const store = useSoalStore();
     const {
-      loading,
-      saving,
-      formData,
-      soals,
-      originalSoals,
-      deletedSoalIds,
-      soalDialogOpen,
-      editingSoalIndex,
-      generating,
-      currentSoalSetId,
-      setLoading,
-      setFormData,
-      setSoals,
-      setOriginalSoals,
-      setDeletedSoalIds,
-      setGenerating,
-      setCurrentSoalSetId,
-      initForCreate,
-      initForEdit,
-      handleAddSoal,
-      handleEditSoal,
-      handleDeleteSoal,
-      handleSaveSoal,
-      handleCancelSoal,
-      handleQuickAddSoal,
-    } = store;
+       loading,
+       saving,
+       formData,
+       soals,
+       originalFormData,
+       originalSoals,
+       deletedSoalIds,
+       soalDialogOpen,
+       editingSoalIndex,
+       generating,
+       currentSoalSetId,
+       setLoading,
+       setFormData,
+       setOriginalFormData,
+       setSoals,
+       setOriginalSoals,
+       setDeletedSoalIds,
+       setGenerating,
+       setCurrentSoalSetId,
+       initForCreate,
+       initForEdit,
+       handleAddSoal,
+       handleEditSoal,
+       handleDeleteSoal,
+       handleSaveSoal,
+       handleCancelSoal,
+       handleQuickAddSoal,
+       hasDataChanged,
+     } = store;
 
    const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+   const manualSavingRef = useRef(false);
+   const saveVersionRef = useRef(0);
+   const lastSavedDataRef = useRef<{ formData: typeof formData, soals: typeof soals } | null>(null);
+
+   // Notify parent of auto-save status changes
+   useEffect(() => {
+    onAutoSaveStatusChange?.(autoSaveStatus);
+  }, [autoSaveStatus, onAutoSaveStatusChange]);
 
    // Auto-save function that saves form data (without triggering onSuccess)
    const performAutoSave = async () => {
-     if (saving) {
+     if (saving || manualSavingRef.current) {
        return;
      }
 
+     const currentVersion = ++saveVersionRef.current;
      setAutoSaveStatus('saving');
+
+     const dataToSave = {
+       formData: JSON.parse(JSON.stringify(formData)),
+       soals: JSON.parse(JSON.stringify(soals))
+     };
 
      try {
        // Add a minimum delay to make the spinner visible
-       const savePromise = performSave();
+       const savePromise = performSave(currentVersion);
        const delayPromise = new Promise(resolve => setTimeout(resolve, 1000));
 
        // Wait for both the save operation and the minimum delay
        await Promise.all([savePromise, delayPromise]);
 
+       if (currentVersion !== saveVersionRef.current) {
+         return; // A newer save took precedence
+       }
+
        setAutoSaveStatus('saved');
+       setLastSavedAt(new Date());
+       lastSavedDataRef.current = dataToSave;
 
        // Auto-hide the saved status after 2 seconds
        setTimeout(() => {
-         setAutoSaveStatus('idle');
+         if (currentVersion === saveVersionRef.current) {
+           setAutoSaveStatus('idle');
+         }
        }, 2000);
      } catch (error) {
+       if (currentVersion !== saveVersionRef.current) return;
        console.error('Auto-save failed:', error);
        setAutoSaveStatus('error');
-       setTimeout(() => {
-         setAutoSaveStatus('idle');
-       }, 3000);
+       
+       if (lastSavedDataRef.current) {
+         setFormData(lastSavedDataRef.current.formData);
+         setSoals(lastSavedDataRef.current.soals);
+       }
      }
    };
+
+   // Function to check if there are unsaved changes
+    const hasUnsavedChanges = (): boolean => {
+      // For new soal sets (no soalSet prop): Check if there's meaningful content beyond initial state
+      if (!soalSet) {
+        const hasMeaningfulName = formData.nama.trim().length > 0;
+        const hasMeaningfulSoals = soals.some(soal =>
+          soal.pertanyaan.trim().length > 0 ||
+          (soal.opsis && soal.opsis.some(opsi => opsi.opsiText.trim().length > 0))
+        );
+        return hasMeaningfulName || hasMeaningfulSoals;
+      }
+      
+      // For existing soal sets: Use the store's hasDataChanged function which compares
+      // current data with original data from the store
+      return hasDataChanged();
+    };
+
+   // Function to save before closing - returns a promise that resolves when save completes
+   const saveBeforeClose = async (): Promise<boolean> => {
+     if (!hasUnsavedChanges()) {
+       return true; // No unsaved changes, can close immediately
+     }
+
+     // Cancel any pending debounced save
+     cancelAutoSave();
+
+     // Trigger immediate save
+     try {
+       await performAutoSave();
+       // Wait a bit to ensure the status is updated
+       await new Promise(resolve => setTimeout(resolve, 100));
+       return autoSaveStatus === 'saved' || autoSaveStatus === 'idle';
+     } catch (error) {
+       console.error('Save before close failed:', error);
+       return false;
+     }
+   };
+
+   // Expose saveBeforeClose to parent via onBeforeCloseRef
+   useEffect(() => {
+     if (onBeforeCloseRef) {
+       onBeforeCloseRef.current = saveBeforeClose;
+     }
+   }, [onBeforeCloseRef, formData, soals, autoSaveStatus]);
 
    // Initialize debounced auto-save with longer delay to see spinner
    const { debouncedSave, cancelAutoSave } = useDebouncedAutoSave({
@@ -134,16 +210,18 @@ export function SoalSetForm({ soalSet, kelasId, }: SoalSetFormProps) {
 
    // Auto-save effect that triggers on form data changes
    useEffect(() => {
-     if (!loading && formData.nama.trim()) {
+     if (!loading && formData.nama.trim() && !saving && !manualSavingRef.current) {
        debouncedSave({ formData, soals });
      }
-   }, [formData, soals, loading, debouncedSave]);
+   }, [formData, soals, loading, debouncedSave, saving]);
 
    // Cancel auto-save on unmount or manual save
    useEffect(() => {
+     manualSavingRef.current = saving;
      if (saving) {
        cancelAutoSave();
        setAutoSaveStatus('idle');
+       saveVersionRef.current++; // Invalidate any pending auto-saves
      }
    }, [saving, cancelAutoSave]);
 
@@ -164,9 +242,9 @@ export function SoalSetForm({ soalSet, kelasId, }: SoalSetFormProps) {
               difficulty: soal.difficulty,
               explanation: soal.explanation,
               opsis: soal.opsis.map((opsi: any) => ({
-                id: opsi.id,
-                opsiText: opsi.opsiText,
-                isCorrect: opsi.isCorrect,
+              id: opsi.id,
+              opsiText: opsi.opsiText,
+              isCorrect: opsi.isCorrect,
               })),
             }));
             setSoals(transformedSoals);
@@ -182,7 +260,7 @@ export function SoalSetForm({ soalSet, kelasId, }: SoalSetFormProps) {
     } else {
       initForCreate();
     }
-  }, [soalSet, initForCreate, initForEdit, setLoading, setSoals, setOriginalSoals]);
+  }, [soalSet, initForCreate, initForEdit, setLoading, setSoals, setOriginalSoals, setOriginalFormData]);
 
   const handleGenerate = async () => {
     if (!formData.nama.trim()) {
@@ -221,15 +299,26 @@ export function SoalSetForm({ soalSet, kelasId, }: SoalSetFormProps) {
 
 
   // Save function for auto-save (no onSuccess callback to avoid closing dialog)
-  const performSave = async () => {
+  const performSave = async (version?: number) => {
+    // Check if a newer version started before we begin
+    if (version !== undefined && version !== saveVersionRef.current) return;
+    if (manualSavingRef.current && version !== undefined) return;
+
     // Don't set setSaving(true) here as it interferes with autoSaveStatus
     // setSaving(true);
+
+    const checkVersion = () => {
+        return version === undefined || version === saveVersionRef.current;
+    };
 
     try {
       // First, handle deletions
       for (const deletedSoalId of deletedSoalIds) {
+        if (!checkVersion() || (manualSavingRef.current && version !== undefined)) return;
         await deleteSoal(deletedSoalId);
       }
+
+      if (!checkVersion() || (manualSavingRef.current && version !== undefined)) return;
 
       // Save the collection metadata (only if it changed)
       // Use currentSoalSetId if available (for newly created sets), otherwise use soalSet?.id (for editing)
@@ -240,6 +329,8 @@ export function SoalSetForm({ soalSet, kelasId, }: SoalSetFormProps) {
         isPrivate: formData.isPrivate,
         isDraft: formData.isDraft,
       }, soalSetIdToUse);
+
+      if (!checkVersion() || (manualSavingRef.current && version !== undefined)) return;
 
       if (koleksiResult.success && koleksiResult.data) {
         const koleksiSoalId = koleksiResult.data.id;
@@ -266,6 +357,8 @@ export function SoalSetForm({ soalSet, kelasId, }: SoalSetFormProps) {
               explanation: soalItem.explanation,
               isActive: true,
             }, typeof soalItem.id === 'number' ? soalItem.id : undefined);
+
+            if (!checkVersion() || (manualSavingRef.current && version !== undefined)) return;
 
             if (soalResult.success && soalResult.data && soalItem.opsis) {
               const soalId = soalResult.data.id;
@@ -296,14 +389,17 @@ export function SoalSetForm({ soalSet, kelasId, }: SoalSetFormProps) {
         setDeletedSoalIds([]);
         // Update original data for next comparison
         setOriginalSoals(JSON.parse(JSON.stringify(soals)));
+        setOriginalFormData(JSON.parse(JSON.stringify(formData)));
         
         // Don't call onSuccess to avoid auto-closing the dialog
         // Users can manually close via the sheet's close button
       } else {
         console.error("Failed to save collection:", koleksiResult.error);
+        throw new Error(koleksiResult.error || "Failed to save collection");
       }
     } catch (error) {
       console.error("Error saving soal set:", error);
+      throw error;
     } finally {
       // Don't set setSaving(false) here as it interferes with autoSaveStatus
       // setSaving(false);
@@ -321,30 +417,44 @@ export function SoalSetForm({ soalSet, kelasId, }: SoalSetFormProps) {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label htmlFor="nama" className="text-lg font-medium text-foreground flex items-center gap-2">
-                Soal Set Name
+                Nama Set Soal
                 <span className="text-destructive">*</span>
                 {/* Enhanced auto-save status indicator */}
                 {autoSaveStatus === 'saving' && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground animate-in fade-in-0 duration-300">
                     <Loader2 className="h-3 w-3 animate-spin" />
-                    <span>Saving...</span>
+                    <span>Menyimpan...</span>
                   </div>
                 )}
                 {autoSaveStatus === 'saved' && (
                   <div className="flex items-center gap-1 text-xs text-green-600 animate-in fade-in-0 duration-300">
                     <Check className="h-3 w-3" />
-                    <span>Saved!</span>
+                    <span>Tersimpan!</span>
                   </div>
                 )}
                 {autoSaveStatus === 'error' && (
-                  <div className="flex items-center gap-1 text-xs text-red-600 animate-in fade-in-0 duration-300">
-                    <span>Save failed</span>
+                  <div className="flex items-center gap-2 text-xs text-red-600 animate-in fade-in-0 duration-300">
+                    <span>Gagal Menyimpan</span>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        performAutoSave();
+                      }}
+                      className="underline hover:text-red-700 transition-colors cursor-pointer"
+                    >
+                      Coba Simpan Lagi
+                    </button>
+                  </div>
+                )}
+                {lastSavedAt && autoSaveStatus !== 'saving' && autoSaveStatus !== 'error' && (
+                  <div className="text-xs text-muted-foreground font-normal ml-2">
+                    Terakhir disimpan: {lastSavedAt.toLocaleTimeString()}
                   </div>
                 )}
               </Label>
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="isPrivate" className="text-sm text-muted-foreground">Private</Label>
+                  <Label htmlFor="isPrivate" className="text-sm text-muted-foreground">Pribadi</Label>
                   <Switch
                     id="isPrivate"
                     checked={formData.isPrivate}
@@ -352,7 +462,7 @@ export function SoalSetForm({ soalSet, kelasId, }: SoalSetFormProps) {
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="isDraft" className="text-sm text-muted-foreground">Draft</Label>
+                  <Label htmlFor="isDraft" className="text-sm text-muted-foreground">Draf</Label>
                   <Switch
                     id="isDraft"
                     checked={formData.isDraft}
@@ -365,19 +475,19 @@ export function SoalSetForm({ soalSet, kelasId, }: SoalSetFormProps) {
               id="nama"
               value={formData.nama}
               onChange={(e) => setFormData({ nama: e.target.value })}
-              placeholder="Enter a descriptive name for your question set"
+              placeholder="Masukkan nama deskriptif untuk set pertanyaan Anda"
               required
               className="h-11 border-0 bg-muted/30 rounded-xl focus-visible:bg-background focus-visible:border focus-visible:border-primary/20 transition-all text-base"
             />
           </div>
 
           <div className="space-y-3">
-            <Label htmlFor="deskripsi" className="text-lg font-medium text-foreground">Description</Label>
+            <Label htmlFor="deskripsi" className="text-lg font-medium text-foreground">Deskripsi</Label>
             <Textarea
               id="deskripsi"
               value={formData.deskripsi || ""}
               onChange={(e) => setFormData({ deskripsi: e.target.value })}
-              placeholder="Enter description (optional)"
+              placeholder="Masukkan deskripsi (opsional)"
               rows={3}
               className="min-h-[100px] border-0 bg-muted/30 rounded-xl focus-visible:bg-background focus-visible:border focus-visible:border-primary/20 transition-all resize-none"
             />
@@ -400,15 +510,15 @@ export function SoalSetForm({ soalSet, kelasId, }: SoalSetFormProps) {
       </div>
 
       <Dialog open={soalDialogOpen} onOpenChange={(open) => store.setSoalDialogOpen(open)}>
-        <DialogContent className="max-w-6xl w-full sm:max-w-6xl max-h-[95vh] overflow-y-auto bg-background border-border/20 shadow-2xl">
+        <DialogContent className="max-w-[95vw] w-full sm:max-w-6xl max-h-[95vh] overflow-y-auto bg-background border-border/20 shadow-2xl">
           <DialogHeader className="border-b border-border/50 pb-4">
             <DialogTitle className="text-xl font-semibold text-foreground flex items-center justify-center gap-2">
-              {editingSoalIndex !== null ? "Edit Question" : "Add New Question"}
+              {editingSoalIndex !== null ? "Edit Pertanyaan" : "Tambah Pertanyaan Baru"}
             </DialogTitle>
             <p className="text-sm text-muted-foreground text-center mt-1">
               {editingSoalIndex !== null
-                ? "Make changes to your existing question"
-                : "Create a new question for your set"
+                ? "Buat perubahan pada pertanyaan yang sudah ada"
+                : "Buat pertanyaan baru untuk set Anda"
               }
             </p>
           </DialogHeader>

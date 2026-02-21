@@ -41,6 +41,7 @@ interface SoalActions {
   setLoading: (loading: boolean) => void;
   setSaving: (saving: boolean) => void;
   setFormData: (formData: Partial<FormData>) => void;
+  setOriginalFormData: (formData: FormData) => void;
   setSoals: (soals: SoalItem[]) => void;
   setOriginalSoals: (soals: SoalItem[]) => void;
   setDeletedSoalIds: (ids: number[]) => void;
@@ -95,6 +96,7 @@ export const useSoalStore = create<SoalState & SoalActions>()(
     setFormData: (updates) => set((state) => {
       state.formData = { ...state.formData, ...updates };
     }),
+    setOriginalFormData: (originalFormData) => set({ originalFormData }),
     setSoals: (soals) => set({ soals }),
     setOriginalSoals: (originalSoals) => set({ originalSoals }),
     setDeletedSoalIds: (deletedSoalIds) => set({ deletedSoalIds }),

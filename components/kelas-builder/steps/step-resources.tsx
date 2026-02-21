@@ -49,7 +49,7 @@ export function StepResources() {
         }
       } catch (error) {
         console.error("Failed to load resources:", error);
-        toast.error("Failed to load available resources");
+        toast.error("Gagal memuat sumber daya yang tersedia");
       } finally {
         setIsLoading(false);
       }
@@ -88,7 +88,7 @@ export function StepResources() {
       toast.success("Resource connections saved successfully");
     } catch (error) {
       console.error("Failed to save connections:", error);
-      toast.error("Failed to save resource connections");
+      toast.error("Gagal menyimpan koneksi sumber daya");
     } finally {
       setIsSaving(false);
     }
@@ -98,7 +98,7 @@ export function StepResources() {
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Loading available resources...</span>
+        <span className="ml-2">Memuat sumber daya yang tersedia...</span>
       </div>
     );
   }
@@ -110,18 +110,18 @@ export function StepResources() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
-            Resource Connections Summary
+            Ringkasan Koneksi Sumber Daya
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4 text-center">
             <div>
               <div className="text-2xl font-bold text-primary">{resources.connectedVocabSets.length}</div>
-              <div className="text-sm text-muted-foreground">Vocabulary Sets</div>
+              <div className="text-sm text-muted-foreground">Kumpulan Kosa Kata</div>
             </div>
             <div>
               <div className="text-2xl font-bold text-secondary">{resources.connectedSoalSets.length}</div>
-              <div className="text-sm text-muted-foreground">Question Sets</div>
+              <div className="text-sm text-muted-foreground">Paket Soal</div>
             </div>
           </div>
         </CardContent>
@@ -132,14 +132,14 @@ export function StepResources() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
-            Vocabulary Sets
+            Kumpulan Kosa Kata
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-6">
             {/* Available Vocabulary Sets */}
             <div className="border rounded-lg p-4">
-              <h4 className="font-semibold mb-4">Available ({availableVocabSets.length})</h4>
+              <h4 className="font-semibold mb-4">Tersedia ({availableVocabSets.length})</h4>
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {availableVocabSets
                   .filter(vocab => !resources.connectedVocabSets.some(c => c.id === vocab.id))
@@ -156,7 +156,7 @@ export function StepResources() {
 
             {/* Connected Vocabulary Sets */}
             <div className="border rounded-lg p-4">
-              <h4 className="font-semibold mb-4">Connected ({resources.connectedVocabSets.length})</h4>
+              <h4 className="font-semibold mb-4">Terhubung ({resources.connectedVocabSets.length})</h4>
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {resources.connectedVocabSets.map((connected) => (
                   <VocabCard
@@ -177,14 +177,14 @@ export function StepResources() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
-            Question Sets
+            Paket Soal
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-6">
             {/* Available Soal Sets */}
             <div className="border rounded-lg p-4">
-              <h4 className="font-semibold mb-4">Available ({availableSoalSets.length})</h4>
+              <h4 className="font-semibold mb-4">Tersedia ({availableSoalSets.length})</h4>
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {availableSoalSets
                   .filter(soal => !resources.connectedSoalSets.some(c => c.id === soal.id))
@@ -201,7 +201,7 @@ export function StepResources() {
 
             {/* Connected Soal Sets */}
             <div className="border rounded-lg p-4">
-              <h4 className="font-semibold mb-4">Connected ({resources.connectedSoalSets.length})</h4>
+              <h4 className="font-semibold mb-4">Terhubung ({resources.connectedSoalSets.length})</h4>
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {resources.connectedSoalSets.map((connected) => (
                   <SoalCard
@@ -226,7 +226,7 @@ export function StepResources() {
             className="flex items-center gap-2"
           >
             {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-            Save Connections
+            Simpan Koneksi
           </Button>
         </div>
       )}

@@ -57,9 +57,9 @@ export function SoalItemList({ items, onEdit, onDelete, onAdd, onQuickAdd, onGen
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-semibold text-foreground">Questions</h3>
+          <h3 className="text-xl font-semibold text-foreground">Pertanyaan</h3>
           <p className="text-sm text-muted-foreground mt-1">
-            {items.length} question{items.length !== 1 ? 's' : ''} created
+            {items.length} pertanyaan dibuat
           </p>
         </div>
         <div className="flex gap-2">
@@ -72,7 +72,7 @@ export function SoalItemList({ items, onEdit, onDelete, onAdd, onQuickAdd, onGen
               className="border-border hover:bg-accent shadow-sm transition-all duration-200"
             >
               <Sparkles className="h-4 w-4 mr-2" />
-              {generating ? "Generating..." : "Generate Question"}
+              {generating ? "Membuat..." : "Buat Pertanyaan"}
             </Button>
           )}
           <Button
@@ -81,7 +81,7 @@ export function SoalItemList({ items, onEdit, onDelete, onAdd, onQuickAdd, onGen
             className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Add Question
+            Tambah Pertanyaan
           </Button>
         </div>
       </div>
@@ -89,7 +89,7 @@ export function SoalItemList({ items, onEdit, onDelete, onAdd, onQuickAdd, onGen
       <div className="flex gap-3">
         <Input
           ref={pertanyaanRef}
-          placeholder="Type your question here..."
+          placeholder="Ketik pertanyaan Anda di sini..."
           value={quickPertanyaan}
           onChange={(e) => setQuickPertanyaan(e.target.value)}
           onKeyDown={(e) => {
@@ -114,9 +114,9 @@ export function SoalItemList({ items, onEdit, onDelete, onAdd, onQuickAdd, onGen
           <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mb-4">
             <HelpCircle className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-medium text-foreground mb-2">No questions yet</h3>
+          <h3 className="text-lg font-medium text-foreground mb-2">Belum ada pertanyaan</h3>
           <p className="text-sm text-muted-foreground text-center max-w-sm">
-            Create your first question using the form above or click the Add Question button to get started.
+            Buat pertanyaan pertama Anda menggunakan formulir di atas atau klik tombol Tambah Pertanyaan untuk memulai.
           </p>
         </div>
       ) : (
@@ -163,16 +163,16 @@ export function SoalItemList({ items, onEdit, onDelete, onAdd, onQuickAdd, onGen
                       variant="secondary" 
                       className="text-xs font-medium bg-card/80 backdrop-blur-sm border-0"
                     >
-                      {item.difficulty?.toLowerCase() || 'not set'}
+                      {item.difficulty?.toLowerCase() || 'belum diatur'}
                     </Badge>
                     <span className="flex items-center gap-2 text-muted-foreground">
                       <div className="w-2 h-2 bg-current rounded-full"></div>
-                      {totalOptions} option{totalOptions !== 1 ? 's' : ''}
+                      {totalOptions} opsi
                     </span>
                   </div>
                   
                   <div className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-                    Click to edit
+                    Klik untuk mengedit
                   </div>
                 </div>
               </div>

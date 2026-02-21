@@ -107,7 +107,7 @@ function SortableMateriItem({
                   <div className="flex items-center gap-1 mt-2">
                     <Badge variant="secondary" className="text-xs">
                       <BookOpen className="h-3 w-3 mr-1" />
-                      Assessment
+                      Penilaian
                     </Badge>
                     {materi.passingScore && (
                       <span className="text-xs text-muted-foreground">
@@ -130,7 +130,7 @@ function SortableMateriItem({
                 size="sm"
                 onClick={() => onToggleMateriDraft(materiId)}
                 className="h-8 w-8 p-0"
-                title={materi.isDraft ? "Publish lesson" : "Mark as draft"}
+                title={materi.isDraft ? "Publikasikan pelajaran" : "Tandai sebagai draf"}
                 disabled={materi.tempId}
               >
                 {materi.isDraft ? (
@@ -262,26 +262,26 @@ export function StepContent() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Content Summary
+            Ringkasan Konten
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-primary">{materis.length}</div>
-              <div className="text-sm text-muted-foreground">Total Lessons</div>
+              <div className="text-sm text-muted-foreground">Total Pelajaran</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
                 {materis.filter(m => m.isDemo).length}
               </div>
-              <div className="text-sm text-muted-foreground">Demo Lessons</div>
+              <div className="text-sm text-muted-foreground">Pelajaran Demo</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600">
                 {materis.filter(m => m.tempId).length}
               </div>
-              <div className="text-sm text-muted-foreground">Unsaved Changes</div>
+              <div className="text-sm text-muted-foreground">Perubahan Belum Disimpan</div>
             </div>
           </div>
         </CardContent>
@@ -290,7 +290,7 @@ export function StepContent() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
-          <span className="font-semibold">Lessons ({materis.length})</span>
+          <span className="font-semibold">Pelajaran ({materis.length})</span>
         </div>
         <LessonForm onSubmit={handleAddMateri} kelasId={draftId || undefined} />
       </div>

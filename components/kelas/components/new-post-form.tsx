@@ -20,11 +20,11 @@ interface NewPostFormProps {
 }
 
 const postTypes = [
-  { value: "DISCUSSION", label: "Discussion", description: "Start a general discussion" },
-  { value: "QUESTION", label: "Question", description: "Ask a question" },
-  { value: "ANNOUNCEMENT", label: "Announcement", description: "Make an announcement" },
-  { value: "TUTORIAL", label: "Tutorial", description: "Share a tutorial" },
-  { value: "SHARE", label: "Share", description: "Share something interesting" },
+  { value: "DISCUSSION", label: "Diskusi", description: "Mulai diskusi umum" },
+  { value: "QUESTION", label: "Pertanyaan", description: "Tanyakan sesuatu" },
+  { value: "ANNOUNCEMENT", label: "Pengumuman", description: "Buat pengumuman" },
+  { value: "TUTORIAL", label: "Tutorial", description: "Bagikan tutorial" },
+  { value: "SHARE", label: "Bagikan", description: "Bagikan sesuatu yang menarik" },
 ];
 
 export default function NewPostForm({ kelasId, kelasTitle = "Class", onPostCreated, isAuthor = false,}: NewPostFormProps) {
@@ -43,7 +43,7 @@ export default function NewPostForm({ kelasId, kelasTitle = "Class", onPostCreat
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.html.trim()) {
-      toast.error("Please write something to post");
+      toast.error("Silakan tulis sesuatu untuk diposting");
       return;
     }
     setIsSubmitting(true);
@@ -69,16 +69,16 @@ export default function NewPostForm({ kelasId, kelasTitle = "Class", onPostCreat
       if (response.ok) {
         const newPost = await response.json();
         onPostCreated(newPost);
-        toast.success("Post created successfully!");
+        toast.success("Postingan berhasil dibuat!");
         setContent({ html: "", json: null });
         setType("DISCUSSION");
         setIsPinned(false);
       } else {
         const errorData = await response.json();
-        toast.error(errorData.error || "Failed to create post");
+        toast.error(errorData.error || "Gagal membuat postingan");
       }
     } catch {
-      toast.error("Failed to create post");
+      toast.error("Gagal membuat postingan");
     } finally {
       setIsSubmitting(false);
     }
@@ -127,7 +127,7 @@ export default function NewPostForm({ kelasId, kelasTitle = "Class", onPostCreat
                     />
                     <Label htmlFor="pin-toggle" className="text-sm text-muted-foreground flex items-center gap-1">
                       <Pin className="w-3 h-3" />
-                      Pin
+                      Sematkan
                     </Label>
                   </div>
                 )}
@@ -138,7 +138,7 @@ export default function NewPostForm({ kelasId, kelasTitle = "Class", onPostCreat
                   disabled={!content.html.trim() || isSubmitting}
                   size="sm"
                 >
-                  {isSubmitting ? "Posting..." : "Post"}
+                  {isSubmitting ? "Memposting..." : "Posting"}
                 </Button>
               </div>
             </div>

@@ -200,7 +200,7 @@ export function VocabCollectionForm({ vocabSet, kelasId,  }: VocabCollectionForm
   };
 
   if (loading) {
-    return <div className="p-6">Loading...</div>;
+    return <div className="p-6">Memuat...</div>;
   }
 
   return (
@@ -219,30 +219,30 @@ export function VocabCollectionForm({ vocabSet, kelasId,  }: VocabCollectionForm
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label htmlFor="title" className="text-lg font-medium text-foreground flex items-center gap-2">
-                Vocabulary Set Title
+                Judul Set Kosakata
                 <span className="text-destructive">*</span>
                 {/* Enhanced auto-save status indicator */}
                 {autoSaveStatus === 'saving' && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground animate-in fade-in-0 duration-300">
                     <Loader2 className="h-3 w-3 animate-spin" />
-                    <span>Saving...</span>
+                    <span>Menyimpan...</span>
                   </div>
                 )}
                 {autoSaveStatus === 'saved' && (
                   <div className="flex items-center gap-1 text-xs text-green-600 animate-in fade-in-0 duration-300">
                     <Check className="h-3 w-3" />
-                    <span>Saved!</span>
+                    <span>Tersimpan!</span>
                   </div>
                 )}
                 {autoSaveStatus === 'error' && (
                   <div className="flex items-center gap-1 text-xs text-red-600 animate-in fade-in-0 duration-300">
-                    <span>Save failed</span>
+                    <span>Penyimpanan gagal</span>
                   </div>
                 )}
               </Label>
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="isPublic" className="text-sm text-muted-foreground">Public</Label>
+                  <Label htmlFor="isPublic" className="text-sm text-muted-foreground">Publik</Label>
                   <Switch
                     id="isPublic"
                     checked={formData.isPublic}
@@ -250,7 +250,7 @@ export function VocabCollectionForm({ vocabSet, kelasId,  }: VocabCollectionForm
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="isDraft" className="text-sm text-muted-foreground">Draft</Label>
+                  <Label htmlFor="isDraft" className="text-sm text-muted-foreground">Draf</Label>
                   <Switch
                     id="isDraft"
                     checked={formData.isDraft}
@@ -263,19 +263,19 @@ export function VocabCollectionForm({ vocabSet, kelasId,  }: VocabCollectionForm
               id="title"
               value={formData.title}
               onChange={(e) => setFormData({ title: e.target.value })}
-              placeholder="Enter a descriptive title for your vocabulary set"
+              placeholder="Masukkan judul deskriptif untuk set kosakata Anda"
               required
               className="h-11 border-0 bg-muted/30 rounded-xl focus-visible:bg-background focus-visible:border focus-visible:border-primary/20 transition-all text-base"
             />
           </div>
 
           <div className="space-y-3">
-            <Label htmlFor="description" className="text-lg font-medium text-foreground">Description</Label>
+            <Label htmlFor="description" className="text-lg font-medium text-foreground">Deskripsi</Label>
             <Textarea
               id="description"
               value={formData.description || ""}
               onChange={(e) => setFormData({ description: e.target.value })}
-              placeholder="Enter description (optional)"
+              placeholder="Masukkan deskripsi (opsional)"
               rows={3}
               className="min-h-[100px] border-0 bg-muted/30 rounded-xl focus-visible:bg-background focus-visible:border focus-visible:border-primary/20 transition-all resize-none"
             />
@@ -300,12 +300,12 @@ export function VocabCollectionForm({ vocabSet, kelasId,  }: VocabCollectionForm
         <DialogContent className="max-w-6xl w-full sm:max-w-6xl max-h-[95vh] overflow-y-auto bg-background border-border/20 shadow-2xl">
           <DialogHeader className="border-b border-border/50">
             <DialogTitle className="text-xl font-semibold text-foreground flex items-center justify-center gap-2">
-              {editingItemIndex !== null ? "Edit Vocabulary Item" : "Add New Vocabulary Item"}
+              {editingItemIndex !== null ? "Edit Item Kosakata" : "Tambah Item Kosakata Baru"}
             </DialogTitle>
             <p className="text-sm text-muted-foreground text-center mt-1">
               {editingItemIndex !== null
-                ? "Make changes to your existing vocabulary item"
-                : "Create a new vocabulary item for your set"
+                ? "Lakukan perubahan pada item kosakata yang ada"
+                : "Buat item kosakata baru untuk set Anda"
               }
             </p>
           </DialogHeader>

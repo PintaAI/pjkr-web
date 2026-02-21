@@ -117,9 +117,9 @@ export function ManageSoals({ soalSets: initialSoalSets }: ManageSoalsProps) {
 
   return (
     <ManageLayout
-      title="Manage Soals"
-      description="Manage your soal sets and questions"
-      placeholder="Search soal sets..."
+      title="Kelola Soal"
+      description="Kelola set soal dan pertanyaan Anda"
+      placeholder="Cari set soal..."
       searchValue={searchTerm}
       onSearchChange={setSearchTerm}
       filters={[
@@ -129,9 +129,9 @@ export function ManageSoals({ soalSets: initialSoalSets }: ManageSoalsProps) {
           label: "Status",
           value: filterStatus,
           options: [
-            { value: "ALL", label: "All Sets" },
-            { value: "PUBLISHED", label: "Published" },
-            { value: "DRAFT", label: "Draft" },
+            { value: "ALL", label: "Semua Set" },
+            { value: "PUBLISHED", label: "Diterbitkan" },
+            { value: "DRAFT", label: "Draf" },
           ],
           onChange: (value: string) => setFilterStatus(value as "ALL" | "DRAFT" | "PUBLISHED"),
         },
@@ -149,11 +149,11 @@ export function ManageSoals({ soalSets: initialSoalSets }: ManageSoalsProps) {
       )}
       createNewCard={{
         onClick: handleCreateSoal,
-        title: "Create New Set",
-        subtitle: "Add a new soal set",
+        title: "Buat Set Baru",
+        subtitle: "Tambahkan set soal baru",
       }}
-      emptyTitle="Your Soal Sets"
-      emptyMessage="No soal sets found matching your filters. Try adjusting your search or filters."
+      emptyTitle="Set Soal Anda"
+      emptyMessage="Tidak ada set soal yang ditemukan sesuai dengan filter Anda. Coba sesuaikan pencarian atau filter Anda."
     >
       <SoalSheet
         isOpen={sheetOpen}

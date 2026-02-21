@@ -167,7 +167,7 @@ export function LessonForm({
   const defaultTrigger = mode === 'add' ? (
     <Button className="flex items-center gap-2">
       <Plus className="h-4 w-4" />
-      Add Lesson
+      Tambah Pelajaran
     </Button>
   ) : (
     <Button
@@ -188,7 +188,7 @@ export function LessonForm({
         <div className="max-w-7xl sm:max-w-5xl mx-auto overflow-y-auto min-w-0 w-full">
           <DrawerHeader>
             <DrawerTitle className="flex items-center justify-between">
-              <span>{mode === 'add' ? 'Add New Lesson' : 'Edit Lesson'}</span>
+              <span>{mode === 'add' ? 'Tambah Pelajaran Baru' : 'Edit Pelajaran'}</span>
               <div className="flex items-center space-x-2">
                 <Label htmlFor="isDemo" className="text-sm">Demo</Label>
                 <Switch
@@ -201,27 +201,27 @@ export function LessonForm({
           </DrawerHeader>
           <div className="space-y-4 p-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Lesson Title *</Label>
+            <Label htmlFor="title">Judul Pelajaran *</Label>
             <Input
               id="title"
-              placeholder="Enter lesson title"
+              placeholder="Masukkan judul pelajaran"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="description">Description *</Label>
+            <Label htmlFor="description">Deskripsi *</Label>
             <Input
               id="description"
-              placeholder="Brief description of the lesson"
+              placeholder="Deskripsi singkat pelajaran"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="content">Content *</Label>
+            <Label htmlFor="content">Konten *</Label>
             <NovelEditor
               initialContent={formData.jsonDescription}
               onUpdate={handleContentUpdate}
@@ -235,11 +235,11 @@ export function LessonForm({
           <div className="space-y-4 border-t pt-4">
             <div className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
-              <Label className="text-base font-medium">Assessment Settings</Label>
+              <Label className="text-base font-medium">Pengaturan Penilaian</Label>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="koleksiSoal">Assessment Questions (Optional)</Label>
+              <Label htmlFor="koleksiSoal">Soal Penilaian (Opsional)</Label>
               <Select
                 value={formData.koleksiSoalId?.toString() || "none"}
                 onValueChange={(value) => setFormData(prev => ({
@@ -250,10 +250,10 @@ export function LessonForm({
                 onOpenChange={setSoalDropdownOpen}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select assessment questions (optional)" />
+                  <SelectValue placeholder="Pilih soal penilaian (opsional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">No assessment</SelectItem>
+                  <SelectItem value="none">Tidak ada penilaian</SelectItem>
                   {availableSoal.map((soal) => (
                     <SelectItem key={soal.id} value={soal.id.toString()}>
                       {soal.nama}
@@ -262,7 +262,7 @@ export function LessonForm({
                 </SelectContent>
               </Select>
               <p className="text-sm text-muted-foreground">
-                Choose a question set for this lesson assessment
+                Pilih paket soal untuk penilaian pelajaran ini
               </p>
             </div>
 
@@ -272,11 +272,11 @@ export function LessonForm({
                 <div className="flex items-center gap-2 flex-1">
                   <BookOpen className="h-4 w-4 text-blue-600" />
                   <span className="text-sm font-medium text-blue-800">
-                    Assessment: {availableSoal.find(s => s.id === formData.koleksiSoalId)?.nama || 'Selected'}
+                    Penilaian: {availableSoal.find(s => s.id === formData.koleksiSoalId)?.nama || 'Dipilih'}
                   </span>
                   {formData.passingScore && (
                     <span className="text-xs text-blue-600">
-                      (Passing: {formData.passingScore}%)
+                      (Lulus: {formData.passingScore}%)
                     </span>
                   )}
                 </div>
@@ -299,7 +299,7 @@ export function LessonForm({
               <div className="space-y-2">
                 <Label htmlFor="passingScore" className="flex items-center gap-2">
                   <Target className="h-4 w-4" />
-                  Passing Score (%)
+                  Nilai Kelulusan (%)
                 </Label>
                 <Input
                   id="passingScore"
@@ -313,7 +313,7 @@ export function LessonForm({
                   }))}
                 />
                 <p className="text-sm text-muted-foreground">
-                  Minimum score required to pass this assessment (0-100%)
+                  Nilai minimum untuk lulus penilaian ini (0-100%)
                 </p>
               </div>
             )}
@@ -321,13 +321,13 @@ export function LessonForm({
 
           <div className="flex gap-2 justify-end">
             <Button variant="outline" onClick={handleCancel}>
-              Cancel
+              Batal
             </Button>
             <Button 
               onClick={handleFormSubmit} 
               disabled={!formData.title || !formData.description || !formData.htmlDescription}
             >
-              {mode === 'add' ? 'Add Lesson' : 'Save Changes'}
+              {mode === 'add' ? 'Tambah Pelajaran' : 'Simpan Perubahan'}
             </Button>
           </div>
           </div>

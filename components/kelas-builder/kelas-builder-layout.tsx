@@ -100,42 +100,42 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
         const hasType = meta.type;
         
         if (hasTitle && hasDescription && hasLevel && hasType) {
-          return { hasRequiredData: true, message: 'All required info provided' };
+          return { hasRequiredData: true, message: 'Semua info wajib telah diisi' };
         } else if (hasTitle) {
-          return { hasRequiredData: false, message: 'Missing description or settings' };
+          return { hasRequiredData: false, message: 'Deskripsi atau pengaturan belum lengkap' };
         } else if (isFirstTime) {
-          return { hasRequiredData: true, message: 'Start by adding your course title and description' };
+          return { hasRequiredData: true, message: 'Mulai dengan menambahkan judul dan deskripsi kelas' };
         } else {
-          return { hasRequiredData: false, message: 'Title required' };
+          return { hasRequiredData: false, message: 'Judul wajib diisi' };
         }
         
       case 'content':
         if (materis.length > 0) {
-          return { hasRequiredData: true, message: `${materis.length} lesson(s) added` };
+          return { hasRequiredData: true, message: `${materis.length} pelajaran ditambahkan` };
         } else if (isFirstTime) {
-          return { hasRequiredData: true, message: 'Add lessons and learning materials' };
+          return { hasRequiredData: true, message: 'Tambahkan pelajaran dan materi pembelajaran' };
         } else {
-          return { hasRequiredData: false, message: 'At least 1 lesson required' };
+          return { hasRequiredData: false, message: 'Minimal 1 pelajaran wajib' };
         }
 
       case 'resources':
         // Resources step is optional
-        return { hasRequiredData: true, message: 'Optional: Connect vocabulary and question sets' };
+        return { hasRequiredData: true, message: 'Opsional: Hubungkan kosa kata dan paket soal' };
 
       case 'members':
         // Members step is optional
-        return { hasRequiredData: true, message: 'Optional: Add members by email' };
+        return { hasRequiredData: true, message: 'Opsional: Tambahkan anggota melalui email' };
 
       case 'review':
         const metaComplete = meta.title.trim() !== '' && meta.description;
         const contentComplete = materis.length > 0;
         
         if (metaComplete && contentComplete) {
-          return { hasRequiredData: true, message: 'Ready to review and publish' };
+          return { hasRequiredData: true, message: 'Siap ditinjau dan dipublikasikan' };
         } else if (isFirstTime) {
-          return { hasRequiredData: true, message: 'Review and publish your course to make it available to students' };
+          return { hasRequiredData: true, message: 'Tinjau dan publikasikan kelas Anda agar tersedia untuk siswa' };
         } else {
-          return { hasRequiredData: false, message: 'Complete required steps first' };
+          return { hasRequiredData: false, message: 'Lengkapi langkah wajib terlebih dahulu' };
         }
         
       default:
@@ -215,7 +215,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back
+              Kembali
             </Button>
           </div>
 
@@ -236,7 +236,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                   className="flex items-center gap-2"
                 >
                   <Save className="h-4 w-4" />
-                  Save
+                  Simpan
                 </Button>
               )}
             </div>
@@ -245,8 +245,8 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
           {/* Progress Bar */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm text-muted-foreground">
-              <span>Progress</span>
-              <span>{Math.round(progress)}% complete</span>
+              <span>Progres</span>
+              <span>{Math.round(progress)}% selesai</span>
             </div>
             <Progress value={progress} className="h-2" />
           </div>
@@ -263,7 +263,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                 size="sm"
                 onClick={() => clearError()}
               >
-                Dismiss
+                Tutup
               </Button>
             </AlertDescription>
           </Alert>
@@ -354,7 +354,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                           <p className="text-sm">
                             {completion.message}
                             {stepIsDirty && (
-                              <span className="block text-orange-600 text-xs mt-1">• Has unsaved changes</span>
+                              <span className="block text-orange-600 text-xs mt-1">• Ada perubahan belum disimpan</span>
                             )}
                           </p>
                         </TooltipContent>
@@ -374,7 +374,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                         size="lg"
                       >
                         <Rocket className="h-5 w-5 mr-2" />
-                        Publish Course
+                        Publikasikan Kelas
                       </Button>
                     ) : (
                       <Button
@@ -384,7 +384,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                         size="lg"
                       >
                         <Archive className="h-5 w-5 mr-2" />
-                        Unpublish Course
+                        Batalkan Publikasi
                       </Button>
                     )}
                   </div>
@@ -405,7 +405,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                   className="flex items-center gap-2 hover:bg-muted/50"
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  Previous
+                  Sebelumnya
                 </Button>
                 
                 <div className="flex flex-row items-center gap-2 px-4 py-2 bg-white/80 dark:bg-muted/80 backdrop-blur-sm rounded-lg border border-primary/20 shadow-sm">
@@ -435,7 +435,7 @@ export function KelasBuilderLayout({ children }: KelasBuilderLayoutProps) {
                     onClick={async () => await nextStep()}
                     className="flex items-center gap-2 bg-primary hover:bg-primary/90"
                   >
-                    Next
+                    Selanjutnya
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 ) : (

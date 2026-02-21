@@ -52,7 +52,7 @@ export default function VocabularyTab({ vocabularySets, kelasId }: VocabularyTab
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
         <GraduationCap className="w-5 h-5 text-primary" />
-        <h3 className="text-lg font-semibold">Vocabulary Sets ({vocabularySets.length})</h3>
+        <h3 className="text-lg font-semibold">Kumpulan Kosa Kata ({vocabularySets.length})</h3>
       </div>
       {vocabularySets.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -68,7 +68,7 @@ export default function VocabularyTab({ vocabularySets, kelasId }: VocabularyTab
       ) : (
         <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/30">
           <GraduationCap className="w-12 h-12 mx-auto mb-2 opacity-50" />
-          <p>No vocabulary sets available for this class.</p>
+          <p>Tidak ada kumpulan kosa kata yang tersedia untuk kelas ini.</p>
         </div>
       )}
     </div>

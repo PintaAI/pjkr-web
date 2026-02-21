@@ -56,7 +56,7 @@ export function VocabCard({ vocabSet, onClick, onDelete, compact = false }: Voca
               <p className="text-sm text-muted-foreground break-words">
                 <span className="inline-flex items-center gap-1">
                   <BookOpen className="h-3 w-3" />
-                  {vocabSet.items.length} items
+                  {vocabSet.items.length} item
                 </span>
               </p>
             </div>
@@ -97,12 +97,12 @@ export function VocabCard({ vocabSet, onClick, onDelete, compact = false }: Voca
           <div className="absolute top-2 left-2 flex gap-2">
             {vocabSet.isDraft && (
               <Badge variant="destructive" className="h-6 px-2 text-[10px]">
-                Draft
+                Draf
               </Badge>
             )}
             {vocabSet.isPublic && !vocabSet.isDraft && (
               <Badge variant="secondary" className="h-6 px-2 text-[10px]">
-                Public
+                Publik
               </Badge>
             )}
           </div>
@@ -128,7 +128,7 @@ export function VocabCard({ vocabSet, onClick, onDelete, compact = false }: Voca
             <div className="flex items-center gap-3 text-xs text-white/90">
               <span className="inline-flex items-center gap-1">
                 <BookOpen className="h-4 w-4" />
-                {vocabSet.items.length} items
+                {vocabSet.items.length} item
               </span>
               <span>{vocabSet.createdAt ? new Date(vocabSet.createdAt).toLocaleDateString() : 'N/A'}</span>
             </div>
@@ -143,7 +143,7 @@ export function VocabCard({ vocabSet, onClick, onDelete, compact = false }: Voca
               {vocabSet.title}
             </h3>
             <p className="mt-1 text-xs sm:text-sm text-muted-foreground/80 dark:text-muted-foreground line-clamp-2">
-              {vocabSet.description || "No description available"}
+              {vocabSet.description || "Tidak ada deskripsi tersedia"}
             </p>
           </div>
         </div>
@@ -153,13 +153,13 @@ export function VocabCard({ vocabSet, onClick, onDelete, compact = false }: Voca
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Vocabulary Set?</AlertDialogTitle>
+              <AlertDialogTitle>Hapus Set Kosakata?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the vocabulary set {vocabSet.title} and all its items.
+                Tindakan ini tidak dapat dibatalkan. Ini akan menghapus set kosakata {vocabSet.title} dan semua itemnya secara permanen.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>Batal</AlertDialogCancel>
               <AlertDialogAction
                 onClick={(e) => {
                   e.stopPropagation();
@@ -167,7 +167,7 @@ export function VocabCard({ vocabSet, onClick, onDelete, compact = false }: Voca
                   setDeleteDialogOpen(false);
                 }}
               >
-                Delete
+                Hapus
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

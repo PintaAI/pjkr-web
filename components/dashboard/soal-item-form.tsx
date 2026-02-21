@@ -122,13 +122,13 @@ export function SoalItemForm({ item, onSave, onCancel }: SoalItemFormProps) {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <Label className="text-lg font-medium text-foreground flex items-center gap-2">
-              Question
+              Pertanyaan
               <span className="text-destructive">*</span>
             </Label>
             
             {/* Compact Difficulty Selector */}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Difficulty:</span>
+              <span className="text-sm text-muted-foreground">Tingkat Kesulitan:</span>
               <Select
                 value={formData.difficulty || ""}
                 onValueChange={(value) => setFormData({
@@ -137,25 +137,25 @@ export function SoalItemForm({ item, onSave, onCancel }: SoalItemFormProps) {
                 })}
               >
                 <SelectTrigger className="w-32 h-8 text-xs border-0 bg-muted/50 focus:bg-background focus:border focus:border-primary/20 transition-all">
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder="Pilih" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={Difficulty.BEGINNER}>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      <span className="text-xs">Beginner</span>
+                      <span className="text-xs">Pemula</span>
                     </div>
                   </SelectItem>
                   <SelectItem value={Difficulty.INTERMEDIATE}>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                      <span className="text-xs">Intermediate</span>
+                      <span className="text-xs">Menengah</span>
                     </div>
                   </SelectItem>
                   <SelectItem value={Difficulty.ADVANCED}>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                      <span className="text-xs">Advanced</span>
+                      <span className="text-xs">Lanjutan</span>
                     </div>
                   </SelectItem>
                 </SelectContent>
@@ -173,8 +173,8 @@ export function SoalItemForm({ item, onSave, onCancel }: SoalItemFormProps) {
         {/* Answer Options Section */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <Label className="text-lg font-medium text-foreground">Answer Options</Label>
-            <span className="text-sm text-muted-foreground">Select one correct answer</span>
+            <Label className="text-lg font-medium text-foreground">Opsi Jawaban</Label>
+            <span className="text-sm text-muted-foreground">Pilih satu jawaban yang benar</span>
           </div>
           
           <div className="space-y-3">
@@ -214,7 +214,7 @@ export function SoalItemForm({ item, onSave, onCancel }: SoalItemFormProps) {
                       } ${
                         formData.opsis!.length > 2 ? 'group-hover:pr-10' : ''
                       }`}
-                      placeholder={`Enter option ${optionLetter}`}
+                      placeholder={`Masukkan opsi ${optionLetter}`}
                     />
                   </div>
 
@@ -245,14 +245,14 @@ export function SoalItemForm({ item, onSave, onCancel }: SoalItemFormProps) {
             className="w-full h-11 border-2 border-dashed border-muted-foreground/30 bg-transparent hover:border-primary/50 hover:bg-muted/30 text-muted-foreground hover:text-foreground transition-all"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Add Another Option
+            Tambah Opsi Lain
           </Button>
         </div>
 
         {/* Explanation Section */}
         <div className="space-y-3">
-          <Label className="text-lg font-medium text-foreground">Explanation</Label>
-          <p className="text-sm text-muted-foreground">Provide additional context or reasoning for the correct answer</p>
+          <Label className="text-lg font-medium text-foreground">Penjelasan</Label>
+          <p className="text-sm text-muted-foreground">Berikan konteks atau alasan tambahan untuk jawaban yang benar</p>
           <NovelEditor
             initialContent={getInitialContent(item?.explanation)}
             onUpdate={handleExplanationUpdate}
@@ -268,13 +268,13 @@ export function SoalItemForm({ item, onSave, onCancel }: SoalItemFormProps) {
             onClick={onCancel}
             className="h-11 px-6"
           >
-            Cancel
+            Batal
           </Button>
           <Button
             type="submit"
             className="h-11 px-6 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200"
           >
-            {item ? "Update Question" : "Create Question"}
+            {item ? "Update Pertanyaan" : "Buat Pertanyaan"}
           </Button>
         </div>
       </form>

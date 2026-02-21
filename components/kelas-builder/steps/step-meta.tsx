@@ -49,7 +49,7 @@ function CircularIconUpload({ value, onChange }: { value?: string; onChange: (ur
         {value ? (
           <Image
             src={value}
-            alt="Course icon"
+            alt="Ikon kelas"
             width={64}
             height={64}
             className="w-full h-full object-cover rounded-full"
@@ -138,7 +138,7 @@ export function StepMeta() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5" />
-                Basic Information
+                Informasi Dasar
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -150,10 +150,10 @@ export function StepMeta() {
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Course Title *</FormLabel>
+                        <FormLabel>Judul Kelas *</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Enter your course title"
+                            placeholder="Masukkan judul kelas Anda"
                             {...field}
                             className="text-lg"
                           />
@@ -171,10 +171,10 @@ export function StepMeta() {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Short Description</FormLabel>
+                        <FormLabel>Deskripsi Singkat</FormLabel>
                         <FormControl>
                           <textarea
-                            placeholder="Brief overview of what students will learn..."
+                            placeholder="Ringkasan singkat tentang apa yang akan dipelajari siswa..."
                             rows={3}
                             className={`w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${errors.description ? "border-destructive" : ""}`}
                             {...field}
@@ -182,7 +182,7 @@ export function StepMeta() {
                           />
                         </FormControl>
                         <FormDescription>
-                          A brief summary that appears in course listings and previews.
+                          Ringkasan singkat yang muncul dalam daftar dan pratinjau kelas.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -196,14 +196,14 @@ export function StepMeta() {
                       name="type"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Course Type *</FormLabel>
+                          <FormLabel>Jenis Kelas *</FormLabel>
                           <Select
                             onValueChange={field.onChange}
                             defaultValue={field.value}
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select course type" />
+                                <SelectValue placeholder="Pilih jenis kelas" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -227,14 +227,14 @@ export function StepMeta() {
                       name="level"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Difficulty Level *</FormLabel>
+                          <FormLabel>Tingkat Kesulitan *</FormLabel>
                           <Select
                             onValueChange={field.onChange}
                             defaultValue={field.value}
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select difficulty level" />
+                                <SelectValue placeholder="Pilih tingkat kesulitan" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -254,7 +254,7 @@ export function StepMeta() {
                             </SelectContent>
                           </Select>
                           <FormDescription>
-                            Select the appropriate difficulty level for your course.
+                            Pilih tingkat kesulitan yang sesuai untuk kelas Anda.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -271,7 +271,7 @@ export function StepMeta() {
                     name="icon"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Course Icon</FormLabel>
+                        <FormLabel>Ikon Kelas</FormLabel>
                         <FormControl>
                           <CircularIconUpload
                             value={field.value}
@@ -279,7 +279,7 @@ export function StepMeta() {
                           />
                         </FormControl>
                         <FormDescription className="text-center">
-                          Click to upload course icon image
+                          Klik untuk mengunggah gambar ikon kelas
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -292,7 +292,7 @@ export function StepMeta() {
                     name="thumbnail"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Course Thumbnail</FormLabel>
+                        <FormLabel>Thumbnail Kelas</FormLabel>
                         <FormControl>
                           <MediaUpload
                             accept="image/*"
@@ -318,7 +318,7 @@ export function StepMeta() {
                           />
                         </FormControl>
                         <FormDescription>
-                          Upload an attractive thumbnail image for your course (recommended: 400x200px).
+                          Unggah gambar thumbnail yang menarik untuk kelas Anda (disarankan: 400x200px).
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -332,7 +332,7 @@ export function StepMeta() {
                 name="htmlDescription"
                 render={() => (
                   <FormItem>
-                    <FormLabel>Detailed Description</FormLabel>
+                    <FormLabel>Deskripsi Lengkap</FormLabel>
                     <FormControl>
                       <NovelEditor
                         initialContent={watch("jsonDescription")}
@@ -342,12 +342,12 @@ export function StepMeta() {
                           form.setValue("jsonDescription", data.json, { shouldTouch: true, shouldDirty: true });
                           form.setValue("htmlDescription", data.html, { shouldTouch: true, shouldDirty: true });
                         }}
-                        saveStatus={isLoading ? "Saving..." : "Saved"}
+                        saveStatus={isLoading ? "Menyimpan..." : "Tersimpan"}
                         showTopToolbar={true}
                       />
                     </FormControl>
                     <FormDescription>
-                      Detailed course description with rich formatting, learning objectives, and curriculum details.
+                      Deskripsi kelas lengkap dengan format kaya, tujuan pembelajaran, dan detail kurikulum.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

@@ -64,15 +64,15 @@ export function VocabItemList({ items, onEdit, onDelete, onAdd, onQuickAdd, onGe
     },
     {
       accessorKey: "korean",
-      header: "Korean",
+      header: "Korea",
     },
     {
       accessorKey: "indonesian",
-      header: "Indonesian",
+      header: "Indonesia",
     },
     {
       accessorKey: "type",
-      header: "Type",
+      header: "Tipe",
       cell: ({ row }) => {
         const type = row.original.type;
         let variant: "default" | "secondary" | "destructive" | "outline" = "secondary";
@@ -104,7 +104,7 @@ export function VocabItemList({ items, onEdit, onDelete, onAdd, onQuickAdd, onGe
     },
     {
       id: "actions",
-      header: "Actions",
+      header: "Tindakan",
       cell: ({ row }) => {
         const index = row.index;
         return (
@@ -142,7 +142,7 @@ export function VocabItemList({ items, onEdit, onDelete, onAdd, onQuickAdd, onGe
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Vocabulary Items</h3>
+        <h3 className="text-lg font-semibold">Item Kosakata</h3>
         <div className="flex gap-2">
           <Button
             type="button"
@@ -151,11 +151,11 @@ export function VocabItemList({ items, onEdit, onDelete, onAdd, onQuickAdd, onGe
             variant="outline"
             size="sm"
           >
-            {generating ? "Generating..." : (<><BsStars className="h-4 w-4 mr-2" />Generate with AI</>)}
+            {generating ? "Membuat..." : (<><BsStars className="h-4 w-4 mr-2" />Buat dengan AI</>)}
           </Button>
           <Button type="button" onClick={onAdd} size="sm">
             <Plus className="h-4 w-4 mr-2" />
-            Add Item
+            Tambah Item
           </Button>
         </div>
       </div>
@@ -163,7 +163,7 @@ export function VocabItemList({ items, onEdit, onDelete, onAdd, onQuickAdd, onGe
       <div className="flex gap-2 mb-4">
         <Input
           ref={koreanRef}
-          placeholder="Korean"
+          placeholder="Korea"
           value={quickKorean}
           onChange={(e) => setQuickKorean(e.target.value)}
           onKeyDown={(e) => {
@@ -174,7 +174,7 @@ export function VocabItemList({ items, onEdit, onDelete, onAdd, onQuickAdd, onGe
           className="flex-1"
         />
         <Input
-          placeholder="Indonesian"
+          placeholder="Indonesia"
           value={quickIndonesian}
           onChange={(e) => setQuickIndonesian(e.target.value)}
           onKeyDown={(e) => {
@@ -185,7 +185,7 @@ export function VocabItemList({ items, onEdit, onDelete, onAdd, onQuickAdd, onGe
           className="flex-1"
         />
         <Button onClick={handleQuickAdd} disabled={!quickKorean.trim() || !quickIndonesian.trim()}>
-          Add
+          Tambah
         </Button>
       </div>
 
@@ -216,7 +216,7 @@ export function VocabItemList({ items, onEdit, onDelete, onAdd, onQuickAdd, onGe
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-                  No vocabulary items yet. Click Add Item to get started.
+                  Belum ada item kosakata. Klik Tambah Item untuk memulai.
                 </TableCell>
               </TableRow>
             )}

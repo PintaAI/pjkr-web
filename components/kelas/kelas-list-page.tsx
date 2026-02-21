@@ -149,30 +149,30 @@ export default function KelasListPage({ initialKelas, initialStats, initialMeta 
       {stats && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
           <StatsCard
-            title="Total Classes"
+            title="Total Kelas"
             value={stats.totalClasses}
-            description="Available courses"
+            description="Kelas tersedia"
             icon={<BookOpen className="h-4 w-4" />}
           />
 
           <StatsCard
-            title="Students"
+            title="Siswa"
             value={stats.totalStudents}
-            description="Learning together"
+            description="Belajar bersama"
             icon={<Users className="h-4 w-4" />}
           />
 
           <StatsCard
-            title="Beginner"
+            title="Pemula"
             value={stats.levelStats.find(s => s.level === "BEGINNER")?._count.id || 0}
-            description="Entry level"
+            description="Tingkat pemula"
             icon={<Star className="h-4 w-4" />}
           />
 
           <StatsCard
-            title="Advanced"
+            title="Lanjutan"
             value={stats.levelStats.find(s => s.level === "ADVANCED")?._count.id || 0}
-            description="Expert level"
+            description="Tingkat ahli"
             icon={<Clock className="h-4 w-4" />}
           />
         </div>
@@ -183,7 +183,7 @@ export default function KelasListPage({ initialKelas, initialStats, initialMeta 
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search classes..."
+            placeholder="Cari kelas..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
@@ -192,10 +192,10 @@ export default function KelasListPage({ initialKelas, initialStats, initialMeta 
         
         <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value as KelasType | "ALL")}>
           <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Class Type" />
+            <SelectValue placeholder="Jenis Kelas" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All Types</SelectItem>
+            <SelectItem value="ALL">Semua Jenis</SelectItem>
             {Object.entries(typeLabels).map(([key, label]) => (
               <SelectItem key={key} value={key}>{label}</SelectItem>
             ))}
@@ -204,10 +204,10 @@ export default function KelasListPage({ initialKelas, initialStats, initialMeta 
 
         <Select value={levelFilter} onValueChange={(value) => setLevelFilter(value as Difficulty | "ALL")}>
           <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Difficulty" />
+            <SelectValue placeholder="Tingkat Kesulitan" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All Levels</SelectItem>
+            <SelectItem value="ALL">Semua Tingkat</SelectItem>
             {Object.entries(levelLabels).map(([key, label]) => (
               <SelectItem key={key} value={key}>{label}</SelectItem>
             ))}
@@ -235,7 +235,7 @@ export default function KelasListPage({ initialKelas, initialStats, initialMeta 
             disabled={loading}
             variant="outline"
           >
-            {loading ? "Loading..." : "Load More"}
+            {loading ? "Memuat..." : "Muat Lebih Banyak"}
           </Button>
         </div>
       )}
@@ -244,9 +244,9 @@ export default function KelasListPage({ initialKelas, initialStats, initialMeta 
       {kelas.length === 0 && !loading && (
         <div className="text-center py-12 mb-8">
           <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No classes found</h3>
+          <h3 className="text-lg font-semibold mb-2">Tidak ada kelas ditemukan</h3>
           <p className="text-muted-foreground mb-4">
-            Try adjusting your search criteria or check back later for new classes.
+            Coba sesuaikan kriteria pencarian Anda atau periksa kembali nanti untuk kelas baru.
           </p>
           <Link
             href="/explore"

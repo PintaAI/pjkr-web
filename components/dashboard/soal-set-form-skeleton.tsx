@@ -18,16 +18,16 @@ export function SoalSetFormSkeleton() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label htmlFor="nama" className="text-lg font-medium text-foreground flex items-center gap-2">
-                Soal Set Name
+                Nama Set Soal
                 <span className="text-destructive">*</span>
               </Label>
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="isPrivate" className="text-sm text-muted-foreground">Private</Label>
+                  <Label htmlFor="isPrivate" className="text-sm text-muted-foreground">Privat</Label>
                   <Switch id="isPrivate" disabled className="opacity-50" />
                 </div>
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="isDraft" className="text-sm text-muted-foreground">Draft</Label>
+                  <Label htmlFor="isDraft" className="text-sm text-muted-foreground">Draf</Label>
                   <Switch id="isDraft" disabled className="opacity-50" />
                 </div>
               </div>
@@ -43,7 +43,7 @@ export function SoalSetFormSkeleton() {
 
           {/* Description Section */}
           <div className="space-y-3">
-            <Label htmlFor="deskripsi" className="text-lg font-medium text-foreground">Description</Label>
+            <Label htmlFor="deskripsi" className="text-lg font-medium text-foreground">Deskripsi</Label>
             <div className="relative">
               <Skeleton className="min-h-[100px] w-full rounded-xl absolute inset-0" />
               <Textarea
@@ -60,7 +60,7 @@ export function SoalSetFormSkeleton() {
           {/* Section Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-xl font-semibold text-foreground">Questions</h3>
+              <h3 className="text-xl font-semibold text-foreground">Pertanyaan</h3>
               <div className="text-sm text-muted-foreground mt-1">
                 <Skeleton className="h-4 w-36 inline-block" />
               </div>
@@ -73,7 +73,7 @@ export function SoalSetFormSkeleton() {
                 className="border-border hover:bg-accent shadow-sm transition-all duration-200 opacity-50"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
-                Generate Question
+                Buat Pertanyaan
               </Button>
               <Button
                 type="button"
@@ -81,7 +81,7 @@ export function SoalSetFormSkeleton() {
                 className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 opacity-50"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Question
+                Tambah Pertanyaan
               </Button>
             </div>
           </div>
@@ -91,7 +91,7 @@ export function SoalSetFormSkeleton() {
             <div className="relative flex-1">
               <Skeleton className="h-10 w-full rounded-md absolute inset-0" />
               <Input
-                placeholder="Type your question here..."
+                placeholder="Ketik pertanyaan Anda di sini..."
                 disabled
                 className="border-border focus:border-primary focus:ring-primary/20 opacity-0"
               />

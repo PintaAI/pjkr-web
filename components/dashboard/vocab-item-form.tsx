@@ -122,22 +122,22 @@ export function VocabItemForm({ item, onSave, onCancel }: VocabItemFormProps) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="korean">Korean *</Label>
+          <Label htmlFor="korean">Korea *</Label>
           <Input
             id="korean"
             value={formData.korean}
             onChange={(e) => setFormData({ ...formData, korean: e.target.value })}
-            placeholder="Korean word"
+            placeholder="Kata Korea"
             required
           />
         </div>
         <div>
-          <Label htmlFor="indonesian">Indonesian *</Label>
+          <Label htmlFor="indonesian">Indonesia *</Label>
           <Input
             id="indonesian"
             value={formData.indonesian}
             onChange={(e) => setFormData({ ...formData, indonesian: e.target.value })}
-            placeholder="Indonesian translation"
+            placeholder="Terjemahan Indonesia"
             required
           />
         </div>
@@ -145,20 +145,20 @@ export function VocabItemForm({ item, onSave, onCancel }: VocabItemFormProps) {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="type">Type</Label>
+          <Label htmlFor="type">Tipe</Label>
           <select
             id="type"
             className="w-full px-3 py-2 border border-input bg-background rounded-md"
             value={formData.type}
             onChange={(e) => setFormData({ ...formData, type: e.target.value as VocabularyType })}
           >
-            <option value={VocabularyType.WORD}>Word</option>
-            <option value={VocabularyType.SENTENCE}>Sentence</option>
+            <option value={VocabularyType.WORD}>Kata</option>
+            <option value={VocabularyType.SENTENCE}>Kalimat</option>
             <option value={VocabularyType.IDIOM}>Idiom</option>
           </select>
         </div>
         <div>
-          <Label htmlFor="pos">Part of Speech</Label>
+          <Label htmlFor="pos">Kelas Kata</Label>
           <select
             id="pos"
             className="w-full px-3 py-2 border border-input bg-background rounded-md"
@@ -168,11 +168,11 @@ export function VocabItemForm({ item, onSave, onCancel }: VocabItemFormProps) {
               pos: e.target.value as PartOfSpeech || undefined
             })}
           >
-            <option value="">Select POS</option>
-            <option value={PartOfSpeech.KATA_KERJA}>Verb</option>
-            <option value={PartOfSpeech.KATA_BENDA}>Noun</option>
-            <option value={PartOfSpeech.KATA_SIFAT}>Adjective</option>
-            <option value={PartOfSpeech.KATA_KETERANGAN}>Adverb</option>
+            <option value="">Pilih Kelas Kata</option>
+            <option value={PartOfSpeech.KATA_KERJA}>Kata Kerja</option>
+            <option value={PartOfSpeech.KATA_BENDA}>Kata Benda</option>
+            <option value={PartOfSpeech.KATA_SIFAT}>Kata Sifat</option>
+            <option value={PartOfSpeech.KATA_KETERANGAN}>Kata Keterangan</option>
           </select>
         </div>
       </div>
@@ -186,7 +186,7 @@ export function VocabItemForm({ item, onSave, onCancel }: VocabItemFormProps) {
             disabled={!formData.korean.trim() || generating}
             className="w-full"
           >
-            {generating ? "Generating Audio..." : "Generate Audio"}
+            {generating ? "Membuat Audio..." : "Buat Audio"}
           </Button>
         )}
         {formData.audioUrl && (
@@ -201,13 +201,13 @@ export function VocabItemForm({ item, onSave, onCancel }: VocabItemFormProps) {
       </div>
 
       <div>
-        <Label>Example Sentences</Label>
+        <Label>Contoh Kalimat</Label>
         {formData.exampleSentences.map((sentence, index) => (
           <div key={index} className="flex gap-2 mt-2">
             <Input
               value={sentence}
               onChange={(e) => updateExampleSentence(index, e.target.value)}
-              placeholder="Example sentence"
+              placeholder="Contoh kalimat"
             />
             {formData.exampleSentences.length > 1 && (
               <Button
@@ -229,16 +229,16 @@ export function VocabItemForm({ item, onSave, onCancel }: VocabItemFormProps) {
           className="mt-2"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Add Example
+          Tambah Contoh
         </Button>
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          Batal
         </Button>
         <Button type="submit">
-          {item ? "Update" : "Add"} Item
+          {item ? "Perbarui" : "Tambah"} Item
         </Button>
       </div>
     </form>

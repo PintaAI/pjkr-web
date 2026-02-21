@@ -59,7 +59,7 @@ export function ManageLayout({
               searchValue={searchValue}
               onSearchChange={onSearchChange}
               filters={filters}
-              className="flex-shrink-0 min-w-[580px]"
+              className="flex-shrink-0 min-w-[300px] sm:min-w-[580px]"
               singleFilter={singleFilter}
             />
           </CardHeader>

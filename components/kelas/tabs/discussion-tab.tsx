@@ -56,7 +56,7 @@ interface DiscussionTabProps {
 
 export default function DiscussionTab({
   kelasId,
-  kelasTitle = "Class",
+  kelasTitle = "Kelas",
   initialPosts = [],
   initialPostsCount = 0,
   isAuthor = false,
@@ -90,10 +90,10 @@ export default function DiscussionTab({
           setHasMore(data.pagination.page < data.pagination.totalPages);
           setPage(pageNum);
         } else {
-          toast.error("Failed to load posts");
+          toast.error("Gagal memuat postingan");
         }
       } catch {
-        toast.error("Failed to load posts");
+        toast.error("Gagal memuat postingan");
       } finally {
         setIsLoading(false);
       }
@@ -184,7 +184,7 @@ export default function DiscussionTab({
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2">
           <MessageSquare className="w-5 h-5 text-primary" />
-          <h3 className="text-lg font-semibold">Discussions
+          <h3 className="text-lg font-semibold">Diskusi
             <span className="text-muted-foreground font-normal">{totalText}</span>
           </h3>
         </div>
@@ -192,7 +192,7 @@ export default function DiscussionTab({
         <div className="flex flex-wrap items-center gap-2 md:justify-end">
           <div className="w-full sm:w-[220px]">
             <Input
-              placeholder="Search discussions..."
+              placeholder="Cari diskusi..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="h-9"
@@ -201,12 +201,12 @@ export default function DiscussionTab({
 
           <Select value={sort} onValueChange={(v) => setSort(v as any)}>
             <SelectTrigger className="h-9 w-[160px]">
-              <SelectValue placeholder="Sort" />
+              <SelectValue placeholder="Urutkan" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="new">Newest</SelectItem>
-              <SelectItem value="comments">Most Commented</SelectItem>
-              <SelectItem value="likes">Most Liked</SelectItem>
+              <SelectItem value="new">Terbaru</SelectItem>
+              <SelectItem value="comments">Paling Dikomentari</SelectItem>
+              <SelectItem value="likes">Paling Disukai</SelectItem>
             </SelectContent>
           </Select>
 
@@ -217,7 +217,7 @@ export default function DiscussionTab({
               onCheckedChange={setPinnedFirst}
             />
             <Label htmlFor="pin-toggle" className="text-xs text-muted-foreground">
-              Pinned first
+              Disematkan di awal
             </Label>
           </div>
 
@@ -271,11 +271,11 @@ export default function DiscussionTab({
             <div className="flex flex-col items-center gap-2 py-2">
               <div ref={sentinelRef} className="h-1 w-1" />
               <div className="text-xs text-muted-foreground">
-                {isLoading ? "Loading more..." : "Scroll to load more"}
+                {isLoading ? "Memuat lebih banyak..." : "Gulir untuk memuat lebih banyak"}
               </div>
               <div className="text-center">
                 <Button variant="outline" onClick={handleLoadMore} disabled={isLoading}>
-                  {isLoading ? "Loading..." : "Load More"}
+                  {isLoading ? "Memuat..." : "Muat Lebih Banyak"}
                 </Button>
               </div>
             </div>
@@ -284,8 +284,8 @@ export default function DiscussionTab({
       ) : (
         <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/30">
           <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <h3 className="text-lg font-medium mb-2">No discussions yet</h3>
-          <p className="mb-4">Be the first to start a conversation!</p>
+          <h3 className="text-lg font-medium mb-2">Belum ada diskusi</h3>
+          <p className="mb-4">Jadilah yang pertama untuk memulai percakapan!</p>
         </div>
       )}
     </div>

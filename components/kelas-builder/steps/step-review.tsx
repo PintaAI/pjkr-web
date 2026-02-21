@@ -88,20 +88,20 @@ export function StepReview() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Content Summary
+            Ringkasan Konten
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-primary">{materis.length}</div>
-              <div className="text-sm text-muted-foreground">Lessons</div>
+              <div className="text-sm text-muted-foreground">Pelajaran</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600">
                 {materis.filter(m => m.isDemo).length}
               </div>
-              <div className="text-sm text-muted-foreground">Demo Lessons</div>
+              <div className="text-sm text-muted-foreground">Pelajaran Demo</div>
             </div>
           </div>
         </CardContent>
@@ -112,8 +112,8 @@ export function StepReview() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Eye className="h-5 w-5" />
-            Course Preview
-            <Badge variant="secondary" className="ml-auto">How it will look</Badge>
+            Pratinjau Kelas
+            <Badge variant="secondary" className="ml-auto">Tampilan</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4">
@@ -131,14 +131,14 @@ export function StepReview() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-300">
               <CheckCircle className="h-5 w-5" />
-              Course Ready for Publishing
+              Kelas Siap Dipublikasikan
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Alert className="mb-4 border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
               <CheckCircle className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-700 dark:text-green-300">
-                Your course meets all requirements and is ready to be published. Use the Publish button in the sidebar to make it live.
+                Kelas Anda memenuhi semua persyaratan dan siap dipublikasikan. Gunakan tombol Publikasikan di sidebar untuk membuatnya tayang.
               </AlertDescription>
             </Alert>
 
@@ -146,19 +146,19 @@ export function StepReview() {
             <div className="space-y-2 mb-6">
               <div className="flex items-center gap-3">
                 <CheckCircle className="h-4 w-4 text-green-600" />
-                <span className="text-green-600">Course Title</span>
+                <span className="text-green-600">Judul Kelas</span>
               </div>
               <div className="flex items-center gap-3">
                 <CheckCircle className="h-4 w-4 text-green-600" />
-                <span className="text-green-600">Course Description</span>
+                <span className="text-green-600">Deskripsi Kelas</span>
               </div>
               <div className="flex items-center gap-3">
                 <CheckCircle className="h-4 w-4 text-green-600" />
-                <span className="text-green-600">Course Content</span>
+                <span className="text-green-600">Konten Kelas</span>
               </div>
               <div className="flex items-center gap-3">
                 <CheckCircle className="h-4 w-4 text-green-600" />
-                <span className="text-green-600">Pricing Configuration</span>
+                <span className="text-green-600">Konfigurasi Harga</span>
               </div>
             </div>
 
@@ -168,7 +168,7 @@ export function StepReview() {
                 onClick={() => router.push('/dashboard')}
                 className="text-muted-foreground hover:text-foreground"
               >
-                Save as Draft & Return Later
+                Simpan sebagai Draf & Kembali Nanti
               </Button>
             </div>
           </CardContent>
@@ -178,14 +178,14 @@ export function StepReview() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-red-600" />
-              Course Not Ready Yet
+              Kelas Belum Siap
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Please complete the following requirements before publishing:
+                Harap lengkapi persyaratan berikut sebelum mempublikasikan:
               </AlertDescription>
             </Alert>
 
@@ -198,7 +198,7 @@ export function StepReview() {
                   <AlertCircle className="h-4 w-4 text-red-600" />
                 )}
                 <span className={hasTitle ? 'text-green-600' : 'text-red-600'}>
-                  Course Title
+                  Judul Kelas
                 </span>
               </div>
               <div className="flex items-center gap-3">
@@ -208,7 +208,7 @@ export function StepReview() {
                   <AlertCircle className="h-4 w-4 text-red-600" />
                 )}
                 <span className={hasDescription ? 'text-green-600' : 'text-red-600'}>
-                  Course Description
+                  Deskripsi Kelas
                 </span>
               </div>
               <div className="flex items-center gap-3">
@@ -218,7 +218,7 @@ export function StepReview() {
                   <AlertCircle className="h-4 w-4 text-red-600" />
                 )}
                 <span className={hasContent ? 'text-green-600' : 'text-red-600'}>
-                  Course Content
+                  Konten Kelas
                 </span>
               </div>
               <div className="flex items-center gap-3">
@@ -228,7 +228,7 @@ export function StepReview() {
                   <AlertCircle className="h-4 w-4 text-red-600" />
                 )}
                 <span className={hasValidPricing ? 'text-green-600' : 'text-red-600'}>
-                  Pricing Configuration
+                  Konfigurasi Harga
                 </span>
               </div>
             </div>

@@ -93,10 +93,10 @@ export default function PostDetailSheet({ post, currentUserId, isOpen, onOpenCha
         const data = await response.json();
         setComments(data.comments);
       } else {
-        toast.error("Failed to load comments");
+        toast.error("Gagal memuat komentar");
       }
     } catch {
-      toast.error("Failed to load comments");
+      toast.error("Gagal memuat komentar");
     } finally {
       setIsLoadingComments(false);
     }
@@ -129,12 +129,12 @@ export default function PostDetailSheet({ post, currentUserId, isOpen, onOpenCha
         setComments([newCommentData, ...comments]);
         setLocalCommentCount(prev => prev + 1);
         setNewComment("");
-        toast.success("Comment posted successfully!");
+        toast.success("Komentar berhasil diposting!");
       } else {
-        toast.error("Failed to post comment");
+        toast.error("Gagal memposting komentar");
       }
     } catch {
-      toast.error("Failed to post comment");
+      toast.error("Gagal memposting komentar");
     } finally {
       setIsSubmittingComment(false);
     }
@@ -174,7 +174,7 @@ export default function PostDetailSheet({ post, currentUserId, isOpen, onOpenCha
         );
         setLocalCommentCount(prev => prev + 1);
       } else {
-        throw new Error("Failed to post reply");
+        throw new Error("Gagal memposting balasan");
       }
     } catch (error) {
       throw error as Error;
@@ -197,7 +197,7 @@ export default function PostDetailSheet({ post, currentUserId, isOpen, onOpenCha
       if (!response.ok) {
         setLiked(!nextLiked);
         setLocalLikeCount((prev) => prev + (nextLiked ? -1 : 1));
-        toast.error("Failed to like post");
+        toast.error("Gagal menyukai postingan");
       } else {
         const data = await response.json().catch(() => null);
         if (data && typeof data.liked === "boolean") {
@@ -210,7 +210,7 @@ export default function PostDetailSheet({ post, currentUserId, isOpen, onOpenCha
     } catch {
       setLiked(!nextLiked);
       setLocalLikeCount((prev) => prev + (nextLiked ? -1 : 1));
-      toast.error("Failed to like post");
+      toast.error("Gagal menyukai postingan");
     } finally {
       setIsLiking(false);
     }
@@ -223,7 +223,7 @@ export default function PostDetailSheet({ post, currentUserId, isOpen, onOpenCha
       });
 
       if (!response.ok) {
-        throw new Error("Failed to like comment");
+        throw new Error("Gagal menyukai komentar");
       }
     } catch (error) {
       throw error as Error;
@@ -236,9 +236,9 @@ export default function PostDetailSheet({ post, currentUserId, isOpen, onOpenCha
     try {
       const url = `${window.location.href.split("#")[0]}#post-${post.id}`;
       await navigator.clipboard.writeText(url);
-      toast.success("Post link copied to clipboard");
+      toast.success("Tautan postingan disalin ke clipboard");
     } catch {
-      toast.error("Failed to copy link");
+      toast.error("Gagal menyalin tautan");
     }
   };
 
@@ -270,7 +270,7 @@ export default function PostDetailSheet({ post, currentUserId, isOpen, onOpenCha
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Post Details</SheetTitle>
+          <SheetTitle>Detail Postingan</SheetTitle>
         </SheetHeader>
 
         <div className=" px-4 space-y-6">
@@ -295,7 +295,7 @@ export default function PostDetailSheet({ post, currentUserId, isOpen, onOpenCha
                       href={`/profile/${post.author.id}`}
                       className="font-semibold text-foreground hover:text-primary transition-colors cursor-pointer"
                     >
-                      {post.author.name || "Unknown User"}
+                      {post.author.name || "Pengguna Tidak Diketahui"}
                     </Link>
                     <span className="text-sm text-muted-foreground">
                       {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
@@ -307,7 +307,7 @@ export default function PostDetailSheet({ post, currentUserId, isOpen, onOpenCha
                     {post.isPinned && (
                       <Badge variant="outline" className="text-xs bg-yellow-500/10 text-yellow-600 border-yellow-200">
                         <Pin className="w-3 h-3 mr-1" />
-                        Pinned
+                        Disematkan
                       </Badge>
                     )}
                     <Badge variant="outline" className={cn("text-xs", getTypeColor(post.type))}>
@@ -341,7 +341,7 @@ export default function PostDetailSheet({ post, currentUserId, isOpen, onOpenCha
                         liked && "text-red-500"
                       )}
                       aria-pressed={liked}
-                      aria-label={liked ? "Unlike post" : "Like post"}
+                      aria-label={liked ? "Batal menyukai postingan" : "Sukai postingan"}
                     >
                       <Heart className={cn("w-4 h-4 mr-1", liked && "fill-red-500")} />
                       {localLikeCount > 0 && <span className="text-sm">{localLikeCount}</span>}
@@ -363,12 +363,12 @@ export default function PostDetailSheet({ post, currentUserId, isOpen, onOpenCha
 
           {/* Comments Section */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Comments ({localCommentCount})</h3>
+            <h3 className="text-lg font-semibold">Komentar ({localCommentCount})</h3>
 
             {/* New Comment Form */}
             <div className="space-y-3">
               <Textarea
-                placeholder="Write a comment..."
+                placeholder="Tulis komentar..."
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 onKeyDown={(e) => {
@@ -385,7 +385,7 @@ export default function PostDetailSheet({ post, currentUserId, isOpen, onOpenCha
                   disabled={!newComment.trim() || isSubmittingComment}
                   size="sm"
                 >
-                  {isSubmittingComment ? "Posting..." : "Comment"}
+                  {isSubmittingComment ? "Memposting..." : "Komentar"}
                 </Button>
                 <span className="text-xs text-muted-foreground">Ctrl/⌘ + Enter</span>
               </div>
@@ -411,7 +411,7 @@ export default function PostDetailSheet({ post, currentUserId, isOpen, onOpenCha
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                No comments yet. Be the first to comment!
+                Belum ada komentar. Jadilah yang pertama berkomentar!
               </div>
             )}
           </div>

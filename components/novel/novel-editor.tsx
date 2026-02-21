@@ -40,7 +40,7 @@ interface NovelEditorProps {
   onUpdate?: (data: { json: any; html: string }) => void;
   onSave?: (data: { json: any; html: string }) => void;
   className?: string;
-  saveStatus?: "Saved" | "Unsaved" | "Saving...";
+  saveStatus?: "Saved" | "Unsaved" | "Saving..." | "Menyimpan..." | "Tersimpan" | "Belum Disimpan";
   showTopToolbar?: boolean;
   placeholder?: string;
 }

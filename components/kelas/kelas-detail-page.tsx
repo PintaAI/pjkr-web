@@ -306,7 +306,7 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
                 className="flex items-center gap-2 text-primary"
               >
                 <FileText className="w-4 h-4 text-primary" />
-                Information
+                Informasi
               </TabsTrigger>
               {/* Only render conditional tabs after client mount to prevent hydration mismatch */}
               {isClient && (enrollment.isEnrolled || isAuthor) && (
@@ -316,28 +316,28 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
                     className="flex items-center gap-2 text-primary"
                   >
                     <BookOpen className="w-4 h-4 text-primary" />
-                    Materials & Live
+                    Materi & Live
                   </TabsTrigger>
                   <TabsTrigger
                     value="discussion"
                     className="flex items-center gap-2 text-primary"
                   >
                     <MessageSquare className="w-4 h-4 text-primary" />
-                    Discussion
+                    Diskusi
                   </TabsTrigger>
                   <TabsTrigger
                     value="vocabulary"
                     className="flex items-center gap-2 text-primary"
                   >
                     <GraduationCap className="w-4 h-4 text-primary" />
-                    Vocabulary
+                    Kosa Kata
                   </TabsTrigger>
                   <TabsTrigger
                     value="questions"
                     className="flex items-center gap-2 text-primary"
                   >
                     <Brain className="w-4 h-4 text-primary" />
-                    Questions
+                    Pertanyaan
                   </TabsTrigger>
                 </>
               )}
@@ -348,7 +348,7 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
                   className="flex items-center gap-2 text-primary"
                 >
                   <BarChart3 className="w-4 h-4 text-primary" />
-                  Statistics
+                  Statistik
                 </TabsTrigger>
               )}
             </TabsList>
@@ -403,30 +403,30 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
             {isAuthor && (
               <TabsContent value="statistics" className="mt-6">
                 <div className="space-y-6">
-                  <h3 className="text-xl font-semibold border-b pb-2">Kelas Statistics</h3>
+                  <h3 className="text-xl font-semibold border-b pb-2">Statistik Kelas</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <Card>
                       <CardContent className="p-6">
                         <div className="text-3xl font-bold text-primary mb-1">150</div>
-                        <p className="text-sm text-muted-foreground">Enrolled Students</p>
+                        <p className="text-sm text-muted-foreground">Siswa Terdaftar</p>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="p-6">
                         <div className="text-3xl font-bold text-primary mb-1">85%</div>
-                        <p className="text-sm text-muted-foreground">Avg Completion Rate</p>
+                        <p className="text-sm text-muted-foreground">Rata-rata Tingkat Penyelesaian</p>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="p-6">
                         <div className="text-3xl font-bold text-primary mb-1">1,200</div>
-                        <p className="text-sm text-muted-foreground">Page Views</p>
+                        <p className="text-sm text-muted-foreground">Tampilan Halaman</p>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="p-6">
                         <div className="text-3xl font-bold text-primary mb-1">Rp 4.5M</div>
-                        <p className="text-sm text-muted-foreground">Total Revenue</p>
+                        <p className="text-sm text-muted-foreground">Total Pendapatan</p>
                       </CardContent>
                     </Card>
                   </div>
@@ -443,9 +443,9 @@ export default function KelasDetailPage({ kelas }: KelasDetailPageProps) {
               <div className="flex items-center justify-center gap-3 text-primary">
                 <Megaphone className="w-6 h-6 text-primary" />
                 <div className="text-center">
-                  <h3 className="font-medium text-lg mb-1">Advertisement Space</h3>
+                  <h3 className="font-medium text-lg mb-1">Ruang Iklan</h3>
                   <p className="text-sm text-secondary">
-                    Running text ads will be displayed here
+                    Iklan teks berjalan akan ditampilkan di sini
                   </p>
                 </div>
                 <div className="flex items-center gap-1 text-xs text-secondary">

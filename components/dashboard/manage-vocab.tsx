@@ -28,10 +28,10 @@ export function ManageVocab({ vocabSets: initialVocabSets }: ManageVocabProps) {
       if (result.success && result.data) {
         setVocabSets(result.data);
       } else {
-        setError(result.error || "Failed to load vocabulary sets");
+        setError(result.error || "Gagal memuat set kosakata");
       }
     } catch {
-      setError("Failed to load vocabulary sets");
+      setError("Gagal memuat set kosakata");
     } finally {
       setLoading(false);
     }
@@ -86,10 +86,10 @@ export function ManageVocab({ vocabSets: initialVocabSets }: ManageVocabProps) {
         // Refresh the list
         await fetchVocabSets();
       } else {
-        setError(result.error || "Failed to delete vocabulary set");
+        setError(result.error || "Gagal menghapus set kosakata");
       }
     } catch  {
-      setError("Failed to delete vocabulary set");
+      setError("Gagal menghapus set kosakata");
     }
   };
 
@@ -97,21 +97,21 @@ export function ManageVocab({ vocabSets: initialVocabSets }: ManageVocabProps) {
 
   return (
     <ManageLayout
-      title="Manage Vocabulary"
-      description="Manage your vocabulary sets and flashcards"
-      placeholder="Search vocabulary sets..."
+      title="Kelola Kosakata"
+      description="Kelola set kosakata dan kartu kilat Anda"
+      placeholder="Cari set kosakata..."
       searchValue={searchTerm}
       onSearchChange={setSearchTerm}
       filters={[
         {
           key: "public",
           type: "select",
-          label: "Visibility",
+          label: "Visibilitas",
           value: filterPublic,
           options: [
-            { value: "ALL", label: "All Sets" },
-            { value: "PUBLIC", label: "Public" },
-            { value: "PRIVATE", label: "Private" },
+            { value: "ALL", label: "Semua Set" },
+            { value: "PUBLIC", label: "Publik" },
+            { value: "PRIVATE", label: "Pribadi" },
           ],
           onChange: (value: string) => setFilterPublic(value as "ALL" | "PUBLIC" | "PRIVATE"),
         },
@@ -129,11 +129,11 @@ export function ManageVocab({ vocabSets: initialVocabSets }: ManageVocabProps) {
       )}
       createNewCard={{
         onClick: handleCreateVocab,
-        title: "Create New Collection",
-        subtitle: "Add a new vocabulary set",
+        title: "Buat Koleksi Baru",
+        subtitle: "Tambah set kosakata baru",
       }}
-      emptyTitle="Your Vocabulary Sets"
-      emptyMessage="No vocabulary sets found matching your filters. Try adjusting your search or filters."
+      emptyTitle="Set Kosakata Anda"
+      emptyMessage="Tidak ada set kosakata yang sesuai dengan filter Anda. Coba sesuaikan pencarian atau filter Anda."
     >
       <VocabSheet
         isOpen={sheetOpen}

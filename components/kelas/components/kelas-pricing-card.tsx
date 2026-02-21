@@ -126,14 +126,14 @@ export default function KelasPricingCard({
   const renderPricingDescription = () => {
     return (
       <div className="text-xs text-muted-foreground">
-        {kelas.isPaidClass ? "One-time payment" : "Langsung join aja !"}
+        {kelas.isPaidClass ? "Pembayaran sekali bayar" : "Langsung gabung aja !"}
       </div>
     );
   };
 
   const handleApplyPromoCode = async () => {
     if (!promoCode.trim()) {
-      setPromoError("Please enter a promo code");
+      setPromoError("Silakan masukkan kode promo");
       return;
     }
 
@@ -145,10 +145,10 @@ export default function KelasPricingCard({
         setAppliedPromoCode(promoCode.toUpperCase());
         setPromoCode("");
       } else {
-        setPromoError("Invalid promo code");
+        setPromoError("Kode promo tidak valid");
       }
     } catch {
-      setPromoError("Failed to apply promo code");
+      setPromoError("Gagal menerapkan kode promo");
     } finally {
       setIsApplyingPromo(false);
     }
@@ -246,7 +246,7 @@ export default function KelasPricingCard({
                   disabled={isApplyingPromo || !promoCode.trim()}
                   className="text-xs bg-primary hover:bg-primary/90 border-primary"
                 >
-                  {isApplyingPromo ? "..." : "Apply"}
+                  {isApplyingPromo ? "..." : "Terapkan"}
                 </Button>
               </div>
             )}
@@ -291,7 +291,7 @@ export default function KelasPricingCard({
                   className="text-destructive focus:text-destructive"
                 >
                   <UserMinus className="w-4 h-4 mr-2" />
-                  {enrollment.isLoading ? "Loading..." : "Keluar Kelas"}
+                  {enrollment.isLoading ? "Memuat..." : "Keluar Kelas"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -303,8 +303,8 @@ export default function KelasPricingCard({
             disabled={!isClient || enrollment.buttonConfig.disabled}
           >
             <BookOpen className="w-4 h-4 mr-2" />
-            {!isClient ? "Loading..." :
-             isLoading ? "Loading..." :
+            {!isClient ? "Memuat..." :
+             isLoading ? "Memuat..." :
              enrollment.buttonConfig.text}
           </Button>
         )}

@@ -92,41 +92,18 @@ export async function getGuruSoalSets() {
   try {
     const session = await assertAuthenticated();
 
+    // This function is GURU-only - verify role before any database queries
     if (session.user.role !== "GURU") {
       return { success: false, error: "Not authorized" };
     }
 
     const userId = session.user.id;
 
-    // Get kelas IDs that the user has joined
-    const joinedKelas = await prisma.kelas.findMany({
-      where: {
-        members: {
-          some: { id: userId }
-        }
-      },
-      select: { id: true }
-    });
-
-    const joinedKelasIds = joinedKelas.map(k => k.id);
-
-    // Get soal sets: either created by the guru or linked to joined kelas
+    // Get only soal sets created by the guru (their own collections)
+    // This ensures users only see soal sets they own and can manage
     const soalSets = await prisma.koleksiSoal.findMany({
       where: {
-        OR: [
-          {
-            userId: userId,
-            // User can see their own collections regardless of draft status
-          },
-          {
-            kelasKoleksiSoals: {
-              some: {
-                kelasId: { in: joinedKelasIds }
-              }
-            },
-            isDraft: false // Only show non-draft collections from joined kelas
-          }
-        ]
+        userId: userId,
       },
       include: {
         soals: {

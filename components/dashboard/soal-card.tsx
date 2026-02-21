@@ -60,7 +60,7 @@ export function SoalCard({ soalSet, onClick, onDelete, compact = false }: SoalCa
               <p className="text-sm text-muted-foreground break-words">
                 <span className="inline-flex items-center gap-1">
                   <BsCreditCard2Front className="h-3 w-3" />
-                  {soalSet.soals.length} questions
+                  {soalSet.soals.length} pertanyaan
                 </span>
               </p>
             </div>
@@ -71,13 +71,13 @@ export function SoalCard({ soalSet, onClick, onDelete, compact = false }: SoalCa
           <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Delete Soal Set?</AlertDialogTitle>
+                <AlertDialogTitle>Hapus Set Soal?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete the soal set {soalSet.nama} and all its questions.
+                  Tindakan ini tidak dapat dibatalkan. Ini akan menghapus set soal {soalSet.nama} dan semua pertanyaannya secara permanen.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>Batal</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={(e) => {
                     e.stopPropagation();
@@ -85,7 +85,7 @@ export function SoalCard({ soalSet, onClick, onDelete, compact = false }: SoalCa
                     setDeleteDialogOpen(false);
                   }}
                 >
-                  Delete
+                  Hapus
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -113,12 +113,12 @@ export function SoalCard({ soalSet, onClick, onDelete, compact = false }: SoalCa
           <div className="absolute top-2 left-2 flex gap-2">
             {soalSet.isPrivate && (
               <Badge variant="secondary" className="h-6 px-2 text-[10px]">
-                Private
+                Pribadi
               </Badge>
             )}
             {soalSet.isDraft && (
               <Badge variant="secondary" className="h-6 px-2 text-[10px]">
-                Draft
+                Draf
               </Badge>
             )}
           </div>
@@ -144,12 +144,12 @@ export function SoalCard({ soalSet, onClick, onDelete, compact = false }: SoalCa
             <div className="flex items-center gap-3 text-xs text-white/90">
               <span className="inline-flex items-center gap-1">
                 <BsCreditCard2Front className="h-4 w-4" />
-                {soalSet.soals.length} questions
+                {soalSet.soals.length} pertanyaan
               </span>
               <span>{new Date(soalSet.createdAt).toLocaleDateString()}</span>
               {soalSet.user && (
                 <span className="inline-flex items-center gap-1">
-                  by {soalSet.user.name || 'Unknown'}
+                  oleh {soalSet.user.name || 'Tidak Diketahui'}
                 </span>
               )}
             </div>
@@ -162,7 +162,7 @@ export function SoalCard({ soalSet, onClick, onDelete, compact = false }: SoalCa
           {soalSet.nama}
         </h3>
         <p className="mt-1 text-xs sm:text-sm text-muted-foreground/80 dark:text-muted-foreground line-clamp-2">
-          {soalSet.deskripsi || "No description available"}
+          {soalSet.deskripsi || "Tidak ada deskripsi tersedia"}
         </p>
       </CardContent>
 
@@ -170,13 +170,13 @@ export function SoalCard({ soalSet, onClick, onDelete, compact = false }: SoalCa
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Soal Set?</AlertDialogTitle>
+              <AlertDialogTitle>Hapus Set Soal?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the soal set {soalSet.nama} and all its questions.
+                Tindakan ini tidak dapat dibatalkan. Ini akan menghapus set soal {soalSet.nama} dan semua pertanyaannya secara permanen.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>Batal</AlertDialogCancel>
               <AlertDialogAction
                 onClick={(e) => {
                   e.stopPropagation();
@@ -184,7 +184,7 @@ export function SoalCard({ soalSet, onClick, onDelete, compact = false }: SoalCa
                   setDeleteDialogOpen(false);
                 }}
               >
-                Delete
+                Hapus
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

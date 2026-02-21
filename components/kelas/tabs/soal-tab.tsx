@@ -38,7 +38,7 @@ export default function SoalTab({ soalSets }: SoalTabProps) {
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
         <Brain className="w-5 h-5 text-primary" />
-        <h3 className="text-lg font-semibold">Question Sets ({soalSets.length})</h3>
+        <h3 className="text-lg font-semibold">Paket Soal ({soalSets.length})</h3>
       </div>
       {soalSets.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -52,7 +52,7 @@ export default function SoalTab({ soalSets }: SoalTabProps) {
       ) : (
         <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/30">
           <Brain className="w-12 h-12 mx-auto mb-2 opacity-50" />
-          <p>No question sets available for this class.</p>
+          <p>Tidak ada paket soal yang tersedia untuk kelas ini.</p>
         </div>
       )}
     </div>

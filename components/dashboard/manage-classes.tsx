@@ -47,12 +47,12 @@ const LEVEL_LABELS: Record<Difficulty, string> = {
 
 // Filter options
 const FILTER_TYPES = [
-  { value: "ALL", label: "All Types" },
+  { value: "ALL", label: "Semua Jenis" },
   ...Object.entries(TYPE_LABELS).map(([key, label]) => ({ value: key, label })),
 ];
 
 const FILTER_LEVELS = [
-  { value: "ALL", label: "All Levels" },
+  { value: "ALL", label: "Semua Tingkat" },
   ...Object.entries(LEVEL_LABELS).map(([key, label]) => ({ value: key, label })),
 ];
 
@@ -98,12 +98,12 @@ const useClassManagement = (initialClasses: any[]) => {
       const result = await deleteDraftKelas(id);
       if (result.success) {
         setClasses(prev => prev.filter(cls => cls.id !== id));
-        toast.success("Class deleted successfully");
+        toast.success("Kelas berhasil dihapus");
       } else {
-        toast.error(result.error || "Failed to delete class");
+        toast.error(result.error || "Gagal menghapus kelas");
       }
     } catch {
-      toast.error("An unexpected error occurred");
+      toast.error("Terjadi kesalahan tak terduga");
     } finally {
       setIsDeleting(null);
     }
@@ -117,12 +117,12 @@ const useClassManagement = (initialClasses: any[]) => {
         setClasses(prev => prev.map(cls =>
           cls.id === id ? { ...cls, isDraft: false } : cls
         ));
-        toast.success("Class published successfully");
+        toast.success("Kelas berhasil dipublikasikan");
       } else {
-        toast.error(result.error || "Failed to publish class");
+        toast.error(result.error || "Gagal mempublikasikan kelas");
       }
     } catch {
-      toast.error("An unexpected error occurred");
+      toast.error("Terjadi kesalahan tak terduga");
     } finally {
       setIsPublishing(null);
     }
@@ -136,12 +136,12 @@ const useClassManagement = (initialClasses: any[]) => {
         setClasses(prev => prev.map(cls =>
           cls.id === id ? { ...cls, isDraft: true } : cls
         ));
-        toast.success("Class unpublished successfully");
+        toast.success("Kelas berhasil dibatalkan publikasinya");
       } else {
-        toast.error(result.error || "Failed to unpublish class");
+        toast.error(result.error || "Gagal membatalkan publikasi kelas");
       }
     } catch {
-      toast.error("An unexpected error occurred");
+      toast.error("Terjadi kesalahan tak terduga");
     } finally {
       setIsUnpublishing(null);
     }
@@ -193,16 +193,16 @@ export function ManageClasses({ classes: initialClasses }: Omit<ManageClassesPro
 
   return (
     <ManageLayout
-      title="Manage Classes"
-      description="Manage your drafted and published classes"
-      placeholder="Search classes..."
+      title="Kelola Kelas"
+      description="Kelola kelas draf dan yang dipublikasikan"
+      placeholder="Cari kelas..."
       searchValue={management.searchTerm}
       onSearchChange={management.setSearchTerm}
       filters={[
         {
           key: "type",
           type: "select",
-          label: "Class Type",
+          label: "Jenis Kelas",
           value: management.filterType,
           options: FILTER_TYPES,
           onChange: (value: string) => management.setFilterType(value as KelasType | "ALL"),
@@ -210,7 +210,7 @@ export function ManageClasses({ classes: initialClasses }: Omit<ManageClassesPro
         {
           key: "level",
           type: "select",
-          label: "Difficulty",
+          label: "Tingkat Kesulitan",
           value: management.filterLevel,
           options: FILTER_LEVELS,
           onChange: (value: string) => management.setFilterLevel(value as Difficulty | "ALL"),
@@ -221,9 +221,9 @@ export function ManageClasses({ classes: initialClasses }: Omit<ManageClassesPro
           label: "Status",
           value: management.filterStatus,
           options: [
-            { value: "ALL", label: "All Classes" },
-            { value: "PUBLISHED", label: "Published" },
-            { value: "DRAFT", label: "Draft" },
+            { value: "ALL", label: "Semua Kelas" },
+            { value: "PUBLISHED", label: "Dipublikasikan" },
+            { value: "DRAFT", label: "Draf" },
           ],
           onChange: (value: string) => management.setFilterStatus(value as "ALL" | "PUBLISHED" | "DRAFT"),
         },
@@ -249,11 +249,11 @@ export function ManageClasses({ classes: initialClasses }: Omit<ManageClassesPro
       }}
       createNewCard={{
         onClick: handleCreateClass,
-        title: "Create New Class",
-        subtitle: "Start building a new class",
+        title: "Buat Kelas Baru",
+        subtitle: "Mulai membuat kelas baru",
       }}
-      emptyTitle="Your Classes"
-      emptyMessage="No classes found matching your filters. Try adjusting your search or filters."
+      emptyTitle="Kelas Anda"
+      emptyMessage="Tidak ada kelas yang sesuai dengan filter Anda. Coba sesuaikan pencarian atau filter Anda."
       singleFilter={true}
     />
   );
