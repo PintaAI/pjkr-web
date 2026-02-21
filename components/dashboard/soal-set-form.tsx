@@ -71,7 +71,6 @@ export function SoalSetForm({ soalSet, kelasId, onAutoSaveStatusChange, onBefore
        saving,
        formData,
        soals,
-       originalFormData,
        originalSoals,
        deletedSoalIds,
        soalDialogOpen,
