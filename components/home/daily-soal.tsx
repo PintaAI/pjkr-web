@@ -34,27 +34,8 @@ interface DailySoalProps {
   take?: number;
 }
 
-// Types from the API
-type Difficulty = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 
-interface Opsi {
-  id: number;
-  opsiText: string;
-  isCorrect: boolean;
-  order: number;
-}
 
-interface SoalItem {
-  id: number;
-  pertanyaan: string;
-  difficulty: Difficulty | null;
-  explanation: string | null;
-  opsis: Opsi[];
-  koleksiSoal: {
-    nama: string;
-    deskripsi: string | null;
-  };
-}
 
 /**
  * DailySoal (daily quiz practice)

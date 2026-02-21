@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { Card, CardContent, CardTitle, CardDescription } from "../ui/card";
+import { Card, CardContent, CardTitle,} from "../ui/card";
 import { BookOpen, PlayCircle, Users, Award, Clock, Target, Globe, HeadphonesIcon, GraduationCap, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from "../ui/button";
