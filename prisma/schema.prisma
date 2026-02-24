@@ -17,6 +17,13 @@ enum UserRoles {
   ADMIN
 }
 
+enum TryoutStatus {
+  IN_PROGRESS
+  SUBMITTED
+  EXPIRED
+  CANCELLED
+}
+
 enum KelasType {
   REGULAR
   EVENT
@@ -571,9 +578,13 @@ model OpsiAttachment {
 model Tryout {
   id            Int                 @id @default(autoincrement())
   nama          String
+  description   String?             // Additional context/instructions for the tryout
   startTime     DateTime
   endTime       DateTime
   duration      Int                 @default(30) // Duration in minutes
+  maxAttempts   Int                 @default(1) // Maximum number of attempts allowed
+  shuffleQuestions Boolean          @default(false) // Randomize question order
+  passingScore  Int                 @default(60) // Minimum score to pass (0-100)
   koleksiSoalId Int
   isActive      Boolean             @default(false)
   guruId        String
@@ -593,15 +604,35 @@ model TryoutParticipant {
   id               Int       @id @default(autoincrement())
   tryoutId         Int
   userId           String
+  status           TryoutStatus @default(IN_PROGRESS) // Track participant status
   score            Int       @default(0)
+  startedAt        DateTime? // When student actually started taking the test
   submittedAt      DateTime?
-  timeTakenSeconds Int? // Nullable for backward compatibility with existing records
+  timeTakenSeconds Int? // Actual time taken in seconds
+  attemptCount     Int       @default(1) // Current attempt number
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   tryout           Tryout    @relation(fields: [tryoutId], references: [id], onDelete: Cascade)
   user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers          TryoutAnswer[]
 
   @@unique([tryoutId, userId])
+  @@index([status])
+}
+
+model TryoutAnswer {
+  id          Int       @id @default(autoincrement())
+  participantId Int
+  soalId      Int
+  opsiId      Int?      // Selected option (null if not answered)
+  isCorrect   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  participant  TryoutParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([participantId, soalId])
+  @@index([participantId])
+  @@index([soalId])
 }
 
 // ================================

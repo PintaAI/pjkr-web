@@ -34,6 +34,10 @@ export const auth = betterAuth({
         type: "number",
         defaultValue: 0,
       },
+      longestStreak: {
+        type: "number",
+        defaultValue: 0,
+      },
       xp: {
         type: "number",
         defaultValue: 0,

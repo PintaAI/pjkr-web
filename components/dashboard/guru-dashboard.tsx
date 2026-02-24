@@ -12,7 +12,7 @@ import {
   Calendar,
   Wrench,
   FileQuestion,
-  BarChart3,
+  ClipboardList,
   Bell
 } from "lucide-react";
 import Link from "next/link";
@@ -22,12 +22,15 @@ import { SearchComponent } from "@/components/ui/search";
 import { ManageClasses } from "@/components/dashboard/manage-classes";
 import { ManageVocab } from "@/components/dashboard/manage-vocab";
 import { ManageSoals } from "@/components/dashboard/manage-soals";
-import { GuruDashboardStatistics } from "@/components/dashboard/guru-dashboard-statistics";
+import { ManageTryout } from "@/components/dashboard/manage-tryout";
 import { VocabSheet, VocabSet } from "@/components/dashboard/vocab-sheet";
 import { SoalSheet, SoalSet } from "@/components/dashboard/soal-sheet";
+import { TryoutSheet } from "@/components/dashboard/tryout-sheet";
+import { Tryout } from "@/components/dashboard/tryout-card";
 import { NotificationSheet } from "@/components/dashboard/notification-sheet";
 import { getGuruVocabularySets } from "@/app/actions/kelas/vocabulary";
 import { getGuruSoalSets } from "@/app/actions/kelas/soal-set";
+import { getGuruTryouts } from "@/app/actions/kelas/tryout";
 import { useEffect, useState } from "react";
 
 type UserRoles = "GURU" | "MURID" | "ADMIN";
@@ -72,13 +75,15 @@ interface GuruDashboardProps {
 export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
   const [vocabSets, setVocabSets] = useState<VocabSet[]>([]);
   const [soalSets, setSoalSets] = useState<SoalSet[]>([]);
+  const [tryouts, setTryouts] = useState<Tryout[]>([]);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [soalSheetOpen, setSoalSheetOpen] = useState(false);
+  const [tryoutSheetOpen, setTryoutSheetOpen] = useState(false);
   const [notificationSheetOpen, setNotificationSheetOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.slice(1);
-      const validTabs = ['tools', 'classes', 'vocabulary', 'soals', 'statistics'];
+      const validTabs = ['tools', 'classes', 'vocabulary', 'soals', 'tryout'];
       return validTabs.includes(hash) ? hash : 'tools';
     }
     return 'tools';
@@ -93,6 +98,10 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
       const soalResult = await getGuruSoalSets();
       if (soalResult.success && soalResult.data) {
         setSoalSets(soalResult.data);
+      }
+      const tryoutResult = await getGuruTryouts();
+      if (tryoutResult.success && tryoutResult.data) {
+        setTryouts(tryoutResult.data);
       }
     } catch (error) {
       console.error("Failed to fetch data:", error);
@@ -110,6 +119,11 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
 
   const handleSoalSuccess = () => {
     setSoalSheetOpen(false);
+    fetchData();
+  };
+
+  const handleTryoutSuccess = () => {
+    setTryoutSheetOpen(false);
     fetchData();
   };
 
@@ -251,9 +265,9 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
             <FileQuestion className="w-4 h-4 mr-2" />
             Kelola Soal
           </TabsTrigger>
-          <TabsTrigger value="statistics">
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Statistik
+          <TabsTrigger value="tryout">
+            <ClipboardList className="w-4 h-4 mr-2" />
+            Kelola Tryout
           </TabsTrigger>
         </TabsList>
 
@@ -343,8 +357,8 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
           <ManageSoals soalSets={soalSets} />
         </TabsContent>
 
-        <TabsContent value="statistics">
-          <GuruDashboardStatistics />
+        <TabsContent value="tryout">
+          <ManageTryout tryouts={tryouts} />
         </TabsContent>
       </Tabs>
 
@@ -362,6 +376,14 @@ export function GuruDashboard({ stats, user, classes }: GuruDashboardProps) {
         soalSet={null}
         onSuccess={handleSoalSuccess}
         onCancel={() => setSoalSheetOpen(false)}
+      />
+
+      <TryoutSheet
+        isOpen={tryoutSheetOpen}
+        onOpenChange={setTryoutSheetOpen}
+        tryout={null}
+        onSuccess={handleTryoutSuccess}
+        onCancel={() => setTryoutSheetOpen(false)}
       />
 
       <NotificationSheet

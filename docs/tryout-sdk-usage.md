@@ -165,9 +165,13 @@ if (results.success) {
 interface Tryout {
   id: number;
   nama: string;
+  description?: string;      // Additional context/instructions
   startTime: string;        // ISO 8601 datetime
   endTime: string;          // ISO 8601 datetime
   duration: number;         // Duration in minutes
+  maxAttempts: number;      // Maximum retry attempts (default: 1)
+  shuffleQuestions: boolean; // Randomize question order (default: false)
+  passingScore: number;     // Minimum score to pass (0-100, default: 60)
   koleksiSoalId: number;
   isActive: boolean;
   guruId: string;
@@ -195,11 +199,14 @@ interface TryoutParticipant {
   id: number;
   tryoutId: number;
   userId: string;
-  startTime: string;        // ISO 8601 datetime
-  endTime?: string;          // ISO 8601 datetime (when submitted)
-  score?: number;            // Final score (0-100)
-  correctCount?: number;     // Number of correct answers
-  submittedAt?: string;      // ISO 8601 datetime
+  status: 'IN_PROGRESS' | 'SUBMITTED' | 'EXPIRED' | 'CANCELLED';
+  score: number;           // Final score (0-100)
+  startedAt?: string;      // ISO 8601 datetime - when student started
+  submittedAt?: string;     // ISO 8601 datetime - when submitted
+  timeTakenSeconds?: number; // Actual time taken in seconds
+  attemptCount: number;     // Current attempt number
+  createdAt: string;
+  updatedAt: string;
   
   // Optional relations
   user?: {
@@ -208,6 +215,21 @@ interface TryoutParticipant {
     image?: string;
   };
   tryout?: Tryout;
+  answers?: TryoutAnswer[]; // Individual answer records
+}
+```
+
+### TryoutAnswer
+
+```typescript
+interface TryoutAnswer {
+  id: number;
+  participantId: number;
+  soalId: number;
+  opsiId?: number;        // Selected option (null if not answered)
+  isCorrect: boolean;      // Whether the answer was correct
+  createdAt: string;
+  updatedAt: string;
 }
 ```
 
@@ -219,6 +241,8 @@ interface TryoutResult {
   score: number;             // Final score (0-100)
   correctCount: number;       // Number of correct answers
   totalCount: number;        // Total number of questions
+  timeTakenSeconds?: number; // Time taken in seconds
+  passed?: boolean;          // Whether score meets passing threshold
   details?: any;             // Additional result details
 }
 ```
@@ -355,9 +379,13 @@ import { apiClient } from '@hakgyo-expo-sdk';
 
 const newTryout = await apiClient.post('/api/tryout', {
   nama: 'Korean Level 1 Mock Exam',
+  description: 'This is a comprehensive test covering basic Korean grammar and vocabulary.',
   startTime: '2025-03-01T10:00:00Z',
   endTime: '2025-03-01T12:00:00Z',
-  duration: 120,  // minutes
+  duration: 120,        // minutes
+  maxAttempts: 2,      // Allow 2 attempts
+  shuffleQuestions: true, // Randomize question order
+  passingScore: 70,     // Need 70% to pass
   koleksiSoalId: 45,
   isActive: false
 });
@@ -391,11 +419,58 @@ function canParticipate(tryout: Tryout): boolean {
 ### Calculate Time Remaining
 
 ```typescript
-function getTimeRemaining(tryout: Tryout): number {
+function getTimeRemaining(tryout: Tryout, participant?: TryoutParticipant): {
+  endTime: number;      // Time until tryout closes (minutes)
+  duration: number;     // Time until duration expires (minutes)
+} {
   const now = new Date();
   const end = new Date(tryout.endTime);
-  const diff = end.getTime() - now.getTime();
-  return Math.max(0, Math.floor(diff / 1000 / 60)); // minutes remaining
+  
+  // Time until tryout closes
+  const endTimeRemaining = Math.max(0, Math.floor((end.getTime() - now.getTime()) / 1000 / 60));
+  
+  // Time until duration expires (if participant has started)
+  let durationRemaining = endTimeRemaining;
+  if (participant?.startedAt) {
+    const started = new Date(participant.startedAt);
+    const durationEnd = new Date(started.getTime() + tryout.duration * 60 * 1000);
+    durationRemaining = Math.max(0, Math.floor((durationEnd.getTime() - now.getTime()) / 1000 / 60));
+  }
+  
+  return {
+    endTime: endTimeRemaining,
+    duration: durationRemaining,
+  };
+}
+```
+
+### Check if Score Passed
+
+```typescript
+function didPass(tryout: Tryout, score: number): boolean {
+  return score >= tryout.passingScore;
+}
+```
+
+### Get Detailed Answers
+
+```typescript
+// Get detailed answer breakdown for a participant
+const results = await tryoutApi.getResults(tryoutId);
+
+if (results.success && !Array.isArray(results.data)) {
+  const participant = results.data;
+  
+  if (participant.answers) {
+    participant.answers.forEach(answer => {
+      console.log(`Question ${answer.soalId}: ${answer.isCorrect ? 'Correct' : 'Incorrect'}`);
+      console.log(`  Selected option: ${answer.opsiId}`);
+    });
+  }
+  
+  // Check if passed
+  const passed = didPass(participant.tryout, participant.score);
+  console.log(`Result: ${passed ? 'PASSED' : 'FAILED'} (${participant.score}/${participant.tryout.passingScore})`);
 }
 ```
 

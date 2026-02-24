@@ -33,6 +33,10 @@ export async function POST(
         processingLocks.set(session.user.id, { timestamp: now });
 
         const tryoutId = parseInt(id);
+        if (isNaN(tryoutId)) {
+            return NextResponse.json({ success: false, error: 'Invalid tryout id' }, { status: 400 });
+        }
+
         const body = await request.json();
         const { answers } = body; // Array of { soalId, opsiId }
 
@@ -40,13 +44,15 @@ export async function POST(
             return NextResponse.json({ success: false, error: 'Invalid answers format' }, { status: 400 });
         }
 
-        // 1. Fetch Tryout Questions and Correct Answers
-        // We need to fetch all questions for this tryout's collection
+        // 1. Fetch Tryout with time constraints and Questions
         const tryout = await prisma.tryout.findUnique({
             where: { id: tryoutId },
             select: {
                 id: true,
                 nama: true,
+                startTime: true,
+                endTime: true,
+                duration: true,
                 koleksiSoal: {
                     include: {
                         soals: {
@@ -63,7 +69,40 @@ export async function POST(
             return NextResponse.json({ success: false, error: 'Tryout not found' }, { status: 404 });
         }
 
-        // 2. Calculate Score
+        // 2. Validate time constraints
+        const currentDateTime = new Date();
+        if (currentDateTime < tryout.startTime) {
+            return NextResponse.json({ success: false, error: 'Tryout has not started yet' }, { status: 400 });
+        }
+
+        if (currentDateTime > tryout.endTime) {
+            return NextResponse.json({ success: false, error: 'Tryout has ended' }, { status: 400 });
+        }
+
+        // Check participant started time for duration validation
+        const participant = await prisma.tryoutParticipant.findUnique({
+            where: {
+                tryoutId_userId: {
+                    tryoutId,
+                    userId: session.user.id,
+                }
+            }
+        });
+
+        if (!participant) {
+            return NextResponse.json({ success: false, error: 'Participant not found. Please join the tryout first.' }, { status: 404 });
+        }
+
+        if (participant.startedAt) {
+            const timeTakenSeconds = Math.floor((currentDateTime.getTime() - participant.startedAt.getTime()) / 1000);
+            const maxTimeSeconds = tryout.duration * 60;
+
+            if (timeTakenSeconds > maxTimeSeconds) {
+                return NextResponse.json({ success: false, error: 'Time limit exceeded' }, { status: 400 });
+            }
+        }
+
+        // 3. Calculate Score and Prepare Answer Data
         let correctCount = 0;
         const totalQuestions = tryout.koleksiSoal.soals.length;
 
@@ -77,19 +116,30 @@ export async function POST(
             }
         });
 
-        // Tally score
-        answers.forEach((ans: any) => {
+        // Prepare answer records for storage
+        const answerRecords = answers.map((ans: any) => {
             const correctId = correctOptionsMap.get(ans.soalId);
-            if (correctId && ans.opsiId === correctId) {
+            const isCorrect = correctId ? ans.opsiId === correctId : false;
+            if (isCorrect) {
                 correctCount++;
             }
+            return {
+                soalId: ans.soalId,
+                opsiId: ans.opsiId,
+                isCorrect,
+            };
         });
 
         const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
         const isPerfectScore = score === 100;
 
-        // 3. Update Participant Record
-        const participant = await prisma.tryoutParticipant.update({
+        // Calculate time taken
+        const timeTakenSeconds = participant.startedAt
+            ? Math.floor((currentDateTime.getTime() - participant.startedAt.getTime()) / 1000)
+            : null;
+
+        // 4. Update Participant Record and Store Answers
+        const updatedParticipant = await prisma.tryoutParticipant.update({
             where: {
                 tryoutId_userId: {
                     tryoutId,
@@ -97,13 +147,23 @@ export async function POST(
                 }
             },
             data: {
+                status: 'SUBMITTED',
                 score,
-                submittedAt: new Date(),
-                // timeTakenSeconds... if we want to track it, need client to send it
+                submittedAt: currentDateTime,
+                timeTakenSeconds,
             },
         });
 
-        // Trigger gamification events
+        // Store individual answers
+        await prisma.tryoutAnswer.createMany({
+            data: answerRecords.map(record => ({
+                participantId: updatedParticipant.id,
+                ...record,
+            })),
+            skipDuplicates: true,
+        });
+
+        // 5. Trigger gamification events
         const gamificationResults: any = {};
 
         // Trigger COMPLETE_SOAL event for completing the quiz
@@ -147,7 +207,8 @@ export async function POST(
                 score,
                 correctCount,
                 totalQuestions,
-                participant,
+                participant: updatedParticipant,
+                timeTakenSeconds,
                 gamification: Object.keys(gamificationResults).length > 0 ? gamificationResults : undefined,
             },
         });

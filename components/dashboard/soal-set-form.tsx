@@ -198,7 +198,7 @@ export function SoalSetForm({ soalSet, kelasId, onAutoSaveStatusChange, onBefore
      if (onBeforeCloseRef) {
        onBeforeCloseRef.current = saveBeforeClose;
      }
-   }, [onBeforeCloseRef, formData, soals, autoSaveStatus]);
+   }, [onBeforeCloseRef, formData, soals, autoSaveStatus, saveBeforeClose]);
 
    // Initialize debounced auto-save with longer delay to see spinner
    const { debouncedSave, cancelAutoSave } = useDebouncedAutoSave({

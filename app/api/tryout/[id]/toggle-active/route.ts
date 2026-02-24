@@ -14,6 +14,9 @@ export async function PATCH(
         }
 
         const tryoutId = parseInt(id);
+        if (isNaN(tryoutId)) {
+            return NextResponse.json({ success: false, error: 'Invalid tryout id' }, { status: 400 });
+        }
 
         // Verify ownership
         const tryout = await prisma.tryout.findUnique({

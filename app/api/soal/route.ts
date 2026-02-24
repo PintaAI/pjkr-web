@@ -13,7 +13,12 @@ export async function GET(request: NextRequest) {
     const where: any = {};
 
     if (authorId) where.authorId = authorId;
-    if (koleksiSoalId) where.koleksiSoalId = parseInt(koleksiSoalId);
+    if (koleksiSoalId && koleksiSoalId !== 'undefined') {
+      const parsedKoleksiSoalId = parseInt(koleksiSoalId);
+      if (!isNaN(parsedKoleksiSoalId)) {
+        where.koleksiSoalId = parsedKoleksiSoalId;
+      }
+    }
 
     // If searching by private collection or generic search, might need auth check
     // For now, assuming basic filters are allowed if you have access to the collection

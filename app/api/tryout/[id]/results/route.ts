@@ -14,6 +14,9 @@ export async function GET(
         }
 
         const tryoutId = parseInt(id);
+        if (isNaN(tryoutId)) {
+            return NextResponse.json({ success: false, error: 'Invalid tryout id' }, { status: 400 });
+        }
 
         // Check if user is the Guru (creator) of the tryout
         const tryout = await prisma.tryout.findUnique({
@@ -27,7 +30,7 @@ export async function GET(
         let results;
 
         if (tryout.guruId === session.user.id) {
-            // Guru sees all results
+            // Guru sees all results with summary
             results = await prisma.tryoutParticipant.findMany({
                 where: { tryoutId },
                 include: {
@@ -38,11 +41,14 @@ export async function GET(
                             image: true,
                         },
                     },
+                    _count: {
+                        select: { answers: true }
+                    }
                 },
                 orderBy: { score: 'desc' },
             });
         } else {
-            // Student sees only their result
+            // Student sees only their result with detailed answers
             results = await prisma.tryoutParticipant.findUnique({
                 where: {
                     tryoutId_userId: {
@@ -54,24 +60,25 @@ export async function GET(
                     tryout: {
                         select: {
                             nama: true,
+                            passingScore: true,
                             koleksiSoal: {
-                                select: {
-                                    _count: {
-                                        select: { soals: true }
+                                include: {
+                                    soals: {
+                                        include: {
+                                            opsis: true,
+                                        }
                                     }
                                 }
                             }
                         }
+                    },
+                    answers: {
+                        include: {
+                            participant: false, // Avoid circular reference
+                        }
                     }
                 }
             });
-
-            // Wrap in array for consistency or return object?
-            // Mobile expects something. Let's return object for single, array for list?
-            // The mobile service `getTryoutResults` returns `any`.
-            // Let's stick to standard: "data" holds the result.
-            // If student, usually they want details about their performance.
-            // If this endpoint is generic, let's return the single object for student.
         }
 
         return NextResponse.json({

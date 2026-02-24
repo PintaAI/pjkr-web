@@ -1,5 +1,5 @@
 # Hakgyo - Korean Language Learning Platform
-# https://hakgyo.com/robots.txt
+# https://hakgyo.vercel.app/robots.txt
 
 User-agent: *
 Allow: /
@@ -28,7 +28,7 @@ Allow: /*.svg
 Allow: /*.webp
 
 # Sitemap
-Sitemap: https://hakgyo.com/sitemap.xml
+Sitemap: https://hakgyo.vercel.app/sitemap.xml
 
 # Crawl delay
 Crawl-delay: 0

@@ -68,9 +68,13 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const {
             nama,
+            description,
             startTime,
             endTime,
             duration,
+            maxAttempts,
+            shuffleQuestions,
+            passingScore,
             koleksiSoalId,
             isActive = false,
         } = body;
@@ -100,9 +104,13 @@ export async function POST(request: NextRequest) {
         const tryout = await prisma.tryout.create({
             data: {
                 nama,
+                description,
                 startTime: new Date(startTime),
                 endTime: new Date(endTime),
-                duration: parseInt(duration),
+                duration: duration ? parseInt(duration) : 30,
+                maxAttempts: maxAttempts ? parseInt(maxAttempts) : 1,
+                shuffleQuestions: shuffleQuestions ?? false,
+                passingScore: passingScore ? parseInt(passingScore) : 60,
                 koleksiSoalId: parseInt(koleksiSoalId),
                 isActive,
                 guruId: session.user.id,

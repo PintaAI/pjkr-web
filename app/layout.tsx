@@ -72,7 +72,7 @@ export const metadata: Metadata = {
   creator: "Hakgyo",
   publisher: "Hakgyo",
   applicationName: "Hakgyo",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://hakgyo.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://hakgyo.vercel.app'),
   category: 'education',
   classification: 'Education, Language Learning',
   referrer: 'origin-when-cross-origin',
@@ -146,8 +146,8 @@ export default function RootLayout({
     name: 'Hakgyo',
     alternateName: 'Hakgyo LPK Korea',
     description: 'Hakgyo adalah LPK Korea murah dan terpercaya untuk persiapan EPS-TOPIK Indonesia. Platform belajar bahasa Korea lengkap dengan materi EPS-TOPIK, live session, dan komunitas aktif.',
-    url: process.env.NEXT_PUBLIC_APP_URL || 'https://hakgyo.com',
-    logo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://hakgyo.com'}/logo/hakgyo-dark.png`,
+    url: process.env.NEXT_PUBLIC_APP_URL || 'https://hakgyo.vercel.app',
+    logo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://hakgyo.vercel.app'}/logo/hakgyo-dark.png`,
     sameAs: [
       'https://www.facebook.com/hakgyo',
       'https://www.instagram.com/hakgyo',
@@ -192,7 +192,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <link rel="canonical" href={process.env.NEXT_PUBLIC_APP_URL || 'https://hakgyo.com'} />
+        <link rel="canonical" href={process.env.NEXT_PUBLIC_APP_URL || 'https://hakgyo.vercel.app'} />
         <meta name="theme-color" content="#ffffff" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />

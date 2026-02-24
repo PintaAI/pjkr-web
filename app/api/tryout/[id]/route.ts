@@ -8,11 +8,19 @@ export async function GET(
 ) {
     try {
         const { id } = await params;
+        
+        // Validate id parameter
+        const parsedId = parseInt(id);
+        if (isNaN(parsedId)) {
+            return NextResponse.json({ success: false, error: 'Invalid tryout id' }, { status: 400 });
+        }
+        
         // const session = await auth.api.getSession({ headers: request.headers });
         // Tryout details usually accessible if active or if owned by guru
 
         const tryout = await prisma.tryout.findUnique({
-            where: { id: parseInt(id) },
+           
+            where: { id: parsedId },
             include: {
                 guru: {
                     select: {
@@ -66,6 +74,10 @@ export async function PUT(
         }
 
         const tryoutId = parseInt(id);
+        if (isNaN(tryoutId)) {
+            return NextResponse.json({ success: false, error: 'Invalid tryout id' }, { status: 400 });
+        }
+        
         const existingTryout = await prisma.tryout.findUnique({ where: { id: tryoutId } });
 
         if (!existingTryout) {
@@ -79,9 +91,13 @@ export async function PUT(
         const body = await request.json();
         const {
             nama,
+            description,
             startTime,
             endTime,
             duration,
+            maxAttempts,
+            shuffleQuestions,
+            passingScore,
             isActive,
         } = body;
 
@@ -89,9 +105,13 @@ export async function PUT(
             where: { id: tryoutId },
             data: {
                 nama,
+                description,
                 startTime: startTime ? new Date(startTime) : undefined,
                 endTime: endTime ? new Date(endTime) : undefined,
                 duration: duration ? parseInt(duration) : undefined,
+                maxAttempts: maxAttempts ? parseInt(maxAttempts) : undefined,
+                shuffleQuestions,
+                passingScore: passingScore ? parseInt(passingScore) : undefined,
                 isActive,
             },
         });
@@ -121,6 +141,10 @@ export async function DELETE(
         }
 
         const tryoutId = parseInt(id);
+        if (isNaN(tryoutId)) {
+            return NextResponse.json({ success: false, error: 'Invalid tryout id' }, { status: 400 });
+        }
+        
         const tryout = await prisma.tryout.findUnique({ where: { id: tryoutId } });
 
         if (!tryout) {
