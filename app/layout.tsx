@@ -102,7 +102,7 @@ export const metadata: Metadata = {
     site: "@hakgyo",
   },
   verification: {
-    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    google: "lGljTx7XheFt5-NyHsBqLD7l1VC9DDJqK2h6FzXjVsk",
     yandex: process.env.NEXT_PUBLIC_YANDEX_VERIFICATION,
     // Add other verification codes as needed
   },
