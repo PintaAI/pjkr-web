@@ -6,9 +6,10 @@ import {
   isProtectedRoute,
   isAdminRoute,
   isGuruRoute,
-  DEFAULT_LOGIN_REDIRECT,
-  DEFAULT_AUTH_REDIRECT
+  DEFAULT_AUTH_REDIRECT,
+  getRedirectUrl
 } from "./lib/routes";
+import { auth } from "./lib/auth";
 
 export async function middleware(request: NextRequest) {
   const { nextUrl } = request;
@@ -24,9 +25,22 @@ export async function middleware(request: NextRequest) {
 
   // Handle authentication routes
   if (isAuthRoute(pathname)) {
-    // If user is already logged in, redirect to dashboard
+    // If user is already logged in, redirect based on role
     if (sessionCookie) {
-      return NextResponse.redirect(new URL(DEFAULT_LOGIN_REDIRECT, request.url));
+      try {
+        const session = await auth.api.getSession({
+          headers: request.headers,
+        });
+        if (session?.user) {
+          const userRole = (session.user as Record<string, unknown>).role as string;
+          const redirectUrl = getRedirectUrl(userRole);
+          return NextResponse.redirect(new URL(redirectUrl, request.url));
+        }
+      } catch (error) {
+        // If we can't get the session, just redirect to default
+        console.error("Error getting session in middleware:", error);
+      }
+      return NextResponse.redirect(new URL(getRedirectUrl(), request.url));
     }
     return NextResponse.next();
   }

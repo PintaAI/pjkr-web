@@ -28,8 +28,14 @@ export async function registerPushToken(
   deviceType?: "ios" | "android"
 ) {
   try {
+    console.log("[PUSH NOTIFICATION] Starting registerPushToken");
+    console.log("[PUSH NOTIFICATION] Input data:", { pushToken, deviceId, deviceType });
+
     const session = await assertAuthenticated();
+    console.log("[PUSH NOTIFICATION] Authenticated user:", session.user.id, session.user.email);
+
     const validData = registerPushTokenSchema.parse({ pushToken, deviceId, deviceType });
+    console.log("[PUSH NOTIFICATION] Validated data:", validData);
 
     // Check if token already exists for this user
     const existingToken = await prisma.expoPushToken.findUnique({
@@ -39,7 +45,8 @@ export async function registerPushToken(
     let expoPushToken;
 
     if (existingToken) {
-      // Update existing token if it belongs to the same user
+      console.log("[PUSH NOTIFICATION] Token already exists:", existingToken.id);
+      // Update existing token if it belongs to same user
       if (existingToken.userId === session.user.id) {
         expoPushToken = await prisma.expoPushToken.update({
           where: { id: existingToken.id },
@@ -50,8 +57,10 @@ export async function registerPushToken(
             lastUsedAt: new Date(),
           },
         });
+        console.log("[PUSH NOTIFICATION] Updated existing token");
       } else {
         // Token belongs to another user, create a new one
+        console.log("[PUSH NOTIFICATION] Token belongs to another user, creating new token");
         expoPushToken = await prisma.expoPushToken.create({
           data: {
             pushToken: validData.pushToken,
@@ -65,6 +74,7 @@ export async function registerPushToken(
       }
     } else {
       // Create new token
+      console.log("[PUSH NOTIFICATION] Creating new token");
       expoPushToken = await prisma.expoPushToken.create({
         data: {
           pushToken: validData.pushToken,
@@ -77,9 +87,10 @@ export async function registerPushToken(
       });
     }
 
+    console.log("[PUSH NOTIFICATION] Token registered successfully:", expoPushToken.id);
     return { success: true, data: expoPushToken };
   } catch (error) {
-    console.error("Register push token error:", error);
+    console.error("[PUSH NOTIFICATION] Register push token error:", error);
     return { success: false, error: "Failed to register push token" };
   }
 }
@@ -103,7 +114,7 @@ export async function getUserPushTokens() {
 
     return { success: true, data: pushTokens };
   } catch (error) {
-    console.error("Get user push tokens error:", error);
+    console.error("[PUSH NOTIFICATION] Get user push tokens error:", error);
     return { success: false, error: "Failed to fetch push tokens" };
   }
 }
@@ -113,30 +124,34 @@ export async function getUserPushTokens() {
  */
 export async function deletePushToken(tokenId: string) {
   try {
+    console.log("[PUSH NOTIFICATION] Starting deletePushToken:", tokenId);
     const session = await assertAuthenticated();
 
-    // Check if the token exists and belongs to the user
+    // Check if token exists and belongs to user
     const token = await prisma.expoPushToken.findUnique({
       where: { id: tokenId },
     });
 
     if (!token) {
+      console.log("[PUSH NOTIFICATION] Token not found:", tokenId);
       return { success: false, error: "Push token not found" };
     }
 
     // Only allow users to delete their own tokens
     if (token.userId !== session.user.id) {
+      console.log("[PUSH NOTIFICATION] Forbidden: token belongs to another user");
       return { success: false, error: "Forbidden" };
     }
 
-    // Delete the token
+    // Delete token
     await prisma.expoPushToken.delete({
       where: { id: tokenId },
     });
 
+    console.log("[PUSH NOTIFICATION] Token deleted successfully:", tokenId);
     return { success: true };
   } catch (error) {
-    console.error("Delete push token error:", error);
+    console.error("[PUSH NOTIFICATION] Delete push token error:", error);
     return { success: false, error: "Failed to delete push token" };
   }
 }
@@ -151,12 +166,17 @@ export async function sendPushNotification(
   data?: any
 ) {
   try {
+    console.log("[PUSH NOTIFICATION] Starting sendPushNotification");
+    console.log("[PUSH NOTIFICATION] Input data:", { userId, title, body, data });
+
     // Check if user has GURU or ADMIN role
-    await assertRole("GURU");
+    const session = await assertRole("GURU");
+    console.log("[PUSH NOTIFICATION] Authenticated sender:", session.user.id, session.user.email);
 
     const validData = sendPushNotificationSchema.parse({ userId, title, body, data });
+    console.log("[PUSH NOTIFICATION] Validated data:", validData);
 
-    // Get all active push tokens for the target user
+    // Get all active push tokens for target user
     const pushTokens = await prisma.expoPushToken.findMany({
       where: {
         userId: validData.userId,
@@ -164,7 +184,14 @@ export async function sendPushNotification(
       },
     });
 
+    console.log("[PUSH NOTIFICATION] Found push tokens:", {
+      userId: validData.userId,
+      count: pushTokens.length,
+      tokens: pushTokens.map(t => ({ id: t.id, pushToken: t.pushToken.substring(0, 20) + "...", deviceType: t.deviceType }))
+    });
+
     if (pushTokens.length === 0) {
+      console.log("[PUSH NOTIFICATION] No active push tokens found for user:", validData.userId);
       return {
         success: true,
         sentCount: 0,
@@ -175,6 +202,7 @@ export async function sendPushNotification(
 
     // Create a new Expo SDK client
     const expo = new Expo();
+    console.log("[PUSH NOTIFICATION] Expo SDK client created");
 
     // Create push messages
     const messages: ExpoPushMessage[] = pushTokens.map((token) => ({
@@ -185,20 +213,37 @@ export async function sendPushNotification(
       data: validData.data || {},
     }));
 
+    console.log("[PUSH NOTIFICATION] Created messages:", {
+      count: messages.length,
+      messages: messages.map(m => ({
+        to: typeof m.to === 'string' ? m.to.substring(0, 20) + "..." : Array.isArray(m.to) ? `[${m.to.length} tokens]` : 'unknown',
+        title: m.title,
+        body: m.body
+      }))
+    });
+
     // Send notifications in chunks
     const chunks = expo.chunkPushNotifications(messages);
+    console.log("[PUSH NOTIFICATION] Chunks created:", chunks.length);
+
     const tickets: any[] = [];
     const errors: string[] = [];
 
-    for (const chunk of chunks) {
+    for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+      const chunk = chunks[chunkIndex];
+      console.log(`[PUSH NOTIFICATION] Sending chunk ${chunkIndex + 1}/${chunks.length} with ${chunk.length} messages`);
+      
       try {
         const ticketChunk = await expo.sendPushNotificationsAsync(chunk);
+        console.log(`[PUSH NOTIFICATION] Chunk ${chunkIndex + 1} response:`, ticketChunk);
         tickets.push(...ticketChunk);
       } catch (error) {
-        console.error("Error sending push notification chunk:", error);
+        console.error(`[PUSH NOTIFICATION] Error sending chunk ${chunkIndex + 1}:`, error);
         errors.push("Failed to send notification chunk");
       }
     }
+
+    console.log("[PUSH NOTIFICATION] Total tickets received:", tickets.length);
 
     // Check for invalid tokens and mark them as inactive
     let sentCount = 0;
@@ -208,17 +253,27 @@ export async function sendPushNotification(
       const ticket = tickets[i];
       const token = pushTokens[i];
 
+      console.log(`[PUSH NOTIFICATION] Processing ticket ${i + 1}/${tickets.length}:`, {
+        status: ticket.status,
+        token: token.pushToken.substring(0, 20) + "...",
+        message: ticket.message,
+        details: ticket.details
+      });
+
       if (ticket.status === "error") {
         failedCount++;
-        errors.push(`Error for token ${token.pushToken}: ${ticket.message}`);
+        const errorMsg = `Error for token ${token.pushToken.substring(0, 20)}...: ${ticket.message}`;
+        errors.push(errorMsg);
+        console.error("[PUSH NOTIFICATION]", errorMsg, ticket.details);
 
-        // If the token is invalid, mark it as inactive
+        // If token is invalid, mark it as inactive
         if (
           ticket.details?.error === "DeviceNotRegistered" ||
           ticket.details?.error === "InvalidCredentials" ||
           ticket.details?.error === "MessageTooBig" ||
           ticket.details?.error === "MessageRateExceeded"
         ) {
+          console.log("[PUSH NOTIFICATION] Marking token as inactive:", token.id);
           await prisma.expoPushToken.update({
             where: { id: token.id },
             data: { isActive: false },
@@ -226,17 +281,21 @@ export async function sendPushNotification(
         }
       } else {
         sentCount++;
+        console.log(`[PUSH NOTIFICATION] Successfully sent to token ${i + 1}`);
       }
     }
 
-    return {
+    const result = {
       success: true,
       sentCount,
       failedCount,
       errors: errors.length > 0 ? errors : undefined,
     };
+
+    console.log("[PUSH NOTIFICATION] Final result:", result);
+    return result;
   } catch (error) {
-    console.error("Send push notification error:", error);
+    console.error("[PUSH NOTIFICATION] Send push notification error:", error);
     return { success: false, error: "Failed to send push notification" };
   }
 }

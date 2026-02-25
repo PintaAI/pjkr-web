@@ -4,8 +4,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Users, Clock, ClipboardList, Power, PowerOff } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Trash2, Users, Clock, ClipboardList, Calendar } from "lucide-react";
 import { useState } from "react";
+import { formatRelativeTime } from "@/lib/utils";
 
 export interface Tryout {
   id: number;
@@ -102,15 +104,24 @@ export function TryoutCard({ tryout, onClick, onDelete, onToggleActive, compact 
 
           {/* badges */}
           <div className="absolute top-2 left-2 flex gap-2 flex-wrap">
-            {tryout.isActive ? (
-              <Badge variant="default" className="h-6 px-2 text-[10px] bg-green-600 hover:bg-green-700">
-                Aktif
-              </Badge>
-            ) : (
-              <Badge variant="secondary" className="h-6 px-2 text-[10px]">
-                Tidak Aktif
-              </Badge>
-            )}
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onToggleActive && !isExpired) {
+                  onToggleActive(tryout.id);
+                }
+              }}
+              className={`flex items-center gap-2 px-2 py-1 rounded-md text-[10px] font-medium cursor-pointer transition-colors ${isExpired ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <Switch
+                checked={tryout.isActive}
+                disabled={isExpired || !onToggleActive}
+                className={isExpired ? 'opacity-50' : ''}
+              />
+              <span className="text-white/90">
+                {tryout.isActive ? 'Aktif' : 'Tidak Aktif'}
+              </span>
+            </div>
             {isUpcoming && (
               <Badge variant="outline" className="h-6 px-2 text-[10px]">
                 Akan Datang
@@ -122,23 +133,6 @@ export function TryoutCard({ tryout, onClick, onDelete, onToggleActive, compact 
               </Badge>
             )}
           </div>
-
-          {/* Toggle active button - top right, hover only */}
-          {onToggleActive && !isExpired && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleActive(tryout.id);
-              }}
-              className="absolute top-2 right-12 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-background/80 hover:bg-background/90 backdrop-blur-sm border"
-              title={tryout.isActive ? "Nonaktifkan" : "Aktifkan"}
-            >
-              {tryout.isActive ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
-            </Button>
-          )}
 
           {/* Delete button - top right, hover only */}
           {onDelete && (
@@ -167,7 +161,10 @@ export function TryoutCard({ tryout, onClick, onDelete, onToggleActive, compact 
                 <Clock className="h-4 w-4" />
                 {tryout.duration} menit
               </span>
-              <span>{new Date(tryout.createdAt).toLocaleDateString()}</span>
+              <span className="inline-flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
+                {formatDate(tryout.startTime)} - {formatDate(tryout.endTime)}
+              </span>
             </div>
           </div>
         </div>
@@ -179,21 +176,16 @@ export function TryoutCard({ tryout, onClick, onDelete, onToggleActive, compact 
             {tryout.nama}
           </h3>
         </div>
-        <p className="mt-1 text-xs sm:text-sm text-muted-foreground/80 dark:text-muted-foreground line-clamp-2">
-          {tryout.description || "Tidak ada deskripsi tersedia"}
-        </p>
-        <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span>{formatRelativeTime(tryout.createdAt)}</span>
           <span className="inline-flex items-center gap-1">
             <ClipboardList className="h-3 w-3" />
             {tryout.koleksiSoal.nama}
           </span>
         </div>
-        <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-          <span>Mulai: {formatDate(tryout.startTime)}</span>
-        </div>
-        <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-          <span>Selesai: {formatDate(tryout.endTime)}</span>
-        </div>
+        <p className="mt-1 text-xs sm:text-sm text-muted-foreground/80 dark:text-muted-foreground line-clamp-2">
+          {tryout.description || "Tidak ada deskripsi tersedia"}
+        </p>
       </CardContent>
 
       {onDelete && (

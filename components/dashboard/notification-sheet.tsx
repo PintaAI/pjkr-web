@@ -71,6 +71,9 @@ export function NotificationSheet({ isOpen, onOpenChange, onSuccess, onCancel }:
     e.preventDefault();
     setIsSubmitting(true);
 
+    console.log("[NOTIFICATION SHEET] Starting notification submission");
+    console.log("[NOTIFICATION SHEET] Form data:", { userId, title, body, data, selectedUser });
+
     try {
       // Validate form
       const validatedData = notificationSchema.parse({
@@ -80,17 +83,28 @@ export function NotificationSheet({ isOpen, onOpenChange, onSuccess, onCancel }:
         data: data || undefined,
       });
 
+      console.log("[NOTIFICATION SHEET] Validated data:", validatedData);
+
       // Parse data as JSON if provided
       let parsedData;
       if (validatedData.data) {
         try {
           parsedData = JSON.parse(validatedData.data);
+          console.log("[NOTIFICATION SHEET] Parsed JSON data:", parsedData);
         } catch {
+          console.error("[NOTIFICATION SHEET] Invalid JSON data");
           toast.error("Data harus berupa JSON yang valid");
           setIsSubmitting(false);
           return;
         }
       }
+
+      console.log("[NOTIFICATION SHEET] Calling sendPushNotification with:", {
+        userId: validatedData.userId,
+        title: validatedData.title,
+        body: validatedData.body,
+        data: parsedData
+      });
 
       const result = await sendPushNotification(
         validatedData.userId,
@@ -99,12 +113,16 @@ export function NotificationSheet({ isOpen, onOpenChange, onSuccess, onCancel }:
         parsedData
       );
 
+      console.log("[NOTIFICATION SHEET] Result from server:", result);
+
       if (result.success) {
+        const successResult = result as { success: true; sentCount: number; failedCount: number; errors?: string[] };
         toast.success(
-          `Notifikasi berhasil dikirim! (${result.sentCount} perangkat)`
+          `Notifikasi berhasil dikirim! (${successResult.sentCount} perangkat)`
         );
-        if (result.errors && result.errors.length > 0) {
-          result.errors.forEach((error) => toast.warning(error));
+        if (successResult.errors && successResult.errors.length > 0) {
+          console.log("[NOTIFICATION SHEET] Errors:", successResult.errors);
+          successResult.errors.forEach((error: string) => toast.warning(error));
         }
         // Reset form
         setUserId("");
@@ -115,10 +133,14 @@ export function NotificationSheet({ isOpen, onOpenChange, onSuccess, onCancel }:
         setSelectedUser(null);
         onSuccess();
       } else {
-        toast.error(result.error || "Gagal mengirim notifikasi");
+        const errorResult = result as { success: false; error: string };
+        console.error("[NOTIFICATION SHEET] Server returned error:", errorResult.error);
+        toast.error(errorResult.error || "Gagal mengirim notifikasi");
       }
     } catch (error) {
+      console.error("[NOTIFICATION SHEET] Error during submission:", error);
       if (error instanceof z.ZodError) {
+        console.error("[NOTIFICATION SHEET] Zod validation errors:", error.issues);
         toast.error(error.issues[0].message);
       } else {
         toast.error("Terjadi kesalahan saat mengirim notifikasi");
