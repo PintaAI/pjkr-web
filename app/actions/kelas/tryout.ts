@@ -14,6 +14,7 @@ const tryoutSchema = z.object({
   shuffleQuestions: z.boolean().default(false),
   passingScore: z.number().int().min(0).max(100).default(60),
   koleksiSoalId: z.number().int().positive(),
+  kelasId: z.number().int().positive().optional(),
   isActive: z.boolean().default(false),
 });
 
@@ -34,6 +35,22 @@ export async function saveTryout(tryoutData: z.infer<typeof tryoutSchema>, tryou
 
     if (koleksi.userId !== session.user.id) {
       return { success: false, error: 'Not authorized to use this question collection' };
+    }
+
+    // If kelasId is provided, verify user is the author
+    if (valid.kelasId) {
+      const kelas = await prisma.kelas.findUnique({
+        where: { id: valid.kelasId },
+        select: { authorId: true }
+      });
+
+      if (!kelas) {
+        return { success: false, error: 'Kelas not found' };
+      }
+
+      if (kelas.authorId !== session.user.id) {
+        return { success: false, error: 'Not authorized to link to this kelas' };
+      }
     }
 
     let tryout;
@@ -64,6 +81,7 @@ export async function saveTryout(tryoutData: z.infer<typeof tryoutSchema>, tryou
           shuffleQuestions: valid.shuffleQuestions,
           passingScore: valid.passingScore,
           koleksiSoalId: valid.koleksiSoalId,
+          kelasId: valid.kelasId,
           isActive: valid.isActive,
         },
       });
@@ -80,6 +98,7 @@ export async function saveTryout(tryoutData: z.infer<typeof tryoutSchema>, tryou
           shuffleQuestions: valid.shuffleQuestions,
           passingScore: valid.passingScore,
           koleksiSoalId: valid.koleksiSoalId,
+          kelasId: valid.kelasId,
           isActive: valid.isActive,
           guruId: session.user.id,
         },
@@ -90,6 +109,12 @@ export async function saveTryout(tryoutData: z.infer<typeof tryoutSchema>, tryou
     const finalTryout = await prisma.tryout.findUnique({
       where: { id: tryout.id },
       include: {
+        kelas: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
         koleksiSoal: {
           select: {
             id: true,
@@ -266,5 +291,100 @@ export async function getGuruSoalSetsForTryout() {
   } catch (error) {
     console.error("Get guru soal sets for tryout error:", error);
     return { success: false, error: "Failed to get soal sets" };
+  }
+}
+
+export async function getGuruKelas() {
+  try {
+    const session = await assertAuthenticated();
+
+    // This function is GURU-only
+    if (session.user.role !== "GURU") {
+      return { success: false, error: "Not authorized" };
+    }
+
+    const userId = session.user.id;
+
+    // Get kelas authored by the guru
+    const kelasList = await prisma.kelas.findMany({
+      where: {
+        authorId: userId,
+      },
+      select: {
+        id: true,
+        title: true,
+        type: true,
+        level: true,
+        _count: {
+          select: {
+            members: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return { success: true, data: kelasList };
+  } catch (error) {
+    console.error("Get guru kelas error:", error);
+    return { success: false, error: "Failed to get kelas" };
+  }
+}
+
+export async function getTryoutsByKelas(kelasId: number) {
+  try {
+    const session = await assertAuthenticated();
+
+    // Verify user is a member of the kelas or is the author
+    const kelas = await prisma.kelas.findUnique({
+      where: { id: kelasId },
+      select: {
+        authorId: true,
+        members: {
+          where: { id: session.user.id },
+          select: { id: true }
+        }
+      }
+    });
+
+    if (!kelas) {
+      return { success: false, error: "Kelas not found" };
+    }
+
+    if (kelas.authorId !== session.user.id && kelas.members.length === 0) {
+      return { success: false, error: "Not authorized" };
+    }
+
+    // Get tryouts for this kelas
+    const tryouts = await prisma.tryout.findMany({
+      where: {
+        kelasId: kelasId,
+      },
+      include: {
+        koleksiSoal: {
+          select: {
+            id: true,
+            nama: true,
+          },
+        },
+        guru: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        _count: {
+          select: {
+            participants: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return { success: true, data: tryouts };
+  } catch (error) {
+    console.error("Get tryouts by kelas error:", error);
+    return { success: false, error: "Failed to get tryouts" };
   }
 }

@@ -10,12 +10,14 @@ export async function GET(request: NextRequest) {
         const searchParams = request.nextUrl.searchParams;
         const guruId = searchParams.get('guruId');
         const koleksiSoalId = searchParams.get('koleksiSoalId');
+        const kelasId = searchParams.get('kelasId');
         const isActive = searchParams.get('isActive');
         const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined;
 
         const where: any = {};
         if (guruId) where.guruId = guruId;
         if (koleksiSoalId) where.koleksiSoalId = parseInt(koleksiSoalId);
+        if (kelasId) where.kelasId = parseInt(kelasId);
         if (isActive !== null) where.isActive = isActive === 'true';
 
         // List tryouts
@@ -27,6 +29,12 @@ export async function GET(request: NextRequest) {
                         id: true,
                         name: true,
                         image: true,
+                    },
+                },
+                kelas: {
+                    select: {
+                        id: true,
+                        title: true,
                     },
                 },
                 koleksiSoal: {
@@ -76,6 +84,7 @@ export async function POST(request: NextRequest) {
             shuffleQuestions,
             passingScore,
             koleksiSoalId,
+            kelasId,
             isActive = false,
         } = body;
 
@@ -101,6 +110,24 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
         }
 
+        // If kelasId is provided, verify user is the author of the kelas
+        if (kelasId) {
+            const kelas = await prisma.kelas.findUnique({
+                where: { id: parseInt(kelasId) }
+            });
+
+            if (!kelas) {
+                return NextResponse.json({ success: false, error: 'Kelas not found' }, { status: 404 });
+            }
+
+            if (kelas.authorId !== session.user.id) {
+                return NextResponse.json({
+                    success: false,
+                    error: 'You must be the author of this kelas to link it'
+                }, { status: 403 });
+            }
+        }
+
         const tryout = await prisma.tryout.create({
             data: {
                 nama,
@@ -114,6 +141,7 @@ export async function POST(request: NextRequest) {
                 koleksiSoalId: parseInt(koleksiSoalId),
                 isActive,
                 guruId: session.user.id,
+                kelasId: kelasId ? parseInt(kelasId) : null,
             },
         });
 

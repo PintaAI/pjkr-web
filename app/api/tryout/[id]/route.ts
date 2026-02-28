@@ -29,6 +29,12 @@ export async function GET(
                         image: true,
                     },
                 },
+                kelas: {
+                    select: {
+                        id: true,
+                        title: true,
+                    },
+                },
                 koleksiSoal: {
                     include: {
                         soals: {
@@ -98,27 +104,49 @@ export async function PUT(
             maxAttempts,
             shuffleQuestions,
             passingScore,
+            koleksiSoalId,
+            kelasId,
             isActive,
         } = body;
 
-        const updatedTryout = await prisma.tryout.update({
+        // If kelasId is provided, verify user is the author
+        if (kelasId !== undefined && kelasId !== null) {
+            const kelas = await prisma.kelas.findUnique({
+                where: { id: parseInt(kelasId) }
+            });
+
+            if (!kelas) {
+                return NextResponse.json({ success: false, error: 'Kelas not found' }, { status: 404 });
+            }
+
+            if (kelas.authorId !== session.user.id) {
+                return NextResponse.json({
+                    success: false,
+                    error: 'You must be the author of this kelas to link it'
+                }, { status: 403 });
+            }
+        }
+
+        const tryout = await prisma.tryout.update({
             where: { id: tryoutId },
             data: {
-                nama,
-                description,
-                startTime: startTime ? new Date(startTime) : undefined,
-                endTime: endTime ? new Date(endTime) : undefined,
-                duration: duration ? parseInt(duration) : undefined,
-                maxAttempts: maxAttempts ? parseInt(maxAttempts) : undefined,
-                shuffleQuestions,
-                passingScore: passingScore ? parseInt(passingScore) : undefined,
-                isActive,
+                ...(nama !== undefined && { nama }),
+                ...(description !== undefined && { description }),
+                ...(startTime !== undefined && { startTime: new Date(startTime) }),
+                ...(endTime !== undefined && { endTime: new Date(endTime) }),
+                ...(duration !== undefined && { duration: parseInt(duration) }),
+                ...(maxAttempts !== undefined && { maxAttempts: parseInt(maxAttempts) }),
+                ...(shuffleQuestions !== undefined && { shuffleQuestions }),
+                ...(passingScore !== undefined && { passingScore: parseInt(passingScore) }),
+                ...(koleksiSoalId !== undefined && { koleksiSoalId: parseInt(koleksiSoalId) }),
+                ...(kelasId !== undefined && { kelasId: kelasId ? parseInt(kelasId) : null }),
+                ...(isActive !== undefined && { isActive }),
             },
         });
 
         return NextResponse.json({
             success: true,
-            data: updatedTryout,
+            data: tryout,
         });
     } catch (error) {
         console.error('Error updating tryout:', error);

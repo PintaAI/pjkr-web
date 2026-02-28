@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getGuruTryouts, deleteTryout, toggleTryoutActive } from "@/app/actions/kelas/tryout";
+import { getGuruTryouts, deleteTryout, toggleTryoutActive, getGuruKelas } from "@/app/actions/kelas/tryout";
 import { Tryout, TryoutCard } from "./tryout-card";
 import { TryoutSheet } from "./tryout-sheet";
 import { ManageLayout } from "./manage-layout";
@@ -19,6 +19,9 @@ export function ManageTryout({ tryouts: initialTryouts }: ManageTryoutProps) {
   const [editingTryout, setEditingTryout] = useState<Tryout | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"ALL" | "ACTIVE" | "INACTIVE" | "UPCOMING" | "EXPIRED">("ALL");
+  const [selectedKelas, setSelectedKelas] = useState<number | null>(null);
+  const [kelasList, setKelasList] = useState<{ id: number; title: string }[]>([]);
+  const [loadingKelas, setLoadingKelas] = useState(false);
 
   const fetchTryouts = async () => {
     try {
@@ -35,12 +38,28 @@ export function ManageTryout({ tryouts: initialTryouts }: ManageTryoutProps) {
     }
   };
 
+  const fetchKelas = async () => {
+    setLoadingKelas(true);
+    try {
+      const result = await getGuruKelas();
+      if (result.success && result.data) {
+        setKelasList(result.data.map((k) => ({ id: k.id, title: k.title })));
+      }
+    } catch (error) {
+      console.error("Failed to fetch kelas:", error);
+    } finally {
+      setLoadingKelas(false);
+    }
+  };
+
   useEffect(() => {
     if (!initialTryouts || initialTryouts.length === 0) {
       fetchTryouts();
+      fetchKelas();
     } else {
       setTryouts(initialTryouts);
       setLoading(false);
+      fetchKelas();
     }
   }, [initialTryouts]);
 
@@ -70,7 +89,9 @@ export function ManageTryout({ tryouts: initialTryouts }: ManageTryoutProps) {
         matchesStatus = true;
     }
     
-    return matchesSearch && matchesStatus;
+    const matchesKelas = selectedKelas === null || tryout.kelasId === selectedKelas;
+    
+    return matchesSearch && matchesStatus && matchesKelas;
   });
 
   const handleCreateTryout = () => {
@@ -143,6 +164,17 @@ export function ManageTryout({ tryouts: initialTryouts }: ManageTryoutProps) {
             { value: "EXPIRED", label: "Selesai" },
           ],
           onChange: (value: string) => setFilterStatus(value as "ALL" | "ACTIVE" | "INACTIVE" | "UPCOMING" | "EXPIRED"),
+        },
+        {
+          key: "kelas",
+          type: "select",
+          label: "Kelas",
+          value: selectedKelas?.toString() || "ALL",
+          options: [
+            { value: "ALL", label: "Semua Kelas" },
+            ...kelasList.map((k) => ({ value: k.id.toString(), label: k.title })),
+          ],
+          onChange: (value: string) => setSelectedKelas(value === "ALL" ? null : parseInt(value)),
         },
       ]}
       loading={loading}

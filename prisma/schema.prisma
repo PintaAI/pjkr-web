@@ -246,6 +246,7 @@ model Kelas {
   completions       UserKelasCompletion[] // Track individual user completions
   posts             Post[]                @relation("KelasPosts") // Class discussion posts
   kelasKoleksiSoals KelasKoleksiSoal[] // Many-to-many relation with question collections
+  tryouts           Tryout[]              @relation("KelasTryouts")
 }
 
 model Materi {
@@ -588,16 +589,19 @@ model Tryout {
   koleksiSoalId Int
   isActive      Boolean             @default(false)
   guruId        String
+  kelasId       Int?
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
   koleksiSoal   KoleksiSoal         @relation(fields: [koleksiSoalId], references: [id], onDelete: Cascade)
   guru          User                @relation("TryoutGuru", fields: [guruId], references: [id], onDelete: Cascade)
+  kelas         Kelas?              @relation("KelasTryouts", fields: [kelasId], references: [id], onDelete: SetNull)
   participants  TryoutParticipant[]
 
   @@index([koleksiSoalId])
   @@index([isActive])
   @@index([startTime])
   @@index([guruId])
+  @@index([kelasId])
 }
 
 model TryoutParticipant {

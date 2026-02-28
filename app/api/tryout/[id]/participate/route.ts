@@ -18,9 +18,12 @@ export async function POST(
             return NextResponse.json({ success: false, error: 'Invalid tryout id' }, { status: 400 });
         }
 
-        // Fetch tryout to validate
+        // Fetch tryout with kelas info
         const tryout = await prisma.tryout.findUnique({
             where: { id: tryoutId },
+            include: {
+                kelas: true
+            }
         });
 
         if (!tryout) {
@@ -40,6 +43,25 @@ export async function POST(
 
         if (now > tryout.endTime) {
             return NextResponse.json({ success: false, error: 'Tryout has ended' }, { status: 400 });
+        }
+
+        // If tryout is linked to a kelas, verify user is a member
+        if (tryout.kelasId) {
+            const isMember = await prisma.kelas.findUnique({
+                where: {
+                    id: tryout.kelasId,
+                    members: {
+                        some: { id: session.user.id }
+                    }
+                }
+            });
+
+            if (!isMember) {
+                return NextResponse.json({
+                    success: false,
+                    error: 'You must be a member of this kelas to participate in this tryout'
+                }, { status: 403 });
+            }
         }
 
         // Check if user already participated

@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
-import { saveTryout, getGuruSoalSetsForTryout } from "@/app/actions/kelas/tryout";
+import { saveTryout, getGuruSoalSetsForTryout, getGuruKelas } from "@/app/actions/kelas/tryout";
 import { Tryout } from "./tryout-card";
 import { Loader2, Save, X } from "lucide-react";
 import { toast } from "sonner";
@@ -19,6 +19,16 @@ interface SoalSetOption {
   nama: string;
   _count: {
     soals: number;
+  };
+}
+
+interface KelasOption {
+  id: number;
+  title: string;
+  type: string;
+  level: string;
+  _count: {
+    members: number;
   };
 }
 
@@ -34,6 +44,8 @@ export function TryoutSheet({ isOpen, onOpenChange, tryout, onSuccess, onCancel 
   const [saving, setSaving] = useState(false);
   const [soalSets, setSoalSets] = useState<SoalSetOption[]>([]);
   const [loadingSoalSets, setLoadingSoalSets] = useState(false);
+  const [kelasList, setKelasList] = useState<KelasOption[]>([]);
+  const [loadingKelas, setLoadingKelas] = useState(false);
   const [formData, setFormData] = useState({
     nama: "",
     description: "",
@@ -44,12 +56,14 @@ export function TryoutSheet({ isOpen, onOpenChange, tryout, onSuccess, onCancel 
     shuffleQuestions: false,
     passingScore: 60,
     koleksiSoalId: "",
+    kelasId: "",
     isActive: false,
   });
 
   useEffect(() => {
     if (isOpen) {
       fetchSoalSets();
+      fetchKelas();
     }
   }, [isOpen]);
 
@@ -65,6 +79,7 @@ export function TryoutSheet({ isOpen, onOpenChange, tryout, onSuccess, onCancel 
         shuffleQuestions: tryout.shuffleQuestions,
         passingScore: tryout.passingScore,
         koleksiSoalId: tryout.koleksiSoalId.toString(),
+        kelasId: tryout.kelasId?.toString() || "",
         isActive: tryout.isActive,
       });
     } else {
@@ -78,6 +93,7 @@ export function TryoutSheet({ isOpen, onOpenChange, tryout, onSuccess, onCancel 
         shuffleQuestions: false,
         passingScore: 60,
         koleksiSoalId: "",
+        kelasId: "",
         isActive: false,
       });
     }
@@ -97,6 +113,20 @@ export function TryoutSheet({ isOpen, onOpenChange, tryout, onSuccess, onCancel 
     }
   };
 
+  const fetchKelas = async () => {
+    setLoadingKelas(true);
+    try {
+      const result = await getGuruKelas();
+      if (result.success && result.data) {
+        setKelasList(result.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch kelas:", error);
+    } finally {
+      setLoadingKelas(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -113,6 +143,7 @@ export function TryoutSheet({ isOpen, onOpenChange, tryout, onSuccess, onCancel 
           shuffleQuestions: formData.shuffleQuestions,
           passingScore: formData.passingScore,
           koleksiSoalId: parseInt(formData.koleksiSoalId),
+          kelasId: formData.kelasId ? parseInt(formData.kelasId) : undefined,
           isActive: formData.isActive,
         },
         tryout?.id
@@ -190,6 +221,26 @@ export function TryoutSheet({ isOpen, onOpenChange, tryout, onSuccess, onCancel 
                   {soalSets.map((soalSet) => (
                     <SelectItem key={soalSet.id} value={soalSet.id.toString()}>
                       {soalSet.nama} ({soalSet._count.soals} soal)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="kelasId">Kelas (Opsional)</Label>
+              <Select
+                value={formData.kelasId}
+                onValueChange={(value) => setFormData({ ...formData, kelasId: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Global (semua user)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Global (semua user)</SelectItem>
+                  {kelasList.map((kelas) => (
+                    <SelectItem key={kelas.id} value={kelas.id.toString()}>
+                      {kelas.title} ({kelas._count.members} member)
                     </SelectItem>
                   ))}
                 </SelectContent>

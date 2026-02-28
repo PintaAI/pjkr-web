@@ -20,6 +20,7 @@ export interface Tryout {
   shuffleQuestions: boolean;
   passingScore: number;
   koleksiSoalId: number;
+  kelasId: number | null;
   isActive: boolean;
   guruId: string;
   createdAt: Date;
@@ -27,6 +28,10 @@ export interface Tryout {
   koleksiSoal: {
     id: number;
     nama: string;
+  };
+  kelas?: {
+    id: number;
+    title: string;
   };
   guru: {
     id: string;
@@ -104,6 +109,11 @@ export function TryoutCard({ tryout, onClick, onDelete, onToggleActive, compact 
 
           {/* badges */}
           <div className="absolute top-2 left-2 flex gap-2 flex-wrap">
+            {tryout.kelas && (
+              <Badge variant="secondary" className="h-6 px-2 text-[10px]">
+                {tryout.kelas.title}
+              </Badge>
+            )}
             <div
               onClick={(e) => {
                 e.stopPropagation();
