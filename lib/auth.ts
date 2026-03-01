@@ -51,8 +51,7 @@ export const auth = betterAuth({
   trustedOrigins: [
     "http://localhost:3000",
     "http://10.0.2.2:3000",
-    "http://192.168.0.106:3000",
-    "http://192.168.0.102:3000",
+    "http://192.168.0.101:3000",
     "https://hakgyo.vercel.app",
     "kli://",
     "kli://*",

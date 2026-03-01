@@ -39,6 +39,8 @@ The vocabulary system now uses a `VocabularyItemProgress` model to track learned
 | `/api/vocabulary-sets` | GET | List vocabulary sets with optional filters |
 | `/api/vocabulary-sets` | POST | Create a new vocabulary set |
 | `/api/vocabulary-sets/{id}` | GET | Get a specific vocabulary set |
+| `/api/vocabulary-sets/{id}` | PUT | Update a vocabulary set |
+| `/api/vocabulary-sets/{id}` | DELETE | Delete a vocabulary set |
 
 ### Vocabulary Items
 
@@ -79,6 +81,17 @@ const newSet = await vocabularyApi.createSet({
   userId: 'user-id',
   kelasId: 123
 });
+
+// Update a vocabulary set
+const updatedSet = await vocabularyApi.updateSet(123, {
+  title: 'Updated Title',
+  description: 'Updated description',
+  icon: 'FaBookOpen',
+  isPublic: true
+});
+
+// Delete a vocabulary set
+await vocabularyApi.deleteSet(123);
 ```
 
 ### Vocabulary Items API
@@ -155,6 +168,27 @@ interface VocabularySet {
   updatedAt: string;
   itemCount?: number;      // Total number of items in the set
   learnedCount?: number;   // Number of items learned by current user
+  
+  // Optional: included when fetching single set with relations
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    image?: string;
+  };
+  kelas?: {
+    id: number;
+    title: string;
+    type: 'REGULAR' | 'EVENT' | 'GROUP' | 'PRIVATE' | 'FUN';
+    level: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+    thumbnail?: string;
+    isDraft?: boolean;
+    author?: {
+      id: string;
+      name: string;
+      image?: string;
+    };
+  };
 }
 ```
 

@@ -21,7 +21,6 @@ export function ManageTryout({ tryouts: initialTryouts }: ManageTryoutProps) {
   const [filterStatus, setFilterStatus] = useState<"ALL" | "ACTIVE" | "INACTIVE" | "UPCOMING" | "EXPIRED">("ALL");
   const [selectedKelas, setSelectedKelas] = useState<number | null>(null);
   const [kelasList, setKelasList] = useState<{ id: number; title: string }[]>([]);
-  const [loadingKelas, setLoadingKelas] = useState(false);
 
   const fetchTryouts = async () => {
     try {
@@ -39,7 +38,6 @@ export function ManageTryout({ tryouts: initialTryouts }: ManageTryoutProps) {
   };
 
   const fetchKelas = async () => {
-    setLoadingKelas(true);
     try {
       const result = await getGuruKelas();
       if (result.success && result.data) {
@@ -47,8 +45,6 @@ export function ManageTryout({ tryouts: initialTryouts }: ManageTryoutProps) {
       }
     } catch (error) {
       console.error("Failed to fetch kelas:", error);
-    } finally {
-      setLoadingKelas(false);
     }
   };
 

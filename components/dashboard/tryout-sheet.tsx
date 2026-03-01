@@ -45,7 +45,6 @@ export function TryoutSheet({ isOpen, onOpenChange, tryout, onSuccess, onCancel 
   const [soalSets, setSoalSets] = useState<SoalSetOption[]>([]);
   const [loadingSoalSets, setLoadingSoalSets] = useState(false);
   const [kelasList, setKelasList] = useState<KelasOption[]>([]);
-  const [loadingKelas, setLoadingKelas] = useState(false);
   const [formData, setFormData] = useState({
     nama: "",
     description: "",
@@ -114,7 +113,6 @@ export function TryoutSheet({ isOpen, onOpenChange, tryout, onSuccess, onCancel 
   };
 
   const fetchKelas = async () => {
-    setLoadingKelas(true);
     try {
       const result = await getGuruKelas();
       if (result.success && result.data) {
@@ -122,8 +120,6 @@ export function TryoutSheet({ isOpen, onOpenChange, tryout, onSuccess, onCancel 
       }
     } catch (error) {
       console.error("Failed to fetch kelas:", error);
-    } finally {
-      setLoadingKelas(false);
     }
   };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -107,8 +107,8 @@ export function SoalSetForm({ soalSet, kelasId, onAutoSaveStatusChange, onBefore
     onAutoSaveStatusChange?.(autoSaveStatus);
   }, [autoSaveStatus, onAutoSaveStatusChange]);
 
-   // Auto-save function that saves form data (without triggering onSuccess)
-   const performAutoSave = async () => {
+
+     const performAutoSave = useCallback(async () => {
      if (saving || manualSavingRef.current) {
        return;
      }
@@ -153,10 +153,17 @@ export function SoalSetForm({ soalSet, kelasId, onAutoSaveStatusChange, onBefore
          setSoals(lastSavedDataRef.current.soals);
        }
      }
-   };
+   }, [saving, formData, soals, autoSaveStatus]);
+
+   // Initialize debounced auto-save with longer delay to see spinner
+   const { debouncedSave, cancelAutoSave } = useDebouncedAutoSave({
+     delay: 1500, // 1.5 second delay
+     onSave: performAutoSave,
+     enabled: !loading && formData.nama.trim().length > 0, // Only enable if form has a name
+   });
 
    // Function to check if there are unsaved changes
-    const hasUnsavedChanges = (): boolean => {
+    const hasUnsavedChanges = useCallback((): boolean => {
       // For new soal sets (no soalSet prop): Check if there's meaningful content beyond initial state
       if (!soalSet) {
         const hasMeaningfulName = formData.nama.trim().length > 0;
@@ -170,10 +177,10 @@ export function SoalSetForm({ soalSet, kelasId, onAutoSaveStatusChange, onBefore
       // For existing soal sets: Use the store's hasDataChanged function which compares
       // current data with original data from the store
       return hasDataChanged();
-    };
+   }, [soalSet, formData, soals, hasDataChanged]);
 
    // Function to save before closing - returns a promise that resolves when save completes
-   const saveBeforeClose = async (): Promise<boolean> => {
+   const saveBeforeClose = useCallback(async (): Promise<boolean> => {
      if (!hasUnsavedChanges()) {
        return true; // No unsaved changes, can close immediately
      }
@@ -191,21 +198,14 @@ export function SoalSetForm({ soalSet, kelasId, onAutoSaveStatusChange, onBefore
        console.error('Save before close failed:', error);
        return false;
      }
-   };
+   }, [hasUnsavedChanges, cancelAutoSave, performAutoSave, autoSaveStatus]);
 
    // Expose saveBeforeClose to parent via onBeforeCloseRef
    useEffect(() => {
      if (onBeforeCloseRef) {
        onBeforeCloseRef.current = saveBeforeClose;
      }
-   }, [onBeforeCloseRef, formData, soals, autoSaveStatus, saveBeforeClose]);
-
-   // Initialize debounced auto-save with longer delay to see spinner
-   const { debouncedSave, cancelAutoSave } = useDebouncedAutoSave({
-     delay: 1500, // 1.5 second delay
-     onSave: performAutoSave,
-     enabled: !loading && formData.nama.trim().length > 0, // Only enable if form has a name
-   });
+   }, [onBeforeCloseRef, saveBeforeClose]);
 
    // Auto-save effect that triggers on form data changes
    useEffect(() => {
